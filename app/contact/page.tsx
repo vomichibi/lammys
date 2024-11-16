@@ -30,6 +30,7 @@ export default function ContactPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData(prev => ({
+
       ...prev,
       [e.target.name]: e.target.value
     }));
@@ -63,8 +64,7 @@ export default function ContactPage() {
                 </div>
                 <div className="ml-4">
                   <h3 className="text-lg font-medium text-gray-900">Phone</h3>
-                  <p className="mt-1 text-gray-600">+1 (234) 567-8900</p>
-                  <p className="mt-1 text-sm text-gray-500">Mon-Fri from 9am to 6pm</p>
+                  <p className="mt-1 text-gray-600">0483 876 223</p>
                 </div>
               </div>
 
@@ -95,8 +95,30 @@ export default function ContactPage() {
                 </div>
                 <div className="ml-4">
                   <h3 className="text-lg font-medium text-gray-900">Location</h3>
-                  <p className="mt-1 text-gray-600">123 Business Street</p>
-                  <p className="mt-1 text-sm text-gray-500">Melbourne, VIC 3000</p>
+                  <p className="mt-1 text-gray-600">36 Eighth Ave</p>
+                  <p className="mt-1 text-gray-600">Maylands WA 6051</p>
+                </div>
+              </div>
+
+              {/* Opening Hours */}
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="ml-4">
+                  <h3 className="text-lg font-medium text-gray-900">Opening Hours</h3>
+                  <div className="mt-1 space-y-1 text-gray-600">
+                    <p>Monday: 9 am–5 pm</p>
+                    <p>Tuesday: 9 am–5 pm</p>
+                    <p>Wednesday: 9 am–5 pm</p>
+                    <p>Thursday: 9 am–5 pm</p>
+                    <p>Friday: 9 am–5 pm</p>
+                    <p>Saturday: 9 am–1 pm</p>
+                    <p className="text-gray-500">Sunday: Closed</p>
+                  </div>
                 </div>
               </div>
             </div>
