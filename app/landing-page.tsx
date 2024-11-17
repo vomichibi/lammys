@@ -20,13 +20,9 @@ export function LandingPageComponent() {
             <div className="relative z-10 pb-8 bg-transparent sm:pb-16 md:pb-20 lg:pb-28 xl:pb-32">
               <main className="mt-10 mx-auto max-w-7xl px-4 sm:mt-12 sm:px-6 md:mt-16 lg:mt-20 lg:px-8 xl:mt-28">
                 <div className="sm:text-center lg:text-left">
-                  <h1 className="text-4xl font-extrabold text-white sm:text-5xl md:text-6xl mb-4">
+                  <h1 className="text-4xl font-extrabold text-white sm:text-5xl md:text-6xl">
                     Lammy's Multi Services
                   </h1>
-                  <h2 className="text-3xl tracking-tight font-extrabold text-white sm:text-4xl md:text-5xl">
-                    <span className="block xl:inline">Your One-Stop Shop for</span>{' '}
-                    <span className="block text-blue-600 xl:inline">Dry Cleaning & More</span>
-                  </h2>
                   <p className="mt-3 text-base text-gray-200 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
                     Quality dry cleaning, expert alterations, and quick key cutting services all under one roof.
                   </p>
@@ -141,15 +137,15 @@ export function LandingPageComponent() {
                   <div className="space-y-6">
                     <div className="flex items-center">
                       <MapPin className="h-6 w-6 text-blue-600" />
-                      <span className="ml-3 text-gray-700">123 Main St, Sydney, NSW 2000</span>
+                      <span className="ml-3 text-gray-700">1/938 Beaufort St, Inglewood WA 6052, Australia</span>
                     </div>
                     <div className="flex items-center">
                       <Clock className="h-6 w-6 text-blue-600" />
-                      <span className="ml-3 text-gray-700">Mon-Fri: 8am-7pm, Sat: 9am-5pm</span>
+                      <span className="ml-3 text-gray-700">Mon-Fri: 9am-5pm, Sat: 9am-1pm, Sun: Closed</span>
                     </div>
                     <div className="flex items-center">
                       <Phone className="h-6 w-6 text-blue-600" />
-                      <span className="ml-3 text-gray-700">+1 (123) 456-7890</span>
+                      <span className="ml-3 text-gray-700">0483 876 223</span>
                     </div>
                     <div className="flex items-center">
                       <Mail className="h-6 w-6 text-blue-600" />
@@ -157,17 +153,14 @@ export function LandingPageComponent() {
                     </div>
                   </div>
                 </div>
-                <div className="mt-5 md:mt-0">
-                  <iframe 
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4175.366248977763!2d115.89102647648903!3d-31.929764121258234!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2a32baf380f6d011%3A0xd2f2c713b6db2a9d!2sLammy&#39;s%20Multi%20Service!5e1!3m2!1sen!2sau!4v1731811117697!5m2!1sen!2sau" 
-                    width="600" 
-                    height="450" 
-                    className="w-full h-64 rounded-lg shadow-lg"
-                    style={{ border: 0 }} 
-                    allowFullScreen 
-                    loading="lazy" 
-                    referrerPolicy="no-referrer-when-downgrade"
-                  />
+                <div className="mt-5 md:mt-0 flex items-center justify-center">
+                  <a 
+                    href="/contact" 
+                    className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                  >
+                    <MapPin className="h-5 w-5 mr-2" />
+                    Our Location
+                  </a>
                 </div>
               </div>
             </div>
