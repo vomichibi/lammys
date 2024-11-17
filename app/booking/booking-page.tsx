@@ -23,10 +23,11 @@ export function BookingPageComponent() {
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([])
+  const [showDisclaimer, setShowDisclaimer] = useState(false)
 
   const services = [
     { id: 'dry-cleaning', name: 'Dry Cleaning', showPrice: false },
-    { id: 'laundry', name: 'Key Cutting', price: 10 },
+    { id: 'key-cutting', name: 'Key Cutting', showPrice: false },
     { id: 'alterations', name: 'Alterations', isRedirect: true },
   ]
 
@@ -60,6 +61,11 @@ export function BookingPageComponent() {
     { id: 'cushion-cover', name: 'Cushion Cover', price: 8, category: 'bedding' },
   ]
 
+  const keyTypes = [
+    { id: 'brass-key', name: 'Brass Key', price: 6 },
+    { id: 'coloured-key', name: 'Coloured Key', price: 7 },
+  ]
+
   const availableTimes = [
     '09:00', '09:15', '09:30', '09:45',
     '10:00', '10:15', '10:30', '10:45',
@@ -81,10 +87,14 @@ export function BookingPageComponent() {
   const calculateTotal = useMemo(() => {
     return selectedItems.reduce((total, selectedItem) => {
       const item = dryCleaningItems.find(i => i.id === selectedItem.id);
-      if (!item) return total;
+      if (!item) {
+        const keyType = keyTypes.find(i => i.id === selectedItem.id);
+        if (!keyType) return total;
+        return total + (keyType.price * selectedItem.quantity);
+      }
       return total + (getBasePrice(item.price) * selectedItem.quantity);
     }, 0);
-  }, [selectedItems, dryCleaningItems]);
+  }, [selectedItems, dryCleaningItems, keyTypes]);
 
   const handleServiceSelect = (serviceId: string) => {
     const service = services.find(s => s.id === serviceId);
@@ -147,7 +157,7 @@ export function BookingPageComponent() {
       selectedDate, 
       selectedTime 
     })
-    router.push('/booking-confirmation')
+    router.push('/booking/confirmation')
   }
 
   return (
@@ -191,7 +201,8 @@ export function BookingPageComponent() {
                   </div>
                 )}
               </div>
-              
+　
+　
               {/* Clothing Items */}
               <div className="mb-6">
                 <h4 className="text-md font-medium mb-3">Clothing Items</h4>
@@ -300,6 +311,70 @@ export function BookingPageComponent() {
             </div>
           )}
 
+          {/* Key Cutting Section */}
+          {selectedService === 'key-cutting' && (
+            <div className="mt-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold">Key Cutting Services</h3>
+                {selectedItems.length > 0 && (
+                  <div className="text-lg font-semibold text-blue-600">
+                    Total: ${calculateTotal.toFixed(2)}
+                  </div>
+                )}
+              </div>
+              
+              <div className="mb-4">
+                <p className="text-sm text-gray-600 italic mb-4">Only normal keys available.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {keyTypes.map((keyType) => (
+                    <div
+                      key={keyType.id}
+                      className={`p-4 rounded-lg border ${
+                        isItemSelected(keyType.id)
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-blue-300'
+                      }`}
+                    >
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={isItemSelected(keyType.id)}
+                          onChange={() => handleItemSelect(keyType.id)}
+                          className="h-4 w-4 text-blue-600 rounded border-gray-300"
+                        />
+                        <span className="ml-3 flex-1">
+                          <span className="block font-medium">{keyType.name}</span>
+                          <span className="block text-sm text-gray-500">
+                            ${keyType.price}
+                          </span>
+                        </span>
+                      </label>
+                      {isItemSelected(keyType.id) && (
+                        <div className="mt-2 flex items-center justify-end space-x-2">
+                          <button
+                            onClick={() => handleQuantityChange(keyType.id, -1)}
+                            className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100"
+                          >
+                            -
+                          </button>
+                          <span className="w-8 text-center">
+                            {getItemQuantity(keyType.id)}
+                          </span>
+                          <button
+                            onClick={() => handleQuantityChange(keyType.id, 1)}
+                            className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100"
+                          >
+                            +
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Navigation Buttons */}
           <div className="flex justify-between items-center mt-6">
             <div className="flex items-center space-x-4">
@@ -363,7 +438,21 @@ export function BookingPageComponent() {
                   <ul className="list-disc pl-5">
                     {selectedItems.map(selectedItem => {
                       const item = dryCleaningItems.find(i => i.id === selectedItem.id)
-                      if (!item) return null;
+                      if (!item) {
+                        const keyType = keyTypes.find(i => i.id === selectedItem.id);
+                        if (!keyType) return null;
+                        const itemTotal = keyType.price * selectedItem.quantity;
+                        return (
+                          <li key={selectedItem.id} className="flex justify-between items-center">
+                            <span>
+                              {keyType.name} (Quantity: {selectedItem.quantity})
+                            </span>
+                            <span className="text-gray-600">
+                              ${itemTotal.toFixed(2)}
+                            </span>
+                          </li>
+                        )
+                      }
                       const itemTotal = getBasePrice(item.price) * selectedItem.quantity;
                       return (
                         <li key={selectedItem.id} className="flex justify-between items-center">
@@ -386,12 +475,28 @@ export function BookingPageComponent() {
                 </div>
                 <p>Date: {selectedDate}</p>
                 <p>Time: {selectedTime}</p>
-                <button
-                  onClick={handleSubmit}
-                  className="w-full mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                >
-                  Confirm Booking
-                </button>
+                <div className="relative">
+                  <button
+                    onClick={handleSubmit}
+                    onMouseEnter={() => setShowDisclaimer(true)}
+                    onMouseLeave={() => setShowDisclaimer(false)}
+                    className="w-full mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  >
+                    Confirm Booking
+                  </button>
+                  {showDisclaimer && (
+                    <div className="absolute bottom-full left-0 right-0 mb-2 p-3 bg-amber-50 border border-amber-200 rounded-md shadow-lg text-sm text-amber-800">
+                      <p className="mb-2"><strong>Important Notice:</strong></p>
+                      <p>Please be aware that certain items, particularly those listed under bedding items, may have stains that cannot be fully removed during the dry cleaning process. This includes:</p>
+                      <ul className="list-disc pl-4 mt-1 mb-2">
+                        <li>Old or set-in stains</li>
+                        <li>Bodily fluid stains</li>
+                        <li>Certain types of dye or color transfers</li>
+                      </ul>
+                      <p>The effectiveness of stain removal can vary depending on the nature of the stain and the fabric type. We will make every effort to achieve the best possible results.</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
