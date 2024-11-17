@@ -30,7 +30,6 @@ export default function ContactPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData(prev => ({
-
       ...prev,
       [e.target.name]: e.target.value
     }));
@@ -261,11 +260,15 @@ export default function ContactPage() {
         {/* Map Section */}
         <div className="bg-white rounded-lg shadow-lg p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Find Us</h2>
-          <div className="aspect-w-16 aspect-h-9">
-            {/* Replace with your actual map implementation */}
-            <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center">
-              <p className="text-gray-600">Map will be displayed here</p>
-            </div>
+          <div className="w-full h-[450px] relative">
+            <iframe 
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3386.1470741445846!2d115.89102647648903!3d-31.929764121258234!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2a32baf380f6d011%3A0xd2f2c713b6db2a9d!2sLammy&#39;s%20Multi%20Service!5e0!3m2!1sen!2sau!4v1731836708687!5m2!1sen!2sau"
+              className="absolute inset-0 w-full h-full rounded-lg"
+              style={{ border: 0 }}
+              allowFullScreen={true}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
           </div>
         </div>
       </div>
