@@ -1,18 +1,55 @@
 'use client'
 
 import Link from "next/link"
-import { Shirt, Key, Scissors } from 'lucide-react'
+import { Shirt, Key, Lock, Scissors } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import styles from './services.module.css'
 
 interface Service {
   id: string
   title: string
   description: string
   price: string
-  icon: React.ReactNode
+  icon: string
   features: string[]
 }
+
+const AnimatedIcon = ({ type }: { type: string }) => {
+  const renderIcon = () => {
+    switch (type) {
+      case 'dry-cleaning':
+        return (
+          <div className={styles.iconContainer}>
+            <Shirt className={`${styles.icon} ${styles.dryCleaningIcon}`} />
+            <div className={styles.sparkleContainer}>
+              <div className={`${styles.sparkle} ${styles.sparkle1}`}>⭐</div>
+              <div className={`${styles.sparkle} ${styles.sparkle2}`}>⭐</div>
+              <div className={`${styles.sparkle} ${styles.sparkle3}`}>⭐</div>
+              <div className={`${styles.sparkle} ${styles.sparkle4}`}>⭐</div>
+            </div>
+          </div>
+        );
+      case 'alterations':
+        return (
+          <div className={styles.iconContainer}>
+            <Scissors className={`${styles.icon} ${styles.alterationsIcon}`} />
+          </div>
+        );
+      case 'key-cutting':
+        return (
+          <div className={styles.iconContainer}>
+            <Key className={`${styles.icon} ${styles.keyIcon}`} />
+            <Lock className={`${styles.icon} ${styles.lockIcon}`} />
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return renderIcon();
+};
 
 const services: Service[] = [
   {
@@ -20,7 +57,7 @@ const services: Service[] = [
     title: "Dry Cleaning",
     description: "Professional dry cleaning service for your delicate garments, suits, dresses, and more.",
     price: "From $15",
-    icon: <Shirt className="h-8 w-8 text-blue-600" />,
+    icon: "dry-cleaning",
     features: [
       "Gentle cleaning process",
       "Stain removal",
@@ -35,7 +72,7 @@ const services: Service[] = [
     title: "Clothing Alterations",
     description: "Expert tailoring and alterations to ensure your garments fit perfectly and look their best.",
     price: "From $10",
-    icon: <Scissors className="h-8 w-8 text-blue-600" />,
+    icon: "alterations",
     features: [
       "Professional tailoring",
       "Hemming and length adjustments",
@@ -50,7 +87,7 @@ const services: Service[] = [
     title: "Key Cutting",
     description: "Precise key cutting service for home, office, or vehicle keys.",
     price: "From $5",
-    icon: <Key className="h-8 w-8 text-blue-600" />,
+    icon: "key-cutting",
     features: [
       "Residential and commercial keys",
       "Car key duplication",
@@ -77,13 +114,11 @@ export function ServicesPageComponent() {
       {/* Services Grid */}
       <div className="max-w-7xl mx-auto grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         {services.map((service) => (
-          <Card key={service.id} className="flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 border-blue-100">
+          <Card key={service.id} className={`flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 border-blue-100 ${styles.serviceCard}`}>
             <CardHeader className="relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-blue-50 opacity-80"></div>
               <div className="relative z-10">
-                <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center mb-4 shadow-lg">
-                  {service.icon}
-                </div>
+                <AnimatedIcon type={service.icon} />
                 <CardTitle className="text-2xl mb-2 text-gray-900">{service.title}</CardTitle>
                 <CardDescription className="text-lg font-semibold text-blue-600">{service.price}</CardDescription>
               </div>
@@ -103,7 +138,26 @@ export function ServicesPageComponent() {
             </CardContent>
             <CardFooter className="mt-auto">
               <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all" asChild>
-                <Link href="/contact">Learn More</Link>
+                <Link 
+                  href={
+                    service.id === "dry-cleaning" 
+                      ? "/services/dry-cleaning" 
+                      : service.id === "alterations"
+                      ? "/services/alterations"
+                      : service.id === "key-cutting"
+                      ? "/services/key-cutting"
+                      : "/contact"
+                  }
+                >
+                  {service.id === "dry-cleaning" 
+                    ? "View Dry Cleaning Services" 
+                    : service.id === "alterations"
+                    ? "View Alteration Services"
+                    : service.id === "key-cutting"
+                    ? "View Key Cutting Services"
+                    : "Learn More"
+                  }
+                </Link>
               </Button>
             </CardFooter>
           </Card>
