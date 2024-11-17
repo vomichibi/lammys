@@ -10,6 +10,7 @@ export default function AlterationsPage() {
     email: '',
     phone: '',
     date: '',
+    pickupDate: '',
     time: '',
     description: '',
   })
@@ -37,7 +38,7 @@ export default function AlterationsPage() {
     e.preventDefault()
     // Here you would typically send the consultation request to your backend
     console.log('Consultation request submitted:', formData)
-    router.push('/alterations/confirmation')
+    router.push('/booking/confirmation')
   }
 
   return (
@@ -107,6 +108,21 @@ export default function AlterationsPage() {
                   id="date"
                   name="date"
                   value={formData.date}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full p-2 border rounded-md"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="pickupDate" className="block text-sm font-medium text-gray-700 mb-1">
+                  Preferred Pick-up Date
+                </label>
+                <input
+                  type="date"
+                  id="pickupDate"
+                  name="pickupDate"
+                  value={formData.pickupDate}
                   onChange={handleInputChange}
                   required
                   className="w-full p-2 border rounded-md"
