@@ -1,7 +1,7 @@
 'use client'
 
 import Link from "next/link"
-import { Shirt, Key } from 'lucide-react'
+import { Shirt, Key, Scissors } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -28,6 +28,21 @@ const services: Service[] = [
       "Eco-friendly solvents",
       "Same-day service available",
       "Expert care for delicate fabrics"
+    ],
+  },
+  {
+    id: "alterations",
+    title: "Clothing Alterations",
+    description: "Expert tailoring and alterations to ensure your garments fit perfectly and look their best.",
+    price: "From $10",
+    icon: <Scissors className="h-8 w-8 text-blue-600" />,
+    features: [
+      "Professional tailoring",
+      "Hemming and length adjustments",
+      "Size modifications",
+      "Zipper replacements",
+      "Quick turnaround time",
+      "Experienced seamstresses"
     ],
   },
   {
@@ -60,7 +75,7 @@ export function ServicesPageComponent() {
       </div>
 
       {/* Services Grid */}
-      <div className="max-w-4xl mx-auto grid gap-8 grid-cols-1 md:grid-cols-2">
+      <div className="max-w-7xl mx-auto grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         {services.map((service) => (
           <Card key={service.id} className="flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 border-blue-100">
             <CardHeader className="relative overflow-hidden">

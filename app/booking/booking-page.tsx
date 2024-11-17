@@ -96,6 +96,10 @@ export function BookingPageComponent() {
     }, 0);
   }, [selectedItems, dryCleaningItems, keyTypes]);
 
+  const getTotalItemCount = () => {
+    return selectedItems.reduce((total, item) => total + item.quantity, 0)
+  }
+
   const handleServiceSelect = (serviceId: string) => {
     const service = services.find(s => s.id === serviceId);
     if (service?.isRedirect) {
@@ -158,6 +162,27 @@ export function BookingPageComponent() {
       selectedTime 
     })
     router.push('/booking/confirmation')
+  }
+
+  const handleAddToCart = (item: any) => {
+    const cartItems = JSON.parse(localStorage.getItem('cartItems') || '[]')
+    const existingItem = cartItems.find((i: any) => i.id === item.id)
+    
+    if (existingItem) {
+      existingItem.quantity += 1
+    } else {
+      cartItems.push({
+        ...item,
+        id: `${item.name}-${Date.now()}`,
+        quantity: 1
+      })
+    }
+    
+    localStorage.setItem('cartItems', JSON.stringify(cartItems))
+  }
+
+  const handleViewCart = () => {
+    router.push('/booking/cart')
   }
 
   return (
@@ -477,12 +502,15 @@ export function BookingPageComponent() {
                 <p>Time: {selectedTime}</p>
                 <div className="relative">
                   <button
-                    onClick={handleSubmit}
+                    onClick={handleViewCart}
                     onMouseEnter={() => setShowDisclaimer(true)}
                     onMouseLeave={() => setShowDisclaimer(false)}
-                    className="w-full mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    className="w-full mt-4 bg-blue-500 text-white p-3 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center justify-center"
                   >
-                    Confirm Booking
+                    <span>View Cart</span>
+                    <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-blue-100 bg-blue-600 rounded-full">
+                      {getTotalItemCount()} items - ${calculateTotal.toFixed(2)}
+                    </span>
                   </button>
                   {showDisclaimer && (
                     <div className="absolute bottom-full left-0 right-0 mb-2 p-3 bg-amber-50 border border-amber-200 rounded-md shadow-lg text-sm text-amber-800">
