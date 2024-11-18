@@ -30,9 +30,16 @@ export default function ContactPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData(prev => ({
+
       ...prev,
       [e.target.name]: e.target.value
     }));
+  };
+
+  const handleOpenGoogleMaps = () => {
+    const address = '36 Eighth Ave, Maylands WA 6051, Australia';
+    const encodedAddress = encodeURIComponent(address);
+    window.open(`https://www.google.com/maps/search/?api=1&query=${encodedAddress}`, '_blank');
   };
 
   return (
@@ -94,8 +101,13 @@ export default function ContactPage() {
                 </div>
                 <div className="ml-4">
                   <h3 className="text-lg font-medium text-gray-900">Location</h3>
-                  <p className="mt-1 text-gray-600">36 Eighth Ave</p>
-                  <p className="mt-1 text-gray-600">Maylands WA 6051</p>
+                  <button 
+                    onClick={handleOpenGoogleMaps}
+                    className="mt-1 text-gray-600 hover:text-blue-600 transition-colors duration-200 text-left"
+                  >
+                    <p className="mt-1">36 Eighth Ave</p>
+                    <p className="mt-1">Maylands WA 6051</p>
+                  </button>
                 </div>
               </div>
 

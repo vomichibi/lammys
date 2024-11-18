@@ -140,11 +140,15 @@ export function LandingPageComponent() {
                   <div className="space-y-6">
                     <div className="flex items-center">
                       <MapPin className="h-6 w-6 text-blue-600" />
-                      <span className="ml-3 text-gray-700">1/938 Beaufort St, Inglewood WA 6052, Australia</span>
+                      <span className="ml-3 text-gray-700">36 Eighth Ave, Maylands WA 6051</span>
                     </div>
                     <div className="flex items-center">
                       <Clock className="h-6 w-6 text-blue-600" />
-                      <span className="ml-3 text-gray-700">Mon-Fri: 9am-5pm, Sat: 9am-1pm, Sun: Closed</span>
+                      <span className="ml-3 text-gray-700">
+                        Monday-Friday: 9am-5pm<br />
+                        Saturday: 9am-1pm<br />
+                        Sunday: Closed
+                      </span>
                     </div>
                     <div className="flex items-center">
                       <Phone className="h-6 w-6 text-blue-600" />
