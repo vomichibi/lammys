@@ -1,8 +1,10 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { LogOutIcon } from 'lucide-react';
+import { Button } from "@/components/ui/button";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -11,8 +13,10 @@ export default function DashboardPage() {
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login');
+    } else if (session?.user?.isAdmin) {
+      router.push('/admindash/dashboard');
     }
-  }, [status, router]);
+  }, [status, session, router]);
 
   if (status === 'loading') {
     return (
@@ -25,6 +29,21 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
+        {/* Dashboard Type Indicator */}
+        <div className="mb-8 flex justify-between items-center">
+          <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+            Customer Dashboard
+          </span>
+          <Button 
+            variant="outline" 
+            onClick={() => signOut({ callbackUrl: '/login' })}
+            className="flex items-center space-x-2"
+          >
+            <LogOutIcon className="h-4 w-4" />
+            <span>Sign Out</span>
+          </Button>
+        </div>
+
         {/* Welcome Section */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">

@@ -1,6 +1,10 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import GoogleProvider from 'next-auth/providers/google';
 import bcrypt from 'bcryptjs';
+
+// List of admin emails
+const adminEmails = ['team@lammys.au'];
 
 // This is a temporary user store. In production, use a database.
 const users = [
@@ -15,6 +19,10 @@ const users = [
 
 const handler = NextAuth({
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
@@ -59,16 +67,29 @@ const handler = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
+        token.isAdmin = adminEmails.includes(token.email || '');
       }
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string;
+      if (session?.user) {
+        session.user.isAdmin = token.isAdmin as boolean;
       }
       return session;
     },
+    async redirect({ url, baseUrl }) {
+      // After sign in
+      if (url.startsWith(baseUrl)) {
+        if (url.includes('/login') || url === baseUrl) {
+          const token = await fetch(`${baseUrl}/api/auth/session`).then(res => res.json());
+          if (token?.user?.email && adminEmails.includes(token.user.email)) {
+            return `${baseUrl}/admindash/dashboard`;
+          }
+          return `${baseUrl}/dashboard`;
+        }
+      }
+      return url;
+    }
   },
 });
 

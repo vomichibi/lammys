@@ -1,8 +1,11 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Head from 'next/head'
+import { useSession } from 'next-auth/react'
+import { useCartStore } from '@/store/cartStore'
+import { formatDate } from '@/lib/utils/date'
 
 interface DryCleaningItem {
   id: string;
@@ -18,6 +21,9 @@ interface SelectedItem {
 
 export function BookingPageComponent() {
   const router = useRouter()
+  const { data: session } = useSession()
+  const { items, addItem, syncWithFirestore, loadFromFirestore } = useCartStore()
+
   const [step, setStep] = useState(1)
   const [selectedService, setSelectedService] = useState('')
   const [selectedDate, setSelectedDate] = useState('')
@@ -164,29 +170,51 @@ export function BookingPageComponent() {
     router.push('/booking/confirmation')
   }
 
-  const handleAddToCart = (item: any) => {
-    const cartItems = JSON.parse(localStorage.getItem('cartItems') || '[]')
-    const existingItem = cartItems.find((i: any) => i.id === item.id)
-    
-    if (existingItem) {
-      existingItem.quantity += 1
-    } else {
-      cartItems.push({
-        ...item,
-        id: `${item.name}-${Date.now()}`,
-        quantity: 1
-      })
+  const handleAddToCart = () => {
+    selectedItems.forEach((selectedItem) => {
+      const dryCleaningItem = dryCleaningItems.find(i => i.id === selectedItem.id)
+      if (dryCleaningItem) {
+        addItem({
+          id: dryCleaningItem.id,
+          name: dryCleaningItem.name,
+          price: typeof dryCleaningItem.price === 'string' 
+            ? parseFloat(dryCleaningItem.price.replace(/[^0-9.]/g, '')) || 0
+            : dryCleaningItem.price,
+          quantity: selectedItem.quantity,
+          category: dryCleaningItem.category
+        })
+      } else {
+        const keyItem = keyTypes.find(i => i.id === selectedItem.id)
+        if (keyItem) {
+          addItem({
+            id: keyItem.id,
+            name: keyItem.name,
+            price: keyItem.price,
+            quantity: selectedItem.quantity,
+            category: 'key-cutting'
+          })
+        }
+      }
+    })
+
+    if (session?.user?.email) {
+      syncWithFirestore(session.user.email)
     }
-    
-    localStorage.setItem('cartItems', JSON.stringify(cartItems))
   }
 
   const handleViewCart = () => {
+    handleAddToCart()
     router.push('/booking/cart')
   }
 
+  useEffect(() => {
+    if (session?.user?.email) {
+      loadFromFirestore(session.user.email)
+    }
+  }, [session, loadFromFirestore])
+
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-3xl mx-auto">
         <div className="bg-white rounded-lg shadow p-6 space-y-6">
           {/* Service Selection */}
@@ -430,25 +458,43 @@ export function BookingPageComponent() {
           {/* Date and Time Selection */}
           {step === 3 && (
             <div>
-              <h3 className="text-lg font-semibold mb-4">Select Date and Time</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input
-                  type="date"
-                  onChange={(e) => handleDateSelect(e.target.value)}
-                  className="w-full p-2 border rounded-md"
-                />
-                <select
-                  onChange={(e) => handleTimeSelect(e.target.value)}
-                  className="w-full p-2 border rounded-md"
-                >
-                  <option value="">Choose a time</option>
-                  {availableTimes.map(time => (
-                    <option key={time} value={time}>
-                      {time.replace(':', ':')} {parseInt(time) < 12 ? 'AM' : 'PM'}
-                    </option>
-                  ))}
-                </select>
+              <h2 className="text-xl font-semibold mb-4">Select Date</h2>
+              <div className="grid grid-cols-3 gap-4">
+                {[...Array(7)].map((_, i) => {
+                  const date = new Date();
+                  date.setDate(date.getDate() + i);
+                  const dateStr = date.toISOString().split('T')[0];
+                  return (
+                    <button
+                      key={dateStr}
+                      onClick={() => handleDateSelect(dateStr)}
+                      className={`p-4 rounded-lg border ${
+                        selectedDate === dateStr
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-blue-500'
+                      }`}
+                    >
+                      {formatDate(dateStr)}
+                    </button>
+                  );
+                })}
               </div>
+            </div>
+          )}
+          {step === 3 && (
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Select Time</h2>
+              <select
+                onChange={(e) => handleTimeSelect(e.target.value)}
+                className="w-full p-2 border rounded-md"
+              >
+                <option value="">Choose a time</option>
+                {availableTimes.map(time => (
+                  <option key={time} value={time}>
+                    {time.replace(':', ':')} {parseInt(time) < 12 ? 'AM' : 'PM'}
+                  </option>
+                ))}
+              </select>
             </div>
           )}
 
@@ -498,7 +544,7 @@ export function BookingPageComponent() {
                     </div>
                   </div>
                 </div>
-                <p>Date: {selectedDate}</p>
+                <p>Date: {formatDate(selectedDate)}</p>
                 <p>Time: {selectedTime}</p>
                 <div className="relative">
                   <button

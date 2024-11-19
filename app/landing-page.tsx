@@ -2,8 +2,22 @@
 
 import { Phone, Mail, MapPin, Clock, Scissors, Key, Shirt } from 'lucide-react'
 import Link from 'next/link'
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 
 export function LandingPageComponent() {
+  const { data: session } = useSession()
+  const router = useRouter()
+
+  const handleBookNowClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    if (session) {
+      router.push('/booking')
+    } else {
+      router.push('/register')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <main>
@@ -29,12 +43,12 @@ export function LandingPageComponent() {
                   </p>
                   <div className="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
                     <div className="rounded-md shadow">
-                      <Link
-                        href="/services"
+                      <button
+                        onClick={handleBookNowClick}
                         className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10"
                       >
                         Book Now
-                      </Link>
+                      </button>
                     </div>
                   </div>
                 </div>
