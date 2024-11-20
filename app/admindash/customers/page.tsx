@@ -29,332 +29,139 @@ import {
   SearchIcon,
   PhoneIcon,
   MailIcon,
-  UserIcon
+  UserIcon,
+  ShieldIcon,
+  CalendarIcon
 } from 'lucide-react'
+import { getAllUsers, User } from '@/lib/userManagement'
 
-// Mock data - Replace with actual data fetching
-const mockCustomers = [
-  { 
-    id: '1', 
-    name: 'John Doe', 
-    email: 'john@example.com', 
-    phone: '0412345678',
-    registeredDate: '2024-01-15',
-    lastOrder: '2024-01-20',
-    totalOrders: 5
-  },
-  // Add more mock customers...
-]
-
-interface Customer {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  registeredDate: string;
-  lastOrder: string;
-  totalOrders: number;
+interface Customer extends User {
+  phone?: string;
+  totalOrders?: number;
+  lastOrder?: string;
 }
 
 export default function CustomersPage() {
-  const { data: session, status } = useSession()
-  const [customers, setCustomers] = useState<Customer[]>(mockCustomers)
-  const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>(mockCustomers)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filterType, setFilterType] = useState<'email' | 'phone' | 'name'>('name')
-  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null)
-  const [isNewCustomerDialogOpen, setIsNewCustomerDialogOpen] = useState(false)
-  const [newCustomer, setNewCustomer] = useState<Partial<Customer>>({})
+  const { data: session } = useSession()
+  const [customers, setCustomers] = useState<Customer[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
 
   useEffect(() => {
-    filterCustomers()
-  }, [searchTerm, filterType])
-
-  const filterCustomers = () => {
-    if (!searchTerm) {
-      setFilteredCustomers(customers)
-      return
-    }
-
-    const filtered = customers.filter(customer => {
-      const searchLower = searchTerm.toLowerCase()
-      switch (filterType) {
-        case 'email':
-          return customer.email.toLowerCase().includes(searchLower)
-        case 'phone':
-          return customer.phone.includes(searchTerm)
-        case 'name':
-          return customer.name.toLowerCase().includes(searchLower)
-        default:
-          return true
+    const fetchCustomers = async () => {
+      try {
+        const users = await getAllUsers();
+        // Convert users to customers format
+        const customerData = users.map(user => ({
+          ...user,
+          phone: '', // You can add these fields from your orders database
+          totalOrders: 0,
+          lastOrder: '',
+        }));
+        setCustomers(customerData);
+      } catch (error) {
+        console.error('Error fetching customers:', error);
+      } finally {
+        setLoading(false);
       }
-    })
-    setFilteredCustomers(filtered)
-  }
+    };
 
-  const handleEdit = (customer: Customer) => {
-    setEditingCustomer(customer)
-  }
+    fetchCustomers();
+  }, []);
 
-  const handleDelete = (customer: Customer) => {
-    setCustomerToDelete(customer)
-    setIsDeleteDialogOpen(true)
-  }
-
-  const confirmDelete = () => {
-    if (customerToDelete) {
-      setCustomers(prev => prev.filter(c => c.id !== customerToDelete.id))
-      setFilteredCustomers(prev => prev.filter(c => c.id !== customerToDelete.id))
-    }
-    setIsDeleteDialogOpen(false)
-    setCustomerToDelete(null)
-  }
-
-  const handleSaveEdit = () => {
-    if (editingCustomer) {
-      setCustomers(prev => prev.map(c => 
-        c.id === editingCustomer.id ? editingCustomer : c
-      ))
-      setFilteredCustomers(prev => prev.map(c => 
-        c.id === editingCustomer.id ? editingCustomer : c
-      ))
-      setEditingCustomer(null)
-    }
-  }
-
-  const handleCreateCustomer = () => {
-    const newId = Math.max(...customers.map(c => parseInt(c.id))) + 1
-    const customer: Customer = {
-      id: newId.toString(),
-      name: newCustomer.name || '',
-      email: newCustomer.email || '',
-      phone: newCustomer.phone || '',
-      registeredDate: new Date().toISOString().split('T')[0],
-      lastOrder: '-',
-      totalOrders: 0
-    }
-    setCustomers(prev => [...prev, customer])
-    setFilteredCustomers(prev => [...prev, customer])
-    setNewCustomer({})
-    setIsNewCustomerDialogOpen(false)
-  }
-
-  if (status === 'loading') {
+  const filteredCustomers = customers.filter(customer => {
+    const searchLower = searchQuery.toLowerCase();
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    )
-  }
-
-  if (!session?.user?.isAdmin) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-red-600">Access Denied. Admin privileges required.</div>
-      </div>
-    )
-  }
+      customer.name?.toLowerCase().includes(searchLower) ||
+      customer.email.toLowerCase().includes(searchLower)
+    );
+  });
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Customer Management</h1>
-        <Button onClick={() => setIsNewCustomerDialogOpen(true)}>
-          <UserPlusIcon className="w-4 h-4 mr-2" />
-          Add Customer
-        </Button>
-      </div>
-
+    <div className="p-6">
       <Card>
-        <CardHeader>
-          <CardTitle>Customers</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <CardTitle className="text-2xl font-bold">Customers</CardTitle>
+          <div className="flex items-center space-x-2">
+            <div className="relative">
+              <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+              <Input
+                className="pl-8"
+                placeholder="Search customers..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="mb-6 flex gap-4">
-            <div className="relative flex-1">
-              <Input
-                placeholder="Search customers..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-              <SearchIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
             </div>
-            <div className="flex gap-2">
-              <Button
-                variant={filterType === 'name' ? 'default' : 'outline'}
-                onClick={() => setFilterType('name')}
-              >
-                <UserIcon className="w-4 h-4 mr-2" />
-                Name
-              </Button>
-              <Button
-                variant={filterType === 'email' ? 'default' : 'outline'}
-                onClick={() => setFilterType('email')}
-              >
-                <MailIcon className="w-4 h-4 mr-2" />
-                Email
-              </Button>
-              <Button
-                variant={filterType === 'phone' ? 'default' : 'outline'}
-                onClick={() => setFilterType('phone')}
-              >
-                <PhoneIcon className="w-4 h-4 mr-2" />
-                Phone
-              </Button>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Registered Date</TableHead>
+                    <TableHead>Last Login</TableHead>
+                    <TableHead>Total Orders</TableHead>
+                    <TableHead>Last Order</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredCustomers.map((customer) => (
+                    <TableRow key={customer.id}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center">
+                          <UserIcon className="mr-2 h-4 w-4 text-gray-500" />
+                          {customer.name || 'N/A'}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <MailIcon className="mr-2 h-4 w-4 text-gray-500" />
+                          {customer.email}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <ShieldIcon className="mr-2 h-4 w-4 text-gray-500" />
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            customer.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'
+                          }`}>
+                            {customer.role}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <CalendarIcon className="mr-2 h-4 w-4 text-gray-500" />
+                          {new Date(customer.createdAt).toLocaleDateString()}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <CalendarIcon className="mr-2 h-4 w-4 text-gray-500" />
+                          {new Date(customer.lastLoginAt).toLocaleDateString()}
+                        </div>
+                      </TableCell>
+                      <TableCell>{customer.totalOrders || 0}</TableCell>
+                      <TableCell>{customer.lastOrder || 'N/A'}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
-          </div>
-
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Registered</TableHead>
-                <TableHead>Last Order</TableHead>
-                <TableHead>Total Orders</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredCustomers.map((customer) => (
-                <TableRow key={customer.id}>
-                  <TableCell>{customer.name}</TableCell>
-                  <TableCell>{customer.email}</TableCell>
-                  <TableCell>{customer.phone}</TableCell>
-                  <TableCell>{customer.registeredDate}</TableCell>
-                  <TableCell>{customer.lastOrder}</TableCell>
-                  <TableCell>{customer.totalOrders}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(customer)}
-                      >
-                        <PencilIcon className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(customer)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <TrashIcon className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          )}
         </CardContent>
       </Card>
-
-      {/* Edit Customer Dialog */}
-      <Dialog open={!!editingCustomer} onOpenChange={() => setEditingCustomer(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Customer</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label>Name</label>
-              <Input
-                value={editingCustomer?.name}
-                onChange={(e) => setEditingCustomer(prev => 
-                  prev ? { ...prev, name: e.target.value } : null
-                )}
-              />
-            </div>
-            <div className="space-y-2">
-              <label>Email</label>
-              <Input
-                value={editingCustomer?.email}
-                onChange={(e) => setEditingCustomer(prev => 
-                  prev ? { ...prev, email: e.target.value } : null
-                )}
-              />
-            </div>
-            <div className="space-y-2">
-              <label>Phone</label>
-              <Input
-                value={editingCustomer?.phone}
-                onChange={(e) => setEditingCustomer(prev => 
-                  prev ? { ...prev, phone: e.target.value } : null
-                )}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingCustomer(null)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveEdit}>Save Changes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Delete</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete {customerToDelete?.name}? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={confirmDelete}>
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* New Customer Dialog */}
-      <Dialog open={isNewCustomerDialogOpen} onOpenChange={setIsNewCustomerDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add New Customer</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label>Name</label>
-              <Input
-                value={newCustomer.name || ''}
-                onChange={(e) => setNewCustomer(prev => ({ ...prev, name: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <label>Email</label>
-              <Input
-                value={newCustomer.email || ''}
-                onChange={(e) => setNewCustomer(prev => ({ ...prev, email: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <label>Phone</label>
-              <Input
-                value={newCustomer.phone || ''}
-                onChange={(e) => setNewCustomer(prev => ({ ...prev, phone: e.target.value }))}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsNewCustomerDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreateCustomer}>Create Customer</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

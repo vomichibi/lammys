@@ -19,15 +19,17 @@ const nextConfig = {
         maxAsyncRequests: 30,
         maxInitialRequests: 30,
         cacheGroups: {
-          defaultVendors: {
+          vendors: {
             test: /[\\/]node_modules[\\/]/,
             priority: -10,
             reuseExistingChunk: true,
+            name: 'vendors',
           },
           default: {
             minChunks: 2,
             priority: -20,
             reuseExistingChunk: true,
+            name: 'commons',
           },
         },
       };

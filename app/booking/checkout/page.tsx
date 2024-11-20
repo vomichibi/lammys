@@ -15,17 +15,37 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 export default function CheckoutPage() {
   const { data: session } = useSession();
   const router = useRouter();
-  const { items, isLoading: cartLoading } = useCartStore();
+  const { items, isLoading: cartLoading, initializeCart } = useCartStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!session) {
       router.push('/login');
+      return;
     }
-  }, [session, router]);
+
+    // Initialize cart when session is available
+    if (session.user?.email) {
+      const userId = session.user.email;
+      initializeCart(userId).catch((error) => {
+        console.error('Failed to initialize cart:', error);
+        setError('Failed to load cart data');
+      });
+    }
+  }, [session, router, initializeCart]);
 
   const handleCheckout = async () => {
+    if (!session?.user?.email) {
+      setError('Please log in to checkout');
+      return;
+    }
+
+    if (!items.length) {
+      setError('Your cart is empty');
+      return;
+    }
+
     try {
       setIsProcessing(true);
       setError(null);
@@ -35,7 +55,10 @@ export default function CheckoutPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ items }),
+        body: JSON.stringify({ 
+          items,
+          userEmail: session.user.email 
+        }),
       });
 
       if (!response.ok) {
@@ -50,100 +73,79 @@ export default function CheckoutPage() {
         throw new Error('Stripe failed to initialize');
       }
 
-      const { error: stripeError } = await stripe.redirectToCheckout({
-        sessionId,
-      });
+      const { error: stripeError } = await stripe.redirectToCheckout({ sessionId });
 
       if (stripeError) {
-        throw new Error(stripeError.message);
+        throw new Error(stripeError.message || 'Failed to redirect to checkout');
       }
-    } catch (error: any) {
-      console.error('Checkout error:', error);
-      setError(error.message || 'An error occurred during checkout');
+    } catch (err: any) {
+      console.error('Checkout error:', err);
+      setError(err.message || 'An error occurred during checkout');
     } finally {
       setIsProcessing(false);
     }
   };
 
-  if (cartLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-      </div>
-    );
-  }
-
-  if (!items.length) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-4">
-        <Card className="max-w-2xl mx-auto p-6 text-center">
-          <h2 className="text-xl font-semibold mb-4">Your cart is empty</h2>
-          <p className="text-gray-600 mb-6">Add some items to your cart before checking out.</p>
-          <Button onClick={() => router.push('/booking')}>
-            Continue Shopping
-          </Button>
-        </Card>
-      </div>
-    );
+  if (!session) {
+    return null;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-2xl mx-auto">
-        <Card className="mb-6">
-          <div className="p-6">
-            <h2 className="text-2xl font-semibold mb-4">Order Summary</h2>
-            <div className="space-y-4">
-              {items.map((item) => (
-                <div key={item.id} className="flex justify-between items-center">
-                  <div>
-                    <h3 className="font-medium">{item.name}</h3>
-                    <p className="text-sm text-gray-500">
-                      {item.category} × {item.quantity}
-                    </p>
-                  </div>
-                  <p className="font-medium">
-                    ${(item.price * item.quantity).toFixed(2)}
-                  </p>
-                </div>
-              ))}
-              <div className="border-t pt-4 mt-4">
-                <div className="flex justify-between items-center font-semibold">
-                  <span>Total</span>
-                  <span>
-                    ${items.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Card>
-
+    <div className="container mx-auto px-4 py-8">
+      <Card className="p-6">
+        <h1 className="text-2xl font-bold mb-4">Checkout</h1>
+        
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             {error}
           </div>
         )}
 
-        <Button
-          className="w-full h-12 text-lg"
-          onClick={handleCheckout}
-          disabled={isProcessing}
-        >
-          {isProcessing ? (
-            <>
-              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              Processing...
-            </>
-          ) : (
-            'Proceed to Payment'
-          )}
-        </Button>
+        {cartLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        ) : (
+          <>
+            {items.length === 0 ? (
+              <p className="text-gray-600">Your cart is empty</p>
+            ) : (
+              <div className="space-y-4">
+                {items.map((item) => (
+                  <div key={item.id} className="flex justify-between items-center">
+                    <div>
+                      <h3 className="font-medium">{item.name}</h3>
+                      <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
+                    </div>
+                    <p className="font-medium">£{Number(item.price) * item.quantity}</p>
+                  </div>
+                ))}
+                <div className="border-t pt-4">
+                  <div className="flex justify-between font-bold">
+                    <span>Total</span>
+                    <span>£{items.reduce((total, item) => total + (Number(item.price) * item.quantity), 0)}</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
-        <p className="text-center text-sm text-gray-500 mt-4">
-          You will be redirected to Stripe to complete your payment securely.
-        </p>
-      </div>
+            <Button
+              onClick={handleCheckout}
+              disabled={isProcessing || items.length === 0}
+              className="w-full mt-6"
+            >
+              {isProcessing ? (
+                <div className="flex items-center justify-center">
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Processing...
+                </div>
+              ) : (
+                'Proceed to Payment'
+              )}
+            </Button>
+          </>
+        )}
+      </Card>
     </div>
   );
 }

@@ -22,7 +22,7 @@ interface SelectedItem {
 export function BookingPageComponent() {
   const router = useRouter()
   const { data: session } = useSession()
-  const { items, addItem, syncWithFirestore, loadFromFirestore, initializeCart, error: cartError, checkout } = useCartStore()
+  const { items, addItem, initializeCart, error: cartError } = useCartStore()
 
   const [step, setStep] = useState(1)
   const [selectedService, setSelectedService] = useState('')
@@ -184,33 +184,25 @@ export function BookingPageComponent() {
         setCartInitialized(true);
       }
 
-      // Add each selected item to cart
+      // Add selected items to cart with their quantities
       for (const selectedItem of selectedItems) {
         const item = dryCleaningItems.find(i => i.id === selectedItem.id);
         if (item) {
-          for (let i = 0; i < selectedItem.quantity; i++) {
-            await addItem({
-              id: item.id,
-              name: item.name,
-              price: item.price,
-              quantity: 1,
-              category: item.category
-            });
-          }
+          await addItem({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: selectedItem.quantity,
+            category: item.category
+          });
         }
       }
 
-      // Sync with Firestore after adding items
-      await syncWithFirestore(session.user.email);
-      
-      // Clear selected items
-      setSelectedItems([]);
-      
-      // Navigate to cart
+      // Navigate to cart page
       router.push('/booking/cart');
     } catch (error) {
       console.error('Error adding items to cart:', error);
-      // Error will be handled by the cart store
+      // Handle error appropriately
     }
   };
 
@@ -221,97 +213,52 @@ export function BookingPageComponent() {
     }
 
     try {
+      // Initialize cart if not already initialized
       if (!cartInitialized) {
         await initializeCart(session.user.email);
         setCartInitialized(true);
       }
-      
-      // Get checkout URL and redirect
-      const checkoutUrl = await checkout();
-      window.location.href = checkoutUrl;
+
+      // Add all selected items to cart
+      for (const selectedItem of selectedItems) {
+        const item = dryCleaningItems.find(i => i.id === selectedItem.id);
+        if (item) {
+          await addItem({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: selectedItem.quantity,
+            category: item.category
+          });
+        }
+      }
+
+      // Navigate to cart page
+      router.push('/booking/cart');
     } catch (error) {
-      console.error('Error starting checkout:', error);
+      console.error('Error processing cart:', error);
       // Handle error appropriately
     }
   };
 
-  // Initialize cart when session is available
   useEffect(() => {
-    let mounted = true;
-    
-    const initCart = async () => {
-      if (!session?.user?.email || cartInitialized) {
-        return;
-      }
+    if (session?.user?.email && !cartInitialized) {
+      initializeCart(session.user.email)
+        .then(() => setCartInitialized(true))
+        .catch((error) => console.error('Failed to initialize cart:', error));
+    }
+  }, [session, cartInitialized]);
 
-      try {
-        await initializeCart(session.user.email);
-        if (mounted) {
-          setCartInitialized(true);
-          // Load cart data after initialization
-          await loadFromFirestore(session.user.email);
-        }
-      } catch (error) {
-        console.error('Failed to initialize cart:', error);
-        if (mounted) {
-          setCartInitialized(false);
-        }
-      }
-    };
-
-    initCart();
-
-    return () => {
-      mounted = false;
-    };
-  }, [session?.user?.email, initializeCart, loadFromFirestore]);
-
-  // Handle cart errors
   useEffect(() => {
     if (cartError) {
       console.error('Cart error:', cartError);
     }
   }, [cartError]);
 
-  // Sync with Firestore when items change
-  useEffect(() => {
-    let mounted = true;
-    
-    const syncCart = async () => {
-      if (!session?.user?.email || !cartInitialized || items.length === 0) {
-        return;
-      }
-
-      try {
-        await syncWithFirestore(session.user.email);
-      } catch (error) {
-        console.error('Failed to sync cart:', error);
-      }
-    };
-
-    syncCart();
-
-    return () => {
-      mounted = false;
-    };
-  }, [items, session?.user?.email, syncWithFirestore, cartInitialized]);
-
-  useEffect(() => {
-    if (session?.user?.email) {
-      loadFromFirestore(session.user.email).catch(console.error)
-    }
-  }, [session?.user?.email, loadFromFirestore])
-
-  useEffect(() => {
-    if (session?.user?.email && items.length > 0) {
-      syncWithFirestore(session.user.email).catch(console.error)
-    }
-  }, [items, session?.user?.email, syncWithFirestore])
-
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-3xl mx-auto">
-        <div className="bg-white rounded-lg shadow p-6 space-y-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl mx-auto">
           {/* Service Selection */}
           <div>
             <h2 className="text-xl font-semibold mb-4">Select Service</h2>
@@ -595,13 +542,12 @@ export function BookingPageComponent() {
 
           {/* Confirmation */}
           {step === 4 && (
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Confirm Booking</h3>
+            <div className="bg-white shadow rounded-lg p-6">
+              <h2 className="text-2xl font-semibold mb-4">Review Your Order</h2>
               <div className="space-y-4">
-                <p>Service: {services.find(s => s.id === selectedService)?.name}</p>
-                <div>
-                  <p className="font-medium mb-2">Selected Items:</p>
-                  <ul className="list-disc pl-5">
+                <div className="bg-gray-50 p-4 rounded-md">
+                  <h3 className="text-lg font-medium mb-2">Selected Items:</h3>
+                  <ul className="space-y-2">
                     {selectedItems.map(selectedItem => {
                       const item = dryCleaningItems.find(i => i.id === selectedItem.id)
                       if (!item) {
@@ -648,7 +594,7 @@ export function BookingPageComponent() {
                     onMouseLeave={() => setShowDisclaimer(false)}
                     className="w-full mt-4 bg-blue-500 text-white p-3 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center justify-center"
                   >
-                    <span>View Cart</span>
+                    <span>Proceed to Checkout</span>
                     <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-blue-100 bg-blue-600 rounded-full">
                       {getTotalItemCount()} items - ${calculateTotal.toFixed(2)}
                     </span>

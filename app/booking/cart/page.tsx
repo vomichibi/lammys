@@ -18,10 +18,12 @@ export default function CartPage() {
     isLoading,
     error,
     setError,
-    initialized 
+    initialized,
+    checkout 
   } = useCartStore()
 
   const [isInitializing, setIsInitializing] = useState(true)
+  const [isCheckingOut, setIsCheckingOut] = useState(false)
 
   const total = items.reduce((sum, item) => {
     const price = typeof item.price === 'string' 
@@ -38,16 +40,16 @@ export default function CartPage() {
       
       try {
         setIsInitializing(true);
-        if (!initialized) {
-          await initializeCart(session.user.email);
-        }
+        await initializeCart(session.user.email);
+        
         if (mounted) {
           await loadFromFirestore(session.user.email);
+          await syncWithFirestore(session.user.email);
         }
       } catch (error) {
         console.error('Error initializing/loading cart:', error);
         if (mounted) {
-          setError('Failed to load cart. Please refresh the page to try again.');
+          setError('Failed to load cart. Please try again or refresh the page.');
         }
       } finally {
         if (mounted) {
@@ -61,7 +63,7 @@ export default function CartPage() {
     return () => {
       mounted = false;
     };
-  }, [session, initializeCart, loadFromFirestore, setError, initialized]);
+  }, [session?.user?.email]);
 
   const handleRemoveItem = async (id: string) => {
     if (!session?.user?.email) return;
@@ -90,6 +92,25 @@ export default function CartPage() {
       }
     }
   }
+
+  const handleCheckout = async () => {
+    if (!session?.user?.email) {
+      router.push('/api/auth/signin');
+      return;
+    }
+
+    try {
+      setIsCheckingOut(true);
+      setError(null);
+      const checkoutUrl = await checkout();
+      window.location.href = checkoutUrl;
+    } catch (error) {
+      console.error('Checkout error:', error);
+      setError('Failed to start checkout. Please try again.');
+    } finally {
+      setIsCheckingOut(false);
+    }
+  };
 
   if (!session) {
     return (
@@ -192,6 +213,7 @@ export default function CartPage() {
                         <button
                           onClick={() => handleUpdateQuantity(item.id, -1)}
                           className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100"
+                          disabled={isCheckingOut}
                         >
                           -
                         </button>
@@ -199,6 +221,7 @@ export default function CartPage() {
                         <button
                           onClick={() => handleUpdateQuantity(item.id, 1)}
                           className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100"
+                          disabled={isCheckingOut}
                         >
                           +
                         </button>
@@ -206,6 +229,7 @@ export default function CartPage() {
                       <button
                         onClick={() => handleRemoveItem(item.id)}
                         className="text-red-600 hover:text-red-800"
+                        disabled={isCheckingOut}
                       >
                         Remove
                       </button>
@@ -216,16 +240,31 @@ export default function CartPage() {
             </div>
 
             <div className="border-t border-gray-200 pt-4">
-              <div className="flex justify-between items-center text-lg font-medium">
-                <span>Total</span>
-                <span>${total.toFixed(2)}</span>
+              <div className="flex justify-between items-center mb-6">
+                <span className="text-lg font-medium">Total:</span>
+                <span className="text-2xl font-semibold">${total.toFixed(2)}</span>
               </div>
-              <button
-                onClick={() => router.push('/checkout')}
-                className="mt-4 w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
-              >
-                Proceed to Checkout
-              </button>
+              
+              <div className="flex justify-end space-x-4">
+                <button
+                  onClick={() => router.push('/booking')}
+                  className="px-6 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                  disabled={isCheckingOut}
+                >
+                  Continue Shopping
+                </button>
+                <button
+                  onClick={handleCheckout}
+                  disabled={isCheckingOut || items.length === 0}
+                  className={`px-6 py-2 text-sm font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                    isCheckingOut || items.length === 0
+                      ? 'bg-blue-400 cursor-not-allowed'
+                      : 'bg-blue-600 hover:bg-blue-700'
+                  }`}
+                >
+                  {isCheckingOut ? 'Processing...' : 'Proceed to Checkout'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

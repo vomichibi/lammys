@@ -2,20 +2,10 @@ import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import bcrypt from 'bcryptjs';
+import { createUser, getUser } from '@/lib/userManagement';
 
 // List of admin emails
 const adminEmails = ['team@lammys.au'];
-
-// This is a temporary user store. In production, use a database.
-const users = [
-  {
-    id: '1',
-    name: 'John Doe',
-    email: 'john@example.com',
-    // Password: "password123"
-    password: '$2a$10$8Ux7YyXKxKcCZKCqJX4kB.qJpVZZpV5mh0TfHR1ZHwzDns4VeGHGi',
-  },
-];
 
 const handler = NextAuth({
   providers: [
@@ -34,9 +24,8 @@ const handler = NextAuth({
           throw new Error('Please enter an email and password');
         }
 
-        // Find user in the temporary store
-        const user = users.find(user => user.email === credentials.email);
-
+        // Get user from Firestore
+        const user = await getUser(credentials.email);
         if (!user) {
           throw new Error('No user found with this email');
         }
@@ -50,22 +39,34 @@ const handler = NextAuth({
           throw new Error('Invalid password');
         }
 
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-        };
-      },
+        return user;
+      }
     }),
   ],
   session: {
     strategy: 'jwt',
   },
-  pages: {
-    signIn: '/login',
-  },
   callbacks: {
-    async jwt({ token, user }) {
+    async signIn({ user, account }) {
+      try {
+        // Create or update user in Firestore
+        await createUser({
+          email: user.email!,
+          name: user.name || '',
+        });
+        return true;
+      } catch (error) {
+        console.error('Error creating user:', error);
+        return false;
+      }
+    },
+    async jwt({ token, user, account }) {
+      if (account && user) {
+        const dbUser = await getUser(user.email!);
+        if (dbUser) {
+          token.role = dbUser.role;
+        }
+      }
       if (user) {
         token.isAdmin = adminEmails.includes(token.email || '');
       }
@@ -74,6 +75,7 @@ const handler = NextAuth({
     async session({ session, token }) {
       if (session?.user) {
         session.user.isAdmin = token.isAdmin as boolean;
+        session.user.role = token.role;
       }
       return session;
     },
@@ -90,6 +92,10 @@ const handler = NextAuth({
       }
       return url;
     }
+  },
+  pages: {
+    signIn: '/login',
+    error: '/auth/error',
   },
 });
 
