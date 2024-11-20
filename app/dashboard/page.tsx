@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { LogOutIcon } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import Footer from '@/components/ui/Footer';
 
-export default function DashboardPage() {
+export default function DashboardPageComponent() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -27,7 +28,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50 pt-28 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Dashboard Type Indicator */}
         <div className="mb-8 flex justify-between items-center">
@@ -176,4 +177,13 @@ export default function DashboardPage() {
       </div>
     </div>
   );
+}
+
+export default function DashboardPage() {
+  return (
+    <>
+      <DashboardPageComponent />
+      <Footer />
+    </>
+  )
 }

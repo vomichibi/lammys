@@ -6,8 +6,9 @@ import { useOrderStore } from '@/store/orderStore';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatDistance } from 'date-fns';
+import Footer from '@/components/ui/Footer';
 
-export default function OrdersPage() {
+export default function OrdersPageComponent() {
   const { data: session } = useSession();
   const { orders, fetchUserOrders } = useOrderStore();
   const [loading, setLoading] = useState(true);
@@ -43,7 +44,7 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50 pt-28 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold mb-6">Your Orders</h1>
         
@@ -110,4 +111,13 @@ export default function OrdersPage() {
       </div>
     </div>
   );
+}
+
+export default function OrdersPage() {
+  return (
+    <>
+      <OrdersPageComponent />
+      <Footer />
+    </>
+  )
 }

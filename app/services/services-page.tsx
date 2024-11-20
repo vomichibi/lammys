@@ -101,7 +101,7 @@ const services: Service[] = [
 
 export function ServicesPageComponent() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50 pt-28 px-4 sm:px-6 lg:px-8">
       {/* Header Section */}
       <div className="max-w-4xl mx-auto text-center mb-12">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">Our Professional Services</h1>

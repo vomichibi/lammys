@@ -3,8 +3,9 @@
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Scissors, Ruler, Clock, Medal, Tag, ArrowLeft } from 'lucide-react'
+import Footer from '@/components/ui/Footer'
 
-const AlterationsPage = () => {
+const AlterationsPageComponent = () => {
   const services = [
     {
       icon: <Scissors className="w-6 h-6" />,
@@ -73,10 +74,10 @@ const AlterationsPage = () => {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
+    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50 pt-28">
       {/* Back Button */}
-      <div className="max-w-7xl mx-auto pt-8 px-4 sm:px-6 lg:px-8">
-        <Button variant="ghost" asChild className="mb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <Button variant="ghost" asChild className="hover:bg-blue-100">
           <Link href="/services" className="flex items-center gap-2">
             <ArrowLeft className="w-4 h-4" />
             Back to Services
@@ -156,4 +157,11 @@ const AlterationsPage = () => {
   )
 }
 
-export default AlterationsPage
+export default function AlterationsPage() {
+  return (
+    <>
+      <AlterationsPageComponent />
+      <Footer />
+    </>
+  )
+}

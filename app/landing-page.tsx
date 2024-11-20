@@ -14,11 +14,7 @@ export function LandingPageComponent() {
 
   const handleBookNowClick = (e: React.MouseEvent) => {
     e.preventDefault()
-    if (session) {
-      router.push('/booking')
-    } else {
-      router.push('/register')
-    }
+    router.push('/booking')
   }
 
   return (
@@ -54,51 +50,55 @@ export function LandingPageComponent() {
         <div id="services" className="py-12 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="lg:text-center">
-              <Link href="/dashboard" className="inline-block">
-                <h2 className="text-base text-blue-600 font-semibold tracking-wide uppercase hover:text-blue-800">Our Services</h2>
-              </Link>
+              <h2 className="text-base text-blue-600 font-semibold tracking-wide uppercase">Our Services</h2>
               <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
                 Everything you need, all in one place
               </p>
             </div>
 
             <div className="mt-10">
-              <dl className="space-y-10 md:space-y-0 md:grid md:grid-cols-3 md:gap-x-8 md:gap-y-10">
-                <div className="relative">
-                  <dt>
-                    <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
-                      <Shirt className="h-6 w-6" aria-hidden="true" />
-                    </div>
-                    <p className="ml-16 text-lg leading-6 font-medium text-gray-900">Dry Cleaning</p>
-                  </dt>
-                  <dd className="mt-2 ml-16 text-base text-gray-500">
-                    Professional dry cleaning services for all your garments, ensuring they look their best.
-                  </dd>
-                </div>
+              <dl className="space-y-6 sm:space-y-8 md:space-y-0 md:grid md:grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
+                <Link href="/services/dry-cleaning" className="block">
+                  <div className="relative p-4 sm:p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                    <dt className="flex items-center mb-4">
+                      <div className="flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-md bg-blue-500 text-white">
+                        <Shirt className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
+                      </div>
+                      <p className="ml-4 text-base sm:text-lg font-medium text-gray-900">Dry Cleaning</p>
+                    </dt>
+                    <dd className="text-sm sm:text-base text-gray-500">
+                      Professional dry cleaning services for all your garments, ensuring they look their best.
+                    </dd>
+                  </div>
+                </Link>
 
-                <div className="relative">
-                  <dt>
-                    <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
-                      <Scissors className="h-6 w-6" aria-hidden="true" />
-                    </div>
-                    <p className="ml-16 text-lg leading-6 font-medium text-gray-900">Alterations</p>
-                  </dt>
-                  <dd className="mt-2 ml-16 text-base text-gray-500">
-                    Expert tailoring and alterations to ensure your clothes fit perfectly.
-                  </dd>
-                </div>
+                <Link href="/services/alterations" className="block">
+                  <div className="relative p-4 sm:p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                    <dt className="flex items-center mb-4">
+                      <div className="flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-md bg-blue-500 text-white">
+                        <Scissors className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
+                      </div>
+                      <p className="ml-4 text-base sm:text-lg font-medium text-gray-900">Alterations</p>
+                    </dt>
+                    <dd className="text-sm sm:text-base text-gray-500">
+                      Expert tailoring and alterations to ensure your clothes fit perfectly.
+                    </dd>
+                  </div>
+                </Link>
 
-                <div className="relative">
-                  <dt>
-                    <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
-                      <Key className="h-6 w-6" aria-hidden="true" />
-                    </div>
-                    <p className="ml-16 text-lg leading-6 font-medium text-gray-900">Key Cutting</p>
-                  </dt>
-                  <dd className="mt-2 ml-16 text-base text-gray-500">
-                    Quick and accurate key cutting services for all your duplication needs.
-                  </dd>
-                </div>
+                <Link href="/services/key-cutting" className="block">
+                  <div className="relative p-4 sm:p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                    <dt className="flex items-center mb-4">
+                      <div className="flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-md bg-blue-500 text-white">
+                        <Key className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
+                      </div>
+                      <p className="ml-4 text-base sm:text-lg font-medium text-gray-900">Key Cutting</p>
+                    </dt>
+                    <dd className="text-sm sm:text-base text-gray-500">
+                      Quick and accurate key cutting services for all your duplication needs.
+                    </dd>
+                  </div>
+                </Link>
               </dl>
             </div>
           </div>
@@ -122,10 +122,11 @@ export function LandingPageComponent() {
               <div className="mt-8 lg:mt-0">
                 <Image
                   className="rounded-lg shadow-lg"
-                  src="https://images.unsplash.com/photo-1519608487953-e999c86e7455?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1200&q=80"
+                  src="https://lh3.googleusercontent.com/p/AF1QipP2Zdb6K5blSF3vqvZshnQk1eC9SYYsYPRpeXOJ=s680-w680-h510"
                   alt="Lammy's store front"
-                  width={1200}
-                  height={900}
+                  width={680}
+                  height={510}
+                  priority
                 />
               </div>
             </div>

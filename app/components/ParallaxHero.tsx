@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import Image from 'next/image'
 
 interface ParallaxHeroProps {
@@ -10,36 +10,45 @@ interface ParallaxHeroProps {
 
 export function ParallaxHero({ imageUrl, children }: ParallaxHeroProps) {
   const [scrollPosition, setScrollPosition] = useState(0)
+  const ticking = useRef(false)
+  const lastScrollY = useRef(0)
 
   const handleScroll = useCallback(() => {
-    if (typeof window !== 'undefined') {
-      const position = window.scrollY
-      const windowHeight = window.innerHeight
-      const scrollPercentage = (position / windowHeight) * 100
-      setScrollPosition(Math.min(scrollPercentage, 100))
+    lastScrollY.current = window.scrollY
+
+    if (!ticking.current) {
+      requestAnimationFrame(() => {
+        const windowHeight = window.innerHeight
+        const scrollPercentage = (lastScrollY.current / windowHeight) * 100
+        setScrollPosition(Math.min(scrollPercentage, 100))
+        ticking.current = false
+      })
+
+      ticking.current = true
     }
   }, [])
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      handleScroll() // Initial position
-      window.addEventListener('scroll', handleScroll, { passive: true })
+    if (typeof window === 'undefined') return
 
-      return () => {
-        window.removeEventListener('scroll', handleScroll)
-      }
+    handleScroll() // Initial position
+    window.addEventListener('scroll', handleScroll, { passive: true })
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
     }
   }, [handleScroll])
+
+  const parallaxStyle = {
+    transform: `translate3d(0, ${scrollPosition * 2.5}px, 0)`,
+    willChange: 'transform',
+  }
 
   return (
     <div className="relative bg-white overflow-hidden h-screen">
       <div 
         className="absolute inset-0 scale-[1.5]"
-        style={{
-          transform: `translate3d(0, ${scrollPosition * 2}px, 0)`,
-          transition: 'transform 0.1s cubic-bezier(0.33, 1, 0.68, 1)',
-          willChange: 'transform',
-        }}
+        style={parallaxStyle}
       >
         <Image
           className="object-cover object-center"
