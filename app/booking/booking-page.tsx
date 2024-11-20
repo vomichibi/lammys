@@ -22,7 +22,7 @@ interface SelectedItem {
 export function BookingPageComponent() {
   const router = useRouter()
   const { data: session } = useSession()
-  const { items, addItem, syncWithFirestore, loadFromFirestore } = useCartStore()
+  const { items, addItem, syncWithFirestore, loadFromFirestore, initializeCart, error: cartError } = useCartStore()
 
   const [step, setStep] = useState(1)
   const [selectedService, setSelectedService] = useState('')
@@ -30,6 +30,7 @@ export function BookingPageComponent() {
   const [selectedTime, setSelectedTime] = useState('')
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([])
   const [showDisclaimer, setShowDisclaimer] = useState(false)
+  const [cartInitialized, setCartInitialized] = useState(false)
 
   const services = [
     { id: 'dry-cleaning', name: 'Dry Cleaning', showPrice: false },
@@ -207,11 +208,41 @@ export function BookingPageComponent() {
     router.push('/booking/cart')
   }
 
+  // Initialize cart when session is available
+  useEffect(() => {
+    const initCart = async () => {
+      if (session?.user?.email && !cartInitialized) {
+        try {
+          await initializeCart(session.user.email);
+          setCartInitialized(true);
+        } catch (error) {
+          console.error('Failed to initialize cart:', error);
+        }
+      }
+    };
+
+    initCart();
+  }, [session, initializeCart, cartInitialized]);
+
+  // Handle cart errors
+  useEffect(() => {
+    if (cartError) {
+      console.error('Cart error:', cartError);
+      // You can add UI feedback here if needed
+    }
+  }, [cartError]);
+
   useEffect(() => {
     if (session?.user?.email) {
-      loadFromFirestore(session.user.email)
+      loadFromFirestore(session.user.email).catch(console.error)
     }
-  }, [session, loadFromFirestore])
+  }, [session?.user?.email, loadFromFirestore])
+
+  useEffect(() => {
+    if (session?.user?.email && items.length > 0) {
+      syncWithFirestore(session.user.email).catch(console.error)
+    }
+  }, [items, session?.user?.email, syncWithFirestore])
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
