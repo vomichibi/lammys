@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { LogOutIcon } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import Footer from '@/components/ui/Footer';
 
-export default function DashboardPage() {
+export default function DashboardPageComponent() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -176,4 +177,13 @@ export default function DashboardPage() {
       </div>
     </div>
   );
+}
+
+export default function DashboardPage() {
+  return (
+    <>
+      <DashboardPageComponent />
+      <Footer />
+    </>
+  )
 }

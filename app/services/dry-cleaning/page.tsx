@@ -3,8 +3,9 @@
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Shirt, Clock, Ban, ThumbsUp, Sparkles, ArrowLeft } from 'lucide-react'
+import Footer from '@/components/ui/Footer'
 
-const DryCleaningPage = () => {
+const DryCleaningPageComponent = () => {
   const services = [
     {
       icon: <Shirt className="w-6 h-6" />,
@@ -118,4 +119,11 @@ const DryCleaningPage = () => {
   )
 }
 
-export default DryCleaningPage
+export default function DryCleaningPage() {
+  return (
+    <>
+      <DryCleaningPageComponent />
+      <Footer />
+    </>
+  )
+}

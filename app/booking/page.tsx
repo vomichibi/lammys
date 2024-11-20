@@ -1,5 +1,13 @@
 'use client';
 
 import BookingPageComponent from './booking-page';
+import Footer from '@/components/ui/Footer';
 
-export default BookingPageComponent;
+export default function BookingPage() {
+  return (
+    <>
+      <BookingPageComponent />
+      <Footer />
+    </>
+  );
+}

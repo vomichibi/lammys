@@ -14,11 +14,7 @@ export function LandingPageComponent() {
 
   const handleBookNowClick = (e: React.MouseEvent) => {
     e.preventDefault()
-    if (session) {
-      router.push('/booking')
-    } else {
-      router.push('/register')
-    }
+    router.push('/booking')
   }
 
   return (

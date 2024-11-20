@@ -29,7 +29,7 @@ export function BookingPageComponent() {
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([])
-  const [showDisclaimer, setShowDisclaimer] = useState(false)
+  const [disclaimerAccepted, setDisclaimerAccepted] = useState(false)
   const [cartInitialized, setCartInitialized] = useState(false)
 
   const services = [
@@ -215,6 +215,27 @@ export function BookingPageComponent() {
   };
 
   const handleViewCart = async () => {
+    if (!session?.user?.email) {
+      router.push('/api/auth/signin');
+      return;
+    }
+
+    try {
+      if (!cartInitialized) {
+        await initializeCart(session.user.email);
+        setCartInitialized(true);
+      }
+      
+      // Get checkout URL and redirect
+      const checkoutUrl = await checkout();
+      window.location.href = checkoutUrl;
+    } catch (error) {
+      console.error('Error starting checkout:', error);
+      // Handle error appropriately
+    }
+  };
+
+  const handleCheckout = async () => {
     if (!session?.user?.email) {
       router.push('/api/auth/signin');
       return;
@@ -599,72 +620,62 @@ export function BookingPageComponent() {
               <h3 className="text-lg font-semibold mb-4">Confirm Booking</h3>
               <div className="space-y-4">
                 <p>Service: {services.find(s => s.id === selectedService)?.name}</p>
-                <div>
-                  <p className="font-medium mb-2">Selected Items:</p>
-                  <ul className="list-disc pl-5">
-                    {selectedItems.map(selectedItem => {
-                      const item = dryCleaningItems.find(i => i.id === selectedItem.id)
-                      if (!item) {
-                        const keyType = keyTypes.find(i => i.id === selectedItem.id);
-                        if (!keyType) return null;
-                        const itemTotal = keyType.price * selectedItem.quantity;
-                        return (
-                          <li key={selectedItem.id} className="flex justify-between items-center">
-                            <span>
-                              {keyType.name} (Quantity: {selectedItem.quantity})
-                            </span>
-                            <span className="text-gray-600">
-                              ${itemTotal.toFixed(2)}
-                            </span>
-                          </li>
-                        )
-                      }
-                      const itemTotal = getBasePrice(item.price) * selectedItem.quantity;
-                      return (
-                        <li key={selectedItem.id} className="flex justify-between items-center">
-                          <span>
-                            {item.name} (Quantity: {selectedItem.quantity})
-                          </span>
-                          <span className="text-gray-600">
-                            ${itemTotal.toFixed(2)}
-                          </span>
-                        </li>
-                      )
-                    })}
-                  </ul>
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <div className="flex justify-between items-center font-semibold">
-                      <span>Total:</span>
-                      <span className="text-blue-600">${calculateTotal.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
                 <p>Date: {formatDate(selectedDate)}</p>
                 <p>Time: {selectedTime}</p>
-                <div className="relative">
+                <div className="border-t border-gray-200 pt-4">
+                  <h4 className="font-medium mb-2">Selected Items:</h4>
+                  {selectedItems.map((item) => {
+                    const dryCleaningItem = dryCleaningItems.find(i => i.id === item.id)
+                    const keyType = keyTypes.find(i => i.id === item.id)
+                    const itemDetails = dryCleaningItem || keyType
+                    return (
+                      <div key={item.id} className="flex justify-between py-1">
+                        <span>{itemDetails?.name} × {item.quantity}</span>
+                        <span>${(getBasePrice(itemDetails?.price || 0) * item.quantity).toFixed(2)}</span>
+                      </div>
+                    )
+                  })}
+                  <div className="flex justify-between font-semibold mt-2 pt-2 border-t">
+                    <span>Total:</span>
+                    <span>${calculateTotal.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                {/* Disclaimer Checkbox */}
+                {selectedService === 'dry-cleaning' && (
+                  <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-md">
+                    <label className="flex items-start space-x-3">
+                      <input
+                        type="checkbox"
+                        checked={disclaimerAccepted}
+                        onChange={(e) => setDisclaimerAccepted(e.target.checked)}
+                        className="mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                      />
+                      <span className="text-sm text-amber-800">
+                      I understand that some stains, such as old stains, bodily fluids, or dye transfers, may not be fully removable during dry cleaning, depending on the fabric and stain type.
+                      </span>
+                    </label>
+                  </div>
+                )}
+
+                <div className="flex justify-end space-x-4 mt-6">
                   <button
-                    onClick={handleViewCart}
-                    onMouseEnter={() => setShowDisclaimer(true)}
-                    onMouseLeave={() => setShowDisclaimer(false)}
-                    className="w-full mt-4 bg-blue-500 text-white p-3 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center justify-center"
+                    onClick={() => setStep(step - 1)}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
                   >
-                    <span>View Cart</span>
-                    <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-blue-100 bg-blue-600 rounded-full">
-                      {getTotalItemCount()} items - ${calculateTotal.toFixed(2)}
-                    </span>
+                    Back
                   </button>
-                  {showDisclaimer && (
-                    <div className="absolute bottom-full left-0 right-0 mb-2 p-3 bg-amber-50 border border-amber-200 rounded-md shadow-lg text-sm text-amber-800">
-                      <p className="mb-2"><strong>Important Notice:</strong></p>
-                      <p>Please be aware that certain items, particularly those listed under bedding items, may have stains that cannot be fully removed during the dry cleaning process. This includes:</p>
-                      <ul className="list-disc pl-4 mt-1 mb-2">
-                        <li>Old or set-in stains</li>
-                        <li>Bodily fluid stains</li>
-                        <li>Certain types of dye or color transfers</li>
-                      </ul>
-                      <p>The effectiveness of stain removal can vary depending on the nature of the stain and the fabric type. We will make every effort to achieve the best possible results.</p>
-                    </div>
-                  )}
+                  <button
+                    onClick={handleCheckout}
+                    disabled={selectedService === 'dry-cleaning' && !disclaimerAccepted}
+                    className={`px-6 py-2 text-sm font-medium text-white rounded-md ${
+                      selectedService === 'dry-cleaning' && !disclaimerAccepted
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : 'bg-blue-600 hover:bg-blue-700'
+                    }`}
+                  >
+                    Confirm & Pay
+                  </button>
                 </div>
               </div>
             </div>

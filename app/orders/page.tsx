@@ -6,8 +6,9 @@ import { useOrderStore } from '@/store/orderStore';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatDistance } from 'date-fns';
+import Footer from '@/components/ui/Footer';
 
-export default function OrdersPage() {
+export default function OrdersPageComponent() {
   const { data: session } = useSession();
   const { orders, fetchUserOrders } = useOrderStore();
   const [loading, setLoading] = useState(true);
@@ -110,4 +111,13 @@ export default function OrdersPage() {
       </div>
     </div>
   );
+}
+
+export default function OrdersPage() {
+  return (
+    <>
+      <OrdersPageComponent />
+      <Footer />
+    </>
+  )
 }
