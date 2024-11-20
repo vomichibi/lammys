@@ -19,7 +19,7 @@ interface SelectedItem {
   quantity: number;
 }
 
-export function BookingPageComponent() {
+const BookingPageComponent = () => {
   const router = useRouter()
   const { data: session } = useSession()
   const { items, addItem, initializeCart, error: cartError } = useCartStore()
@@ -29,8 +29,10 @@ export function BookingPageComponent() {
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([])
-  const [showDisclaimer, setShowDisclaimer] = useState(false)
+  const [disclaimerAccepted, setDisclaimerAccepted] = useState(false)
   const [cartInitialized, setCartInitialized] = useState(false)
+
+  const [showDisclaimer, setShowDisclaimer] = useState(false)
 
   const services = [
     { id: 'dry-cleaning', name: 'Dry Cleaning', showPrice: false },
@@ -274,8 +276,8 @@ export function BookingPageComponent() {
                   }`}
                 >
                   <div className="font-medium">{service.name}</div>
-                  {service.price && !service.isRedirect && (
-                    <div className="text-sm text-gray-500">From ${service.price}</div>
+                  {service.showPrice && (
+                    <div className="text-sm text-gray-500">Click to view prices</div>
                   )}
                   {service.isRedirect && (
                     <div className="text-sm text-blue-500">Schedule Consultation</div>
@@ -417,7 +419,7 @@ export function BookingPageComponent() {
                   </div>
                 )}
               </div>
-              
+　　 　 　 　
               <div className="mb-4">
                 <p className="text-sm text-gray-600 italic mb-4">Only normal keys available.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -587,30 +589,42 @@ export function BookingPageComponent() {
                 </div>
                 <p>Date: {formatDate(selectedDate)}</p>
                 <p>Time: {selectedTime}</p>
-                <div className="relative">
+
+                {/* Dry Cleaning Disclaimer Checkbox */}
+                {selectedService === 'dry-cleaning' && (
+                  <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-md">
+                    <label className="flex items-start space-x-3">
+                      <input
+                        type="checkbox"
+                        checked={disclaimerAccepted}
+                        onChange={(e) => setDisclaimerAccepted(e.target.checked)}
+                        className="mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                      />
+                      <span className="text-sm text-amber-800">
+                        I understand that some stains, such as old stains, bodily fluids, or dye transfers, may not be fully removable during dry cleaning, depending on the fabric and stain type.
+                      </span>
+                    </label>
+                  </div>
+                )}
+
+                <div className="mt-6 flex justify-between items-center">
+                  <button
+                    onClick={() => setStep(3)}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                  >
+                    Back
+                  </button>
                   <button
                     onClick={handleViewCart}
-                    onMouseEnter={() => setShowDisclaimer(true)}
-                    onMouseLeave={() => setShowDisclaimer(false)}
-                    className="w-full mt-4 bg-blue-500 text-white p-3 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center justify-center"
+                    disabled={selectedService === 'dry-cleaning' && !disclaimerAccepted}
+                    className={`px-6 py-2 text-sm font-medium text-white rounded-md ${
+                      selectedService === 'dry-cleaning' && !disclaimerAccepted
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : 'bg-blue-600 hover:bg-blue-700'
+                    }`}
                   >
-                    <span>Proceed to Checkout</span>
-                    <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-blue-100 bg-blue-600 rounded-full">
-                      {getTotalItemCount()} items - ${calculateTotal.toFixed(2)}
-                    </span>
+                    Proceed to Checkout
                   </button>
-                  {showDisclaimer && (
-                    <div className="absolute bottom-full left-0 right-0 mb-2 p-3 bg-amber-50 border border-amber-200 rounded-md shadow-lg text-sm text-amber-800">
-                      <p className="mb-2"><strong>Important Notice:</strong></p>
-                      <p>Please be aware that certain items, particularly those listed under bedding items, may have stains that cannot be fully removed during the dry cleaning process. This includes:</p>
-                      <ul className="list-disc pl-4 mt-1 mb-2">
-                        <li>Old or set-in stains</li>
-                        <li>Bodily fluid stains</li>
-                        <li>Certain types of dye or color transfers</li>
-                      </ul>
-                      <p>The effectiveness of stain removal can vary depending on the nature of the stain and the fabric type. We will make every effort to achieve the best possible results.</p>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -620,3 +634,5 @@ export function BookingPageComponent() {
     </div>
   )
 }
+
+export default BookingPageComponent;
