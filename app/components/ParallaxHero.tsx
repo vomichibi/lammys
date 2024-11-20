@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Image from 'next/image'
 
 interface ParallaxHeroProps {
@@ -11,20 +11,25 @@ interface ParallaxHeroProps {
 export function ParallaxHero({ imageUrl, children }: ParallaxHeroProps) {
   const [scrollPosition, setScrollPosition] = useState(0)
 
-  useEffect(() => {
-    const handleScroll = () => {
+  const handleScroll = useCallback(() => {
+    if (typeof window !== 'undefined') {
       const position = window.scrollY
       const windowHeight = window.innerHeight
       const scrollPercentage = (position / windowHeight) * 100
       setScrollPosition(Math.min(scrollPercentage, 100))
     }
-
-    window.addEventListener('scroll', handleScroll, { passive: true })
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll)
-    }
   }, [])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      handleScroll() // Initial position
+      window.addEventListener('scroll', handleScroll, { passive: true })
+
+      return () => {
+        window.removeEventListener('scroll', handleScroll)
+      }
+    }
+  }, [handleScroll])
 
   return (
     <div className="relative bg-white overflow-hidden h-screen">
