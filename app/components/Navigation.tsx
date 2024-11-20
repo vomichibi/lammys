@@ -68,15 +68,15 @@ export default function Navigation() {
         {isMenuOpen && (
           <div ref={menuRef} className="mt-4 pb-4">
             <div className="flex flex-col space-y-4">
-              <Link href="/" className="hover:text-blue-600">Home</Link>
-              <Link href="/services" className="hover:text-blue-600">Services</Link>
-              <Link href="/booking" className="hover:text-blue-600">Book Now</Link>
-              <Link href="/contact" className="hover:text-blue-600">Contact</Link>
-              <Link href="/faq" className="hover:text-blue-600">FAQ</Link>
-              <Link href="/login" className="hover:text-blue-600">Login</Link>
+              <Link href="/" className="hover:text-blue-600" onClick={() => setIsMenuOpen(false)}>Home</Link>
+              <Link href="/booking" className="hover:text-blue-600" onClick={() => setIsMenuOpen(false)}>Book Now</Link>
+              <Link href="/contact" className="hover:text-blue-600" onClick={() => setIsMenuOpen(false)}>Contact</Link>
+              <Link href="/faq" className="hover:text-blue-600" onClick={() => setIsMenuOpen(false)}>FAQ</Link>
+              <Link href="/login" className="hover:text-blue-600" onClick={() => setIsMenuOpen(false)}>Login</Link>
               <Link 
                 href="/register" 
                 className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 inline-block text-center"
+                onClick={() => setIsMenuOpen(false)}
               >
                 Register
               </Link>

@@ -30,7 +30,6 @@ export default function ContactPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData(prev => ({
-
       ...prev,
       [e.target.name]: e.target.value
     }));
@@ -70,7 +69,12 @@ export default function ContactPage() {
                 </div>
                 <div className="ml-4">
                   <h3 className="text-lg font-medium text-gray-900">Phone</h3>
-                  <p className="mt-1 text-gray-600">0483 876 223</p>
+                  <a 
+                    href="tel:0483876223"
+                    className="mt-1 text-gray-600 hover:text-blue-600 transition-colors duration-200"
+                  >
+                    0483 876 223
+                  </a>
                 </div>
               </div>
 
@@ -84,7 +88,12 @@ export default function ContactPage() {
                 </div>
                 <div className="ml-4">
                   <h3 className="text-lg font-medium text-gray-900">Email</h3>
-                  <p className="mt-1 text-gray-600">info@lammys.au</p>
+                  <a 
+                    href="mailto:team@lammys.au"
+                    className="mt-1 text-gray-600 hover:text-blue-600 transition-colors duration-200"
+                  >
+                    team@lammys.au
+                  </a>
                   <p className="mt-1 text-sm text-gray-500">We'll respond within 24 hours</p>
                 </div>
               </div>
@@ -271,15 +280,17 @@ export default function ContactPage() {
 
         {/* Map Section */}
         <div className="bg-white rounded-lg shadow-lg p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Find Us</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8 text-center">Find Us</h2>
           <div className="w-full h-[450px] relative">
             <iframe 
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3386.1470741445846!2d115.89102647648903!3d-31.929764121258234!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2a32baf380f6d011%3A0xd2f2c713b6db2a9d!2sLammy&#39;s%20Multi%20Service!5e0!3m2!1sen!2sau!4v1731836708687!5m2!1sen!2sau"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3386.146741907736!2d115.88884337645949!3d-31.92977598124055!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2a32baf380f6d011%3A0xd2f2c713b6db2a9d!2sLammy&#39;s%20Multi%20Service!5e0!3m2!1sen!2sau!4v1699405283644!5m2!1sen!2sau"
               className="absolute inset-0 w-full h-full rounded-lg"
               style={{ border: 0 }}
               allowFullScreen={true}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
+              title="Lammy's Multi Service Location Map"
+              aria-label="Google Maps showing Lammy's Multi Service location"
             />
           </div>
         </div>
