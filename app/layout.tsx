@@ -4,7 +4,10 @@ import "./globals.css";
 import Navigation from "./components/Navigation";
 import { Providers } from "./providers";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ 
+  subsets: ["latin"],
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: "Lammy's Dry Cleaning",
@@ -17,13 +20,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </head>
       <body className={inter.className}>
         <Providers>
           <Navigation />
-          <main className="pt-16">
-            {children}
-          </main>
+          {children}
         </Providers>
       </body>
     </html>
