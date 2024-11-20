@@ -12,10 +12,13 @@
     "@next-auth/firebase-adapter": "^2.0.1",
     "@prisma/client": "^5.22.0",
     "@radix-ui/react-avatar": "^1.1.1",
+    "@radix-ui/react-dialog": "^1.1.2",
     "@radix-ui/react-label": "^2.1.0",
     "@radix-ui/react-select": "^2.1.2",
     "@radix-ui/react-slot": "^1.1.0",
     "@radix-ui/react-tabs": "^1.1.1",
+    "@shadcn/ui": "^0.0.4",
+    "@stripe/stripe-js": "^5.0.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/react-slick": "^0.23.13",
     "bcryptjs": "^2.4.3",
@@ -30,7 +33,12 @@
     "react-dom": "^18.3.1",
     "react-slick": "^0.30.2",
     "recharts": "^2.13.3",
+<<<<<<< HEAD
     "slick-carousel": "^1.8.1",
+=======
+    "sonner": "^1.7.0",
+    "stripe": "^17.3.1",
+>>>>>>> ce4ce78b4e9cfd4d7c504e45a38c84be9e3ded23
     "tailwind-merge": "^2.5.4",
     "tailwindcss-animate": "^1.0.7",
     "zustand": "^5.0.1"

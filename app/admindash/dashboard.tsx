@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts'
 import { 
   CalendarIcon, 
@@ -23,21 +23,7 @@ import { Input } from "@/components/ui/input"
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
 
-// Mock data for the dashboard
-const revenueData = [
-  { name: 'Jan', total: 1200 },
-  { name: 'Feb', total: 1800 },
-  { name: 'Mar', total: 2200 },
-  { name: 'Apr', total: 2600 },
-  { name: 'May', total: 2400 },
-  { name: 'Jun', total: 2800 },
-]
-
-const recentOrders = [
-  { id: '1', customer: 'John Doe', service: 'Dry Cleaning', status: 'In Progress', total: '$45.00' },
-  { id: '2', customer: 'Jane Smith', service: 'Laundry', status: 'Completed', total: '$32.00' },
-  { id: '3', customer: 'Mike Johnson', service: 'Alterations', status: 'Pending', total: '$28.00' },
-]
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://your-vps-ip:3001';
 
 const sidebarLinks = [
   { name: 'Dashboard', icon: LayoutDashboardIcon, href: '/admindash/dashboard' },
@@ -49,6 +35,32 @@ const sidebarLinks = [
 export default function Dashboard() {
   const { data: session } = useSession()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [revenueData, setRevenueData] = useState([])
+  const [recentOrders, setRecentOrders] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const [revenueRes, ordersRes] = await Promise.all([
+          fetch(`${API_URL}/api/analytics/revenue`),
+          fetch(`${API_URL}/api/analytics/recent-orders`)
+        ]);
+
+        const revenue = await revenueRes.json();
+        const orders = await ordersRes.json();
+
+        setRevenueData(revenue);
+        setRecentOrders(orders);
+      } catch (error) {
+        console.error('Error fetching analytics:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnalytics();
+  }, []);
 
   return (
     <div className="flex h-screen bg-gray-100">
