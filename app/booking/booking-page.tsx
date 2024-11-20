@@ -22,7 +22,7 @@ interface SelectedItem {
 export function BookingPageComponent() {
   const router = useRouter()
   const { data: session } = useSession()
-  const { items, addItem, syncWithFirestore, loadFromFirestore, initializeCart, error: cartError } = useCartStore()
+  const { items, addItem, syncWithFirestore, loadFromFirestore, initializeCart, error: cartError, checkout } = useCartStore()
 
   const [step, setStep] = useState(1)
   const [selectedService, setSelectedService] = useState('')
@@ -171,66 +171,130 @@ export function BookingPageComponent() {
     router.push('/booking/confirmation')
   }
 
-  const handleAddToCart = () => {
-    selectedItems.forEach((selectedItem) => {
-      const dryCleaningItem = dryCleaningItems.find(i => i.id === selectedItem.id)
-      if (dryCleaningItem) {
-        addItem({
-          id: dryCleaningItem.id,
-          name: dryCleaningItem.name,
-          price: typeof dryCleaningItem.price === 'string' 
-            ? parseFloat(dryCleaningItem.price.replace(/[^0-9.]/g, '')) || 0
-            : dryCleaningItem.price,
-          quantity: selectedItem.quantity,
-          category: dryCleaningItem.category
-        })
-      } else {
-        const keyItem = keyTypes.find(i => i.id === selectedItem.id)
-        if (keyItem) {
-          addItem({
-            id: keyItem.id,
-            name: keyItem.name,
-            price: keyItem.price,
-            quantity: selectedItem.quantity,
-            category: 'key-cutting'
-          })
+  const handleAddToCart = async () => {
+    if (!session?.user?.email) {
+      router.push('/api/auth/signin');
+      return;
+    }
+
+    try {
+      // Initialize cart if not already initialized
+      if (!cartInitialized) {
+        await initializeCart(session.user.email);
+        setCartInitialized(true);
+      }
+
+      // Add each selected item to cart
+      for (const selectedItem of selectedItems) {
+        const item = dryCleaningItems.find(i => i.id === selectedItem.id);
+        if (item) {
+          for (let i = 0; i < selectedItem.quantity; i++) {
+            await addItem({
+              id: item.id,
+              name: item.name,
+              price: item.price,
+              quantity: 1,
+              category: item.category
+            });
+          }
         }
       }
-    })
 
-    if (session?.user?.email) {
-      syncWithFirestore(session.user.email)
+      // Sync with Firestore after adding items
+      await syncWithFirestore(session.user.email);
+      
+      // Clear selected items
+      setSelectedItems([]);
+      
+      // Navigate to cart
+      router.push('/booking/cart');
+    } catch (error) {
+      console.error('Error adding items to cart:', error);
+      // Error will be handled by the cart store
     }
-  }
+  };
 
-  const handleViewCart = () => {
-    handleAddToCart()
-    router.push('/booking/cart')
-  }
+  const handleViewCart = async () => {
+    if (!session?.user?.email) {
+      router.push('/api/auth/signin');
+      return;
+    }
+
+    try {
+      if (!cartInitialized) {
+        await initializeCart(session.user.email);
+        setCartInitialized(true);
+      }
+      
+      // Get checkout URL and redirect
+      const checkoutUrl = await checkout();
+      window.location.href = checkoutUrl;
+    } catch (error) {
+      console.error('Error starting checkout:', error);
+      // Handle error appropriately
+    }
+  };
 
   // Initialize cart when session is available
   useEffect(() => {
+    let mounted = true;
+    
     const initCart = async () => {
-      if (session?.user?.email && !cartInitialized) {
-        try {
-          await initializeCart(session.user.email);
+      if (!session?.user?.email || cartInitialized) {
+        return;
+      }
+
+      try {
+        await initializeCart(session.user.email);
+        if (mounted) {
           setCartInitialized(true);
-        } catch (error) {
-          console.error('Failed to initialize cart:', error);
+          // Load cart data after initialization
+          await loadFromFirestore(session.user.email);
+        }
+      } catch (error) {
+        console.error('Failed to initialize cart:', error);
+        if (mounted) {
+          setCartInitialized(false);
         }
       }
     };
 
     initCart();
-  }, [session, initializeCart, cartInitialized]);
+
+    return () => {
+      mounted = false;
+    };
+  }, [session?.user?.email, initializeCart, loadFromFirestore]);
 
   // Handle cart errors
   useEffect(() => {
     if (cartError) {
       console.error('Cart error:', cartError);
-      // You can add UI feedback here if needed
     }
   }, [cartError]);
+
+  // Sync with Firestore when items change
+  useEffect(() => {
+    let mounted = true;
+    
+    const syncCart = async () => {
+      if (!session?.user?.email || !cartInitialized || items.length === 0) {
+        return;
+      }
+
+      try {
+        await syncWithFirestore(session.user.email);
+      } catch (error) {
+        console.error('Failed to sync cart:', error);
+      }
+    };
+
+    syncCart();
+
+    return () => {
+      mounted = false;
+    };
+  }, [items, session?.user?.email, syncWithFirestore, cartInitialized]);
 
   useEffect(() => {
     if (session?.user?.email) {

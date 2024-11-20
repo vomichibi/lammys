@@ -14,12 +14,14 @@ import {
   disableNetwork,
   getDoc,
   enableIndexedDbPersistence,
+  query,
+  where,
 } from 'firebase/firestore';
 
 interface CartItem {
   id: string;
   name: string;
-  price: number;
+  price: number | string;
   quantity: number;
   category: string;
 }
@@ -31,6 +33,7 @@ interface CartStore {
   unsubscribe: (() => void) | null;
   initialized: boolean;
   userId: string | null;
+  setError: (error: string | null) => void;
   addItem: (item: CartItem) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
   updateQuantity: (itemId: string, quantity: number) => Promise<void>;
@@ -39,6 +42,7 @@ interface CartStore {
   reconnect: () => Promise<void>;
   syncWithFirestore: (userId: string) => Promise<void>;
   loadFromFirestore: (userId: string) => Promise<void>;
+  checkout: () => Promise<string>;
 }
 
 const useCartStore = create<CartStore>((set, get) => ({
@@ -49,167 +53,248 @@ const useCartStore = create<CartStore>((set, get) => ({
   initialized: false,
   userId: null,
 
-  initializeCart: async (userId: string) => {
-    const currentState = get();
-    
-    // If already initialized with the same userId, don't reinitialize
-    if (currentState.initialized && currentState.userId === userId && currentState.unsubscribe) {
-      return;
-    }
+  setError: (error: string | null) => set({ error }),
 
-    let currentUnsubscribe = currentState.unsubscribe;
+  initializeCart: async (userId: string) => {
     try {
-      // Validate userId
+      // Validate and sanitize userId
       if (!userId || userId.trim() === '') {
         throw new Error('Invalid userId provided');
+      }
+
+      const currentState = get();
+      // Sanitize userId by replacing invalid characters with underscores
+      const sanitizedUserId = userId.trim().replace(/[.#$[\]]/g, '_');
+      
+      // If already initialized with the same userId, don't reinitialize
+      if (currentState.initialized && currentState.userId === sanitizedUserId) {
+        return;
       }
 
       set({ isLoading: true, error: null });
 
       // Cleanup previous listener if exists
-      if (currentUnsubscribe) {
-        currentUnsubscribe();
-        set({ unsubscribe: null });
+      if (currentState.unsubscribe) {
+        currentState.unsubscribe();
       }
 
-      // Enable persistence only once
-      try {
-        await enableIndexedDbPersistence(db).catch((err) => {
-          if (err.code === 'failed-precondition') {
-            // Multiple tabs open, persistence can only be enabled in one tab at a time
-            console.warn('Persistence already enabled in another tab');
-          } else if (err.code === 'unimplemented') {
-            // The current browser doesn't support persistence
-            console.warn('Persistence not supported in this browser');
-          }
-        });
-      } catch (err) {
-        // Ignore persistence errors, they shouldn't stop cart initialization
-        console.warn('Persistence setup failed:', err);
-      }
+      // Create cart reference with sanitized userId
+      const cartRef = collection(db, 'users', sanitizedUserId, 'cart');
 
-      // Create cart reference
-      const cartRef = collection(db, 'carts', userId.trim());
+      // Set up snapshot listener with error handling and retry logic
+      let retryCount = 0;
+      const maxRetries = 3;
       
-      // Set up snapshot listener
-      const newUnsubscribe = onSnapshot(
-        cartRef,
-        (snapshot) => {
-          const items: CartItem[] = [];
-          snapshot.forEach((doc) => {
-            items.push({ id: doc.id, ...doc.data() } as CartItem);
-          });
-          set({ 
-            items, 
-            error: null, 
-            initialized: true,
-            userId: userId.trim() 
-          });
-        },
-        (error) => {
-          console.error('Cart sync error:', error);
-          set({ 
-            error: 'Failed to sync cart', 
-            initialized: false,
-            userId: null
-          });
-        }
-      );
+      const setupListener = async () => {
+        try {
+          // Enable persistence only if not already enabled
+          try {
+            await enableIndexedDbPersistence(db).catch((err) => {
+              if (err.code === 'failed-precondition') {
+                // Multiple tabs open, persistence can only be enabled in one tab at a time
+                console.info('Persistence already enabled in another tab');
+              } else if (err.code === 'unimplemented') {
+                // The current browser doesn't support persistence
+                console.info('Persistence not supported in this browser');
+              } else {
+                throw err;
+              }
+            });
+          } catch (err) {
+            console.warn('Persistence setup warning:', err);
+            // Continue execution - persistence is optional
+          }
 
-      set({ unsubscribe: newUnsubscribe });
+          const unsubscribe = onSnapshot(
+            query(cartRef),
+            (snapshot) => {
+              const items: CartItem[] = [];
+              snapshot.forEach((doc) => {
+                const data = doc.data() as CartItem;
+                items.push({ ...data, id: doc.id });
+              });
+              set({ 
+                items, 
+                isLoading: false, 
+                error: null, 
+                initialized: true, 
+                userId: sanitizedUserId 
+              });
+            },
+            async (error) => {
+              console.error('Cart sync error:', error);
+              
+              // If it's an IndexedDB error and we haven't exceeded retries, try again
+              if (error.code === 'unavailable' && retryCount < maxRetries) {
+                retryCount++;
+                console.log(`Retrying cart initialization (attempt ${retryCount}/${maxRetries})...`);
+                
+                // Clean up the current listener
+                if (currentState.unsubscribe) {
+                  currentState.unsubscribe();
+                }
+                
+                // Wait a bit before retrying
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Try again
+                await setupListener();
+              } else {
+                set({ 
+                  error: 'Failed to sync with cart', 
+                  isLoading: false,
+                  initialized: false,
+                  userId: null
+                });
+              }
+            }
+          );
+
+          set({ unsubscribe });
+        } catch (error) {
+          throw error;
+        }
+      };
+
+      await setupListener();
     } catch (error) {
-      console.error('Initialize cart error:', error);
-      set({ 
+      console.error('Cart initialization error:', error);
+      set({
         error: 'Failed to initialize cart',
+        isLoading: false,
         initialized: false,
         userId: null
       });
-    } finally {
-      set({ isLoading: false });
+      throw error;
+    }
+  },
+
+  loadFromFirestore: async (userId: string) => {
+    if (!userId) {
+      set({ error: 'Invalid user ID' });
+      return;
+    }
+
+    try {
+      set({ isLoading: true, error: null });
+      
+      // Use sanitized userId
+      const sanitizedUserId = userId.trim().replace(/[.#$[\]]/g, '_');
+      const cartRef = collection(db, 'users', sanitizedUserId, 'cart');
+      
+      const snapshot = await getDocs(cartRef);
+      
+      const items: CartItem[] = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data() as CartItem;
+        items.push({ ...data, id: doc.id });
+      });
+
+      set({ items, isLoading: false, error: null });
+    } catch (error) {
+      console.error('Error loading cart:', error);
+      set({ error: 'Failed to load cart data', isLoading: false });
+      throw error;
     }
   },
 
   addItem: async (item: CartItem) => {
+    const state = get();
+    if (!state.initialized || !state.userId) {
+      set({ error: 'Cart not initialized' });
+      throw new Error('Cart not initialized');
+    }
+
     try {
       set({ isLoading: true, error: null });
-      const userId = get().userId; 
-      if (!userId) throw new Error('User not authenticated');
-      
-      const cartRef = doc(db, 'carts', userId.trim(), item.id);
-      
-      const docSnap = await getDoc(cartRef);
-      if (docSnap.exists()) {
-        const existingItem = docSnap.data() as CartItem;
-        await setDoc(cartRef, {
-          ...item,
-          quantity: existingItem.quantity + 1,
-        });
-      } else {
-        await setDoc(cartRef, { ...item, quantity: 1 });
-      }
+
+      const sanitizedUserId = state.userId.replace(/[.#$[\]]/g, '_');
+      const cartRef = collection(db, 'users', sanitizedUserId, 'cart');
+      const docRef = doc(cartRef);
+
+      await setDoc(docRef, {
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        category: item.category
+      });
+
+      set({ isLoading: false, error: null });
     } catch (error) {
-      console.error('Add item error:', error);
-      set({ error: 'Failed to add item to cart' });
-    } finally {
-      set({ isLoading: false });
+      console.error('Error adding item to cart:', error);
+      set({ error: 'Failed to add item to cart', isLoading: false });
+      throw error;
     }
   },
 
   removeItem: async (itemId: string) => {
+    const state = get();
+    if (!state.initialized || !state.userId) {
+      set({ error: 'Cart not initialized' });
+      throw new Error('Cart not initialized');
+    }
+
     try {
       set({ isLoading: true, error: null });
-      const userId = get().userId; 
-      if (!userId) throw new Error('User not authenticated');
-      
-      const cartRef = doc(db, 'carts', userId.trim(), itemId);
-      await deleteDoc(cartRef);
+
+      const sanitizedUserId = state.userId.replace(/[.#$[\]]/g, '_');
+      const itemRef = doc(db, 'users', sanitizedUserId, 'cart', itemId);
+      await deleteDoc(itemRef);
+
+      set({ isLoading: false, error: null });
     } catch (error) {
-      console.error('Remove item error:', error);
-      set({ error: 'Failed to remove item from cart' });
-    } finally {
-      set({ isLoading: false });
+      console.error('Error removing item from cart:', error);
+      set({ error: 'Failed to remove item from cart', isLoading: false });
+      throw error;
     }
   },
 
   updateQuantity: async (itemId: string, quantity: number) => {
+    const state = get();
+    if (!state.initialized || !state.userId) {
+      set({ error: 'Cart not initialized' });
+      throw new Error('Cart not initialized');
+    }
+
     try {
       set({ isLoading: true, error: null });
-      const userId = get().userId; 
-      if (!userId) throw new Error('User not authenticated');
-      
-      const cartRef = doc(db, 'carts', userId.trim(), itemId);
-      
-      if (quantity > 0) {
-        const docSnap = await getDoc(cartRef);
-        if (docSnap.exists()) {
-          await updateDoc(cartRef, { quantity });
-        }
-      } else {
-        await deleteDoc(cartRef);
-      }
+
+      const sanitizedUserId = state.userId.replace(/[.#$[\]]/g, '_');
+      const itemRef = doc(db, 'users', sanitizedUserId, 'cart', itemId);
+      await updateDoc(itemRef, { quantity });
+
+      set({ isLoading: false, error: null });
     } catch (error) {
-      console.error('Update quantity error:', error);
-      set({ error: 'Failed to update quantity' });
-    } finally {
-      set({ isLoading: false });
+      console.error('Error updating item quantity:', error);
+      set({ error: 'Failed to update item quantity', isLoading: false });
+      throw error;
     }
   },
 
   clearCart: async () => {
+    const state = get();
+    if (!state.initialized || !state.userId) {
+      set({ error: 'Cart not initialized' });
+      throw new Error('Cart not initialized');
+    }
+
     try {
       set({ isLoading: true, error: null });
-      const userId = get().userId; 
-      if (!userId) throw new Error('User not authenticated');
-      
-      const promises = get().items.map((item) =>
-        deleteDoc(doc(db, 'carts', userId.trim(), item.id))
+
+      const sanitizedUserId = state.userId.replace(/[.#$[\]]/g, '_');
+      const cartRef = collection(db, 'users', sanitizedUserId, 'cart');
+      const snapshot = await getDocs(cartRef);
+
+      // Delete all documents in parallel
+      await Promise.all(
+        snapshot.docs.map(doc => deleteDoc(doc.ref))
       );
-      await Promise.all(promises);
+
+      set({ items: [], isLoading: false, error: null });
     } catch (error) {
-      console.error('Clear cart error:', error);
-      set({ error: 'Failed to clear cart' });
-    } finally {
-      set({ isLoading: false });
+      console.error('Error clearing cart:', error);
+      set({ error: 'Failed to clear cart', isLoading: false });
+      throw error;
     }
   },
 
@@ -217,7 +302,10 @@ const useCartStore = create<CartStore>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       await enableNetwork(db);
-      await get().initializeCart(get().userId as string);
+      const state = get();
+      if (state.userId) {
+        await get().loadFromFirestore(state.userId);
+      }
     } catch (error) {
       console.error('Reconnect error:', error);
       set({ error: 'Failed to reconnect' });
@@ -227,63 +315,94 @@ const useCartStore = create<CartStore>((set, get) => ({
   },
 
   syncWithFirestore: async (userId: string) => {
+    if (!userId) {
+      set({ error: 'Invalid user ID' });
+      return;
+    }
+
     try {
       set({ isLoading: true, error: null });
-      const items = get().items;
-      const cartRef = collection(db, 'carts', userId.trim());
       
-      // Get existing items
+      // Sanitize userId and create cart reference with proper collection path
+      const sanitizedUserId = userId.trim().replace(/[.#$[\]]/g, '_');
+      const cartRef = collection(db, 'users', sanitizedUserId, 'cart');
+      
+      // Get current items
       const snapshot = await getDocs(cartRef);
-      const existingItems = new Map(
+      const currentItems = new Map(
         snapshot.docs.map(doc => [doc.id, doc.data() as CartItem])
       );
-      
-      // Update or add items
-      const promises = items.map(item => {
-        const docRef = doc(db, 'carts', userId.trim(), item.id);
-        return setDoc(docRef, item);
-      });
-      
-      // Remove items that are no longer in the local state
-      const itemIds = new Set(items.map(item => item.id));
-      existingItems.forEach((_, id) => {
-        if (!itemIds.has(id)) {
-          const docRef = doc(db, 'carts', userId.trim(), id);
-          promises.push(deleteDoc(docRef));
+
+      // Update or create items
+      const state = get();
+      for (const item of state.items) {
+        const itemRef = doc(cartRef, item.id);
+        await setDoc(itemRef, item);
+      }
+
+      // Delete items that are no longer in the cart
+      for (const [id, _] of currentItems) {
+        if (!state.items.some(item => item.id === id)) {
+          await deleteDoc(doc(cartRef, id));
         }
-      });
-      
-      await Promise.all(promises);
+      }
+
     } catch (error) {
       console.error('Sync error:', error);
-      set({ error: 'Failed to sync with Firestore' });
+      set({ error: 'Failed to sync with server' });
+      throw error;
     } finally {
       set({ isLoading: false });
     }
   },
 
-  loadFromFirestore: async (userId: string) => {
+  checkout: async () => {
+    const state = get();
+    if (!state.initialized || !state.userId) {
+      set({ error: 'Cart not initialized' });
+      throw new Error('Cart not initialized');
+    }
+
+    if (state.items.length === 0) {
+      set({ error: 'Cart is empty' });
+      throw new Error('Cart is empty');
+    }
+
     try {
       set({ isLoading: true, error: null });
-      const cartRef = collection(db, 'carts', userId.trim());
-      const snapshot = await getDocs(cartRef);
-      
-      const items = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as CartItem[];
 
-      set({ items, initialized: true });
-    } catch (error) {
-      console.error('Load from Firestore error:', error);
-      set({ 
-        error: 'Failed to load from Firestore',
-        initialized: false
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          items: state.items,
+        }),
       });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || 'Failed to create checkout session');
+      }
+
+      const { url } = await response.json();
+      if (!url) {
+        throw new Error('No checkout URL received');
+      }
+
+      // Clear cart after successful checkout initiation
+      await get().clearCart();
+      
+      return url;
+    } catch (error) {
+      console.error('Checkout error:', error);
+      set({ error: 'Failed to initiate checkout', isLoading: false });
+      throw error;
     } finally {
       set({ isLoading: false });
     }
-  }
+  },
 }));
 
 export { useCartStore };
