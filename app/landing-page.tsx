@@ -122,10 +122,11 @@ export function LandingPageComponent() {
               <div className="mt-8 lg:mt-0">
                 <Image
                   className="rounded-lg shadow-lg"
-                  src="https://images.unsplash.com/photo-1519608487953-e999c86e7455?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1200&q=80"
+                  src="https://lh3.googleusercontent.com/p/AF1QipP2Zdb6K5blSF3vqvZshnQk1eC9SYYsYPRpeXOJ=s680-w680-h510"
                   alt="Lammy's store front"
-                  width={1200}
-                  height={900}
+                  width={680}
+                  height={510}
+                  priority
                 />
               </div>
             </div>
