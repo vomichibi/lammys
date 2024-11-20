@@ -36,6 +36,11 @@ const Footer = () => {
             <h3 className="text-white text-lg font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-2">
               <li>
+                <Link href="/" className="hover:text-white">
+                  Home
+                </Link>
+              </li>
+              <li>
                 <Link href="/services" className="hover:text-white">
                   Our Services
                 </Link>
@@ -85,7 +90,7 @@ const Footer = () => {
         
         {/* Copyright */}
         <div className="border-t border-gray-800 mt-8 pt-8 text-center">
-          <p>© {new Date().getFullYear()} Lammy's Multi Services. All rights reserved.</p>
+          <p> {new Date().getFullYear()} Lammy's Multi Services. All rights reserved.</p>
         </div>
       </div>
     </footer>
