@@ -1,3 +1,5 @@
 'use client';
 
-export { BookingPageComponent as default } from './booking-page';
+import BookingPageComponent from './booking-page';
+
+export default BookingPageComponent;

@@ -309,8 +309,8 @@ export function BookingPageComponent() {
   }, [items, session?.user?.email, syncWithFirestore])
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-3xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50 pt-28 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
         <div className="bg-white rounded-lg shadow p-6 space-y-6">
           {/* Service Selection */}
           <div>
@@ -674,3 +674,5 @@ export function BookingPageComponent() {
     </div>
   )
 }
+
+export default BookingPageComponent;

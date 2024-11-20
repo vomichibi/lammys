@@ -73,10 +73,10 @@ const AlterationsPage = () => {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
+    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50 pt-28">
       {/* Back Button */}
-      <div className="max-w-7xl mx-auto pt-8 px-4 sm:px-6 lg:px-8">
-        <Button variant="ghost" asChild className="mb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <Button variant="ghost" asChild className="hover:bg-blue-100">
           <Link href="/services" className="flex items-center gap-2">
             <ArrowLeft className="w-4 h-4" />
             Back to Services
