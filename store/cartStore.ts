@@ -28,6 +28,7 @@ interface CartStore {
   isLoading: boolean;
   error: string | null;
   userId: string | null;
+  initialized: boolean;
   setError: (error: string | null) => void;
   addItem: (item: CartItem) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
@@ -36,6 +37,7 @@ interface CartStore {
   clearCart: () => Promise<void>;
   loadFromFirestore: (userId: string) => Promise<void>;
   syncWithFirestore: (userId: string) => Promise<void>;
+  checkout: () => Promise<string>;
 }
 
 const useCartStore = create<CartStore>((set, get) => ({
@@ -43,6 +45,7 @@ const useCartStore = create<CartStore>((set, get) => ({
   isLoading: false,
   error: null,
   userId: null,
+  initialized: false,
 
   setError: (error: string | null) => set({ error }),
 
@@ -58,10 +61,10 @@ const useCartStore = create<CartStore>((set, get) => ({
       
       if (cartDoc.exists()) {
         const cartData = cartDoc.data();
-        set({ items: cartData.items || [] });
+        set({ items: cartData.items || [], initialized: true });
       } else {
         await setDoc(userCartRef, { items: [] });
-        set({ items: [] });
+        set({ items: [], initialized: true });
       }
     } catch (error) {
       set({ error: 'Failed to initialize cart' });
@@ -83,7 +86,7 @@ const useCartStore = create<CartStore>((set, get) => ({
       
       if (cartDoc.exists()) {
         const cartData = cartDoc.data();
-        set({ items: cartData.items || [] });
+        set({ items: cartData.items || [], initialized: true });
       }
     } catch (error) {
       set({ error: 'Failed to load cart from Firestore' });
@@ -99,24 +102,25 @@ const useCartStore = create<CartStore>((set, get) => ({
       return;
     }
     try {
+      set({ isLoading: true });
       const { items } = get();
       const userCartRef = doc(db, 'carts', userId);
       await setDoc(userCartRef, { items }, { merge: true });
     } catch (error) {
       set({ error: 'Failed to sync cart with Firestore' });
       console.error('Error syncing cart:', error);
+    } finally {
+      set({ isLoading: false });
     }
   },
 
   addItem: async (item: CartItem) => {
     const { items, userId } = get();
-    const existingItem = items.find(i => i.id === item.id);
+    const existingItem = items.find((i) => i.id === item.id);
 
     if (existingItem) {
-      const updatedItems = items.map(i =>
-        i.id === item.id
-          ? { ...i, quantity: i.quantity + 1 }
-          : i
+      const updatedItems = items.map((i) =>
+        i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
       );
       set({ items: updatedItems });
     } else {
@@ -124,58 +128,73 @@ const useCartStore = create<CartStore>((set, get) => ({
     }
 
     if (userId) {
-      try {
-        await get().syncWithFirestore(userId);
-      } catch (error) {
-        console.error('Error syncing after add:', error);
-      }
+      await get().syncWithFirestore(userId);
     }
   },
 
   removeItem: async (itemId: string) => {
     const { items, userId } = get();
-    const updatedItems = items.filter(item => item.id !== itemId);
-    set({ items: updatedItems });
-
+    set({ items: items.filter((item) => item.id !== itemId) });
+    
     if (userId) {
-      try {
-        await get().syncWithFirestore(userId);
-      } catch (error) {
-        console.error('Error syncing after remove:', error);
-      }
+      await get().syncWithFirestore(userId);
     }
   },
 
   updateQuantity: async (itemId: string, quantity: number) => {
     const { items, userId } = get();
-    if (quantity < 1) return;
+    if (quantity < 1) {
+      await get().removeItem(itemId);
+      return;
+    }
 
-    const updatedItems = items.map(item =>
-      item.id === itemId
-        ? { ...item, quantity }
-        : item
+    const updatedItems = items.map((item) =>
+      item.id === itemId ? { ...item, quantity } : item
     );
     set({ items: updatedItems });
 
     if (userId) {
-      try {
-        await get().syncWithFirestore(userId);
-      } catch (error) {
-        console.error('Error syncing after update:', error);
-      }
+      await get().syncWithFirestore(userId);
     }
   },
 
   clearCart: async () => {
     const { userId } = get();
-    set({ items: [] });
-
+    set({ items: [], initialized: false });
+    
     if (userId) {
-      try {
-        await get().syncWithFirestore(userId);
-      } catch (error) {
-        console.error('Error syncing after clear:', error);
+      const userCartRef = doc(db, 'carts', userId);
+      await setDoc(userCartRef, { items: [] });
+    }
+  },
+
+  checkout: async () => {
+    const { items, userId } = get();
+    if (!userId || items.length === 0) {
+      throw new Error('Cannot checkout with empty cart or without user ID');
+    }
+
+    try {
+      set({ isLoading: true });
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ items }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Checkout failed');
       }
+
+      const data = await response.json();
+      return data.url;
+    } catch (error) {
+      console.error('Checkout error:', error);
+      throw error;
+    } finally {
+      set({ isLoading: false });
     }
   },
 }));
