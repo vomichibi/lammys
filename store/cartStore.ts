@@ -38,6 +38,7 @@ interface CartStore {
   loadFromFirestore: (userId: string) => Promise<void>;
   syncWithFirestore: (userId: string) => Promise<void>;
   checkout: () => Promise<string>;
+  completeCart: (userId: string, userEmail: string) => Promise<void>;
 }
 
 const useCartStore = create<CartStore>((set, get) => ({
@@ -195,6 +196,17 @@ const useCartStore = create<CartStore>((set, get) => ({
       throw error;
     } finally {
       set({ isLoading: false });
+    }
+  },
+
+  completeCart: async (userId: string, userEmail: string) => {
+    try {
+      set({ isLoading: true });
+      await get().clearCart();
+      set({ isLoading: false });
+    } catch (error) {
+      set({ error: 'Failed to complete cart' });
+      throw error;
     }
   },
 }));
