@@ -4,8 +4,9 @@ import "./globals.css";
 import Navigation from "./components/Navigation";
 import { Providers } from "./providers";
 
-const inter = Inter({ 
-  subsets: ["latin"],
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
   display: 'swap',
 });
 
@@ -20,11 +21,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-      </head>
-      <body className={inter.className}>
+    <html lang="en" className={inter.className} suppressHydrationWarning>
+      <body>
         <Providers>
           <Navigation />
           {children}
