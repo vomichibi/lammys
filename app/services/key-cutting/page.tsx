@@ -171,6 +171,45 @@ const KeyCuttingPage = () => {
           </Button>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="bg-slate-900 text-slate-300 mt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-4">Contact Us</h3>
+              <div className="space-y-2">
+                <p>123 High Street</p>
+                <p>Birmingham, B1 1AA</p>
+                <p>Phone: 0121 XXX XXXX</p>
+                <p>Email: info@lammys.co.uk</p>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-4">Quick Links</h3>
+              <ul className="space-y-2">
+                <li><Link href="/services" className="hover:text-white">All Services</Link></li>
+                <li><Link href="/booking" className="hover:text-white">Book Appointment</Link></li>
+                <li><Link href="/contact" className="hover:text-white">Find Us</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-4">Business Hours</h3>
+              <div className="space-y-2">
+                <p>Monday - Friday: 9:00 AM - 6:00 PM</p>
+                <p>Saturday: 9:00 AM - 5:00 PM</p>
+                <p>Sunday: Closed</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-slate-800 mt-8 pt-8 text-center">
+            <p>&copy; {new Date().getFullYear()} Lammy's. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }
