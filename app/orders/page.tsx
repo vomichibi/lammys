@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { formatDistance } from 'date-fns';
 import Footer from '@/components/ui/Footer';
 
-export function OrdersPageComponent() {
+function OrdersPageContent() {
   const { data: session } = useSession();
   const { orders, fetchUserOrders } = useOrderStore();
   const [loading, setLoading] = useState(true);
@@ -116,8 +116,8 @@ export function OrdersPageComponent() {
 export default function OrdersPage() {
   return (
     <>
-      <OrdersPageComponent />
+      <OrdersPageContent />
       <Footer />
     </>
-  )
+  );
 }

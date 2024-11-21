@@ -2,20 +2,10 @@ import { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
+import { createUser, getUser } from '@/lib/userManagement';
 
 // List of admin emails
 const adminEmails = ['team@lammys.au'];
-
-// This is a temporary user store. In production, use a database.
-const users = [
-  {
-    id: '1',
-    name: 'John Doe',
-    email: 'john@example.com',
-    // Password: "password123"
-    password: '$2a$10$8Ux7YyXKxKcCZKCqJX4kB.qJpVZZpV5mh0TfHR1ZHwzDns4VeGHGi',
-  },
-];
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -35,17 +25,18 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Please enter an email and password');
         }
 
-        // Find user in the temporary store
-        const user = users.find(user => user.email === credentials.email);
-
+        const user = await getUser(credentials.email);
+        
         if (!user) {
           throw new Error('No user found with this email');
         }
 
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        );
+        // Type guard to check if user has password
+        if (!('password' in user)) {
+          throw new Error('Invalid user data');
+        }
+
+        const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
 
         if (!isPasswordValid) {
           throw new Error('Invalid password');
@@ -53,8 +44,10 @@ export const authOptions: NextAuthOptions = {
 
         return {
           id: user.id,
-          name: user.name,
           email: user.email,
+          name: user.name || '',
+          isAdmin: adminEmails.includes(user.email),
+          role: user.role || 'user'
         };
       },
     }),
@@ -65,24 +58,41 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: '/login',
+    error: '/auth/error',
   },
   callbacks: {
+    async signIn({ user, account }) {
+      try {
+        if (user.email) {
+          await createUser({
+            email: user.email,
+            name: user.name || '',
+          });
+        }
+        return true;
+      } catch (error) {
+        console.error('Error creating user:', error);
+        return false;
+      }
+    },
     async jwt({ token, user }) {
       if (user) {
         token.isAdmin = adminEmails.includes(token.email || '');
+        token.role = user.role || 'user';
       }
       return token;
     },
     async session({ session, token }) {
       if (session?.user) {
         session.user.isAdmin = token.isAdmin as boolean;
+        session.user.role = token.role as string;
       }
       return session;
     },
     async redirect({ url, baseUrl }) {
       if (url.startsWith(baseUrl)) {
         if (url.includes('/login') || url === baseUrl) {
-          return `${baseUrl}/dashboard`;
+          return token?.isAdmin ? `${baseUrl}/admindash/dashboard` : `${baseUrl}/dashboard`;
         }
       }
       return url;

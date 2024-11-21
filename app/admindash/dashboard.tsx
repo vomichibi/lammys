@@ -22,8 +22,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
+import { createHash } from 'crypto';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://your-vps-ip:3001';
+
+const getGravatarUrl = (email: string) => {
+  const hash = createHash('md5').update(email.toLowerCase().trim()).digest('hex');
+  return `https://www.gravatar.com/avatar/${hash}?d=mp`;
+};
+
+interface Order {
+  id: string;
+  customer: string;
+  date: string;
+  status: string;
+  total: number;
+  service: string;
+}
 
 const sidebarLinks = [
   { name: 'Dashboard', icon: LayoutDashboardIcon, href: '/admindash/dashboard' },
@@ -36,7 +51,7 @@ export default function Dashboard() {
   const { data: session } = useSession()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [revenueData, setRevenueData] = useState([])
-  const [recentOrders, setRecentOrders] = useState([])
+  const [recentOrders, setRecentOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -91,7 +106,7 @@ export default function Dashboard() {
             <div className="flex items-center">
               <div>
                 <Avatar>
-                  <AvatarImage src={session?.user?.image || ''} />
+                  <AvatarImage src={session?.user?.email ? getGravatarUrl(session.user.email) : ''} />
                   <AvatarFallback>{session?.user?.name?.[0]}</AvatarFallback>
                 </Avatar>
               </div>
@@ -256,7 +271,7 @@ export default function Dashboard() {
                       <div className="ml-4 space-y-1">
                         <p className="text-sm font-medium leading-none">{order.customer}</p>
                         <p className="text-sm text-muted-foreground">
-                          {order.service}
+                          {order.service || 'No service specified'}
                         </p>
                       </div>
                       <div className="ml-auto font-medium">

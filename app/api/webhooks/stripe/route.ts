@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { headers } from 'next/headers';
 import Stripe from 'stripe';
+import { addDoc, collection } from 'firebase/firestore';
+import { db } from '../../../../lib/firebaseInit';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2023-10-16',
@@ -8,70 +9,49 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
-const handleSuccessfulPayment = async (session: Stripe.Checkout.Session) => {
-  try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/analytics/orders`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        userId: session.client_reference_id,
-        userEmail: session.customer_email,
-        items: session.line_items?.data.map(item => ({
-          id: item.id,
-          name: item.description,
-          quantity: item.quantity,
-          price: item.amount_total / 100, // Convert from cents to dollars
-          category: item.price?.product?.name || 'Uncategorized'
-        })),
-        status: 'pending',
-        total: session.amount_total ? session.amount_total / 100 : 0,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to store order analytics');
-    }
-
-    console.log('Successfully stored order analytics');
-  } catch (error) {
-    console.error('Error storing order analytics:', error);
-  }
-};
-
 export async function POST(req: Request) {
+  const body = await req.text();
+  const sig = req.headers.get('stripe-signature')!;
+
   try {
-    const body = await req.text();
-    const headersList = headers();
-    const signature = headersList.get('stripe-signature')!;
-
-    let event: Stripe.Event;
-
-    try {
-      event = stripe.webhooks.constructEvent(
-        body,
-        signature,
-        webhookSecret
-      );
-    } catch (err) {
-      console.error('Webhook signature verification failed:', err);
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
-    }
+    const event = stripe.webhooks.constructEvent(
+      body,
+      sig,
+      webhookSecret
+    );
 
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
-      await handleSuccessfulPayment(session);
+      const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
+
+      const orderData = {
+        items: lineItems.data.map(item => ({
+          quantity: item.quantity,
+          price: item.amount_total / 100, // Convert from cents to dollars
+          category: (item.price?.product as Stripe.Product)?.name || 'Uncategorized'
+        })),
+        status: 'pending',
+        total: session.amount_total ? session.amount_total / 100 : 0,
+        customerEmail: session.customer_details?.email || '',
+        customerName: session.customer_details?.name || '',
+        createdAt: new Date(),
+        paymentStatus: session.payment_status,
+        paymentId: session.payment_intent as string,
+      };
+
+      // Add order to Firestore
+      const ordersRef = collection(db, 'orders');
+      await addDoc(ordersRef, orderData);
+
+      return NextResponse.json({ received: true });
     }
 
     return NextResponse.json({ received: true });
-  } catch (error) {
-    console.error('Webhook error:', error);
+  } catch (err) {
+    console.error('Error processing webhook:', err);
     return NextResponse.json(
-      { error: 'Webhook handler failed' },
-      { status: 500 }
+      { error: (err as Error).message },
+      { status: 400 }
     );
   }
 }

@@ -14,6 +14,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Link from 'next/link'
+import { createHash } from 'crypto';
+
+const getGravatarUrl = (email: string) => {
+  const hash = createHash('md5').update(email.toLowerCase().trim()).digest('hex');
+  return `https://www.gravatar.com/avatar/${hash}?d=mp`;
+};
 
 const sidebarLinks = [
   { name: 'Dashboard', icon: LayoutDashboardIcon, href: '/admindash/dashboard' },
@@ -59,7 +65,7 @@ export default function OrdersLayout({
             <div className="flex items-center">
               <div>
                 <Avatar>
-                  <AvatarImage src={session?.user?.image || ''} />
+                  <AvatarImage src={session?.user?.email ? getGravatarUrl(session.user.email) : ''} />
                   <AvatarFallback>{session?.user?.name?.[0]}</AvatarFallback>
                 </Avatar>
               </div>

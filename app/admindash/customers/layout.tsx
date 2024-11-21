@@ -56,7 +56,7 @@ export default function CustomersLayout({
             <div className="flex items-center">
               <div>
                 <Avatar>
-                  <AvatarImage src={session?.user?.image || ''} />
+                  <AvatarImage src={session?.user?.email ? `https://www.gravatar.com/avatar/${session.user.email}` : ''} />
                   <AvatarFallback>{session?.user?.name?.[0]}</AvatarFallback>
                 </Avatar>
               </div>

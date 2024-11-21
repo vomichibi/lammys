@@ -34,6 +34,8 @@ interface CartStore {
   updateQuantity: (itemId: string, quantity: number) => Promise<void>;
   initializeCart: (userId: string) => Promise<void>;
   clearCart: () => Promise<void>;
+  loadFromFirestore: (userId: string) => Promise<void>;
+  syncWithFirestore: (userId: string) => Promise<void>;
 }
 
 const useCartStore = create<CartStore>((set, get) => ({
@@ -49,130 +51,131 @@ const useCartStore = create<CartStore>((set, get) => ({
       set({ error: 'Invalid user ID' });
       return;
     }
-
     try {
       set({ isLoading: true, userId });
-      const cartRef = collection(db as Firestore, 'carts');
-      const q = query(cartRef, where('userId', '==', userId));
-      const querySnapshot = await getDocs(q);
+      const userCartRef = doc(db, 'carts', userId);
+      const cartDoc = await getDoc(userCartRef);
       
-      if (!querySnapshot.empty) {
-        const cartDoc = querySnapshot.docs[0];
+      if (cartDoc.exists()) {
         const cartData = cartDoc.data();
         set({ items: cartData.items || [] });
       } else {
-        // Create a new cart for the user
-        const newCart = {
-          userId,
-          items: []
-        };
-        const newCartRef = doc(collection(db as Firestore, 'carts'));
-        await setDoc(newCartRef, newCart);
+        await setDoc(userCartRef, { items: [] });
         set({ items: [] });
       }
-      set({ error: null });
     } catch (error) {
-      console.error('Failed to initialize cart:', error);
-      set({ error: 'Failed to load cart' });
+      set({ error: 'Failed to initialize cart' });
+      console.error('Error initializing cart:', error);
     } finally {
       set({ isLoading: false });
+    }
+  },
+
+  loadFromFirestore: async (userId: string) => {
+    if (!userId) {
+      set({ error: 'Invalid user ID' });
+      return;
+    }
+    try {
+      set({ isLoading: true });
+      const userCartRef = doc(db, 'carts', userId);
+      const cartDoc = await getDoc(userCartRef);
+      
+      if (cartDoc.exists()) {
+        const cartData = cartDoc.data();
+        set({ items: cartData.items || [] });
+      }
+    } catch (error) {
+      set({ error: 'Failed to load cart from Firestore' });
+      console.error('Error loading cart:', error);
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  syncWithFirestore: async (userId: string) => {
+    if (!userId) {
+      set({ error: 'Invalid user ID' });
+      return;
+    }
+    try {
+      const { items } = get();
+      const userCartRef = doc(db, 'carts', userId);
+      await setDoc(userCartRef, { items }, { merge: true });
+    } catch (error) {
+      set({ error: 'Failed to sync cart with Firestore' });
+      console.error('Error syncing cart:', error);
     }
   },
 
   addItem: async (item: CartItem) => {
-    const { userId, items } = get();
-    if (!userId) return;
+    const { items, userId } = get();
+    const existingItem = items.find(i => i.id === item.id);
 
-    try {
-      set({ isLoading: true });
-      const cartRef = collection(db as Firestore, 'carts');
-      const q = query(cartRef, where('userId', '==', userId));
-      const querySnapshot = await getDocs(q);
-      
-      if (!querySnapshot.empty) {
-        const cartDoc = querySnapshot.docs[0];
-        const updatedItems = [...items, item];
-        await updateDoc(cartDoc.ref, { items: updatedItems });
-        set({ items: updatedItems });
+    if (existingItem) {
+      const updatedItems = items.map(i =>
+        i.id === item.id
+          ? { ...i, quantity: i.quantity + 1 }
+          : i
+      );
+      set({ items: updatedItems });
+    } else {
+      set({ items: [...items, { ...item, quantity: 1 }] });
+    }
+
+    if (userId) {
+      try {
+        await get().syncWithFirestore(userId);
+      } catch (error) {
+        console.error('Error syncing after add:', error);
       }
-    } catch (error) {
-      console.error('Failed to add item:', error);
-      set({ error: 'Failed to add item to cart' });
-    } finally {
-      set({ isLoading: false });
     }
   },
 
   removeItem: async (itemId: string) => {
-    const { userId, items } = get();
-    if (!userId) return;
+    const { items, userId } = get();
+    const updatedItems = items.filter(item => item.id !== itemId);
+    set({ items: updatedItems });
 
-    try {
-      set({ isLoading: true });
-      const cartRef = collection(db as Firestore, 'carts');
-      const q = query(cartRef, where('userId', '==', userId));
-      const querySnapshot = await getDocs(q);
-      
-      if (!querySnapshot.empty) {
-        const cartDoc = querySnapshot.docs[0];
-        const updatedItems = items.filter(item => item.id !== itemId);
-        await updateDoc(cartDoc.ref, { items: updatedItems });
-        set({ items: updatedItems });
+    if (userId) {
+      try {
+        await get().syncWithFirestore(userId);
+      } catch (error) {
+        console.error('Error syncing after remove:', error);
       }
-    } catch (error) {
-      console.error('Failed to remove item:', error);
-      set({ error: 'Failed to remove item from cart' });
-    } finally {
-      set({ isLoading: false });
     }
   },
 
   updateQuantity: async (itemId: string, quantity: number) => {
-    const { userId, items } = get();
-    if (!userId) return;
+    const { items, userId } = get();
+    if (quantity < 1) return;
 
-    try {
-      set({ isLoading: true });
-      const cartRef = collection(db as Firestore, 'carts');
-      const q = query(cartRef, where('userId', '==', userId));
-      const querySnapshot = await getDocs(q);
-      
-      if (!querySnapshot.empty) {
-        const cartDoc = querySnapshot.docs[0];
-        const updatedItems = items.map(item =>
-          item.id === itemId ? { ...item, quantity } : item
-        );
-        await updateDoc(cartDoc.ref, { items: updatedItems });
-        set({ items: updatedItems });
+    const updatedItems = items.map(item =>
+      item.id === itemId
+        ? { ...item, quantity }
+        : item
+    );
+    set({ items: updatedItems });
+
+    if (userId) {
+      try {
+        await get().syncWithFirestore(userId);
+      } catch (error) {
+        console.error('Error syncing after update:', error);
       }
-    } catch (error) {
-      console.error('Failed to update quantity:', error);
-      set({ error: 'Failed to update item quantity' });
-    } finally {
-      set({ isLoading: false });
     }
   },
 
   clearCart: async () => {
     const { userId } = get();
-    if (!userId) return;
+    set({ items: [] });
 
-    try {
-      set({ isLoading: true });
-      const cartRef = collection(db as Firestore, 'carts');
-      const q = query(cartRef, where('userId', '==', userId));
-      const querySnapshot = await getDocs(q);
-      
-      if (!querySnapshot.empty) {
-        const cartDoc = querySnapshot.docs[0];
-        await updateDoc(cartDoc.ref, { items: [] });
-        set({ items: [] });
+    if (userId) {
+      try {
+        await get().syncWithFirestore(userId);
+      } catch (error) {
+        console.error('Error syncing after clear:', error);
       }
-    } catch (error) {
-      console.error('Failed to clear cart:', error);
-      set({ error: 'Failed to clear cart' });
-    } finally {
-      set({ isLoading: false });
     }
   },
 }));
