@@ -10,42 +10,55 @@ interface ParallaxHeroProps {
 
 export function ParallaxHero({ imageUrl, children }: ParallaxHeroProps) {
   const [scrollPosition, setScrollPosition] = useState(0)
-  const ticking = useRef(false)
-  const lastScrollY = useRef(0)
+  const heroRef = useRef<HTMLDivElement>(null)
 
   const handleScroll = useCallback(() => {
-    lastScrollY.current = window.scrollY
+    if (!heroRef.current) return
 
-    if (!ticking.current) {
-      requestAnimationFrame(() => {
-        const windowHeight = window.innerHeight
-        const scrollPercentage = (lastScrollY.current / windowHeight) * 100
-        setScrollPosition(Math.min(scrollPercentage, 100))
-        ticking.current = false
-      })
-
-      ticking.current = true
-    }
+    const rect = heroRef.current.getBoundingClientRect()
+    const windowHeight = window.innerHeight
+    const scrollPercentage = Math.min(
+      Math.max(0, -rect.top) / windowHeight * 100,
+      100
+    )
+    
+    setScrollPosition(scrollPercentage)
   }, [])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    handleScroll() // Initial position
-    window.addEventListener('scroll', handleScroll, { passive: true })
+    // Initial position
+    handleScroll()
+
+    // Add scroll listener with throttling
+    let ticking = false
+    const onScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          handleScroll()
+          ticking = false
+        })
+        ticking = true
+      }
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', handleScroll, { passive: true })
 
     return () => {
-      window.removeEventListener('scroll', handleScroll)
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', handleScroll)
     }
   }, [handleScroll])
 
   const parallaxStyle = {
-    transform: `translate3d(0, ${scrollPosition * 2.5}px, 0)`,
+    transform: `translate3d(0, ${scrollPosition * 1.2}px, 0)`,
     willChange: 'transform',
   }
 
   return (
-    <div className="relative bg-white overflow-hidden h-screen">
+    <div ref={heroRef} className="relative bg-white overflow-hidden h-screen">
       <div 
         className="absolute inset-0 scale-[1.5]"
         style={parallaxStyle}
