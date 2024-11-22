@@ -21,7 +21,7 @@ export default function BookingConfirmation() {
         try {
           // Calculate total
           const total = items.reduce(
-            (sum, item) => sum + item.price * item.quantity,
+            (sum: number, item) => sum + item.price * item.quantity,
             0
           );
 
@@ -86,7 +86,7 @@ export default function BookingConfirmation() {
                   <div className="flex justify-between font-semibold">
                     <span>Total</span>
                     <span>
-                      ${items.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}
+                      ${items.reduce((sum: number, item) => sum + item.price * item.quantity, 0).toFixed(2)}
                     </span>
                   </div>
                 </div>
