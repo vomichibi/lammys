@@ -30,11 +30,19 @@ export default function BookingConfirmation() {
             0
           );
 
+          // Convert cart items to order items with correct price type
+          const orderItems = items.map(item => ({
+            ...item,
+            price: typeof item.price === 'string' 
+              ? parseFloat(item.price.toString().replace(/[^0-9.]/g, ''))
+              : item.price
+          }));
+
           // Create the order
           await createOrder({
             userId: session.user.email,
             userEmail: session.user.email,
-            items: items,
+            items: orderItems,
             status: 'pending',
             total: total
           });
