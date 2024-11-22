@@ -1,14 +1,8 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Toaster } from "sonner";
+import { AuthProvider } from "@/providers/AuthProvider";
+import { inter } from './fonts';
 import "./globals.css";
-import Navigation from "./components/Navigation";
-import { Providers } from "./providers";
-
-const inter = Inter({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  display: 'swap',
-});
+import { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: "Lammy's Dry Cleaning",
@@ -21,12 +15,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.className} suppressHydrationWarning>
+    <html lang="en" className={inter.className}>
       <body>
-        <Providers>
-          <Navigation />
+        <AuthProvider>
           {children}
-        </Providers>
+          <Toaster />
+        </AuthProvider>
       </body>
     </html>
   );

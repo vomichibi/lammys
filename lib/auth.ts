@@ -7,6 +7,16 @@ import { createUser, getUser } from '@/lib/userManagement';
 // List of admin emails
 const adminEmails = ['team@lammys.au'];
 
+type Credentials = Record<"email" | "password", string> | undefined;
+
+interface User {
+  id: string;
+  email: string;
+  name?: string;
+  password: string;
+  role?: string;
+}
+
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   providers: [
@@ -20,12 +30,12 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials) {
+      async authorize(credentials: Credentials) {
         if (!credentials?.email || !credentials?.password) {
           throw new Error('Please enter an email and password');
         }
 
-        const user = await getUser(credentials.email);
+        const user = await getUser(credentials.email) as User | null;
         
         if (!user) {
           throw new Error('No user found with this email');
@@ -36,7 +46,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Invalid user data');
         }
 
-        const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
+        const isPasswordValid = await bcrypt.compare(credentials.password, user.password) as boolean;
 
         if (!isPasswordValid) {
           throw new Error('Invalid password');
