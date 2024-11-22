@@ -21,7 +21,12 @@ export default function BookingConfirmation() {
         try {
           // Calculate total
           const total = items.reduce(
-            (sum: number, item) => sum + item.price * item.quantity,
+            (sum: number, item) => {
+              const price = typeof item.price === 'string' 
+                ? parseFloat(item.price.toString().replace(/[^0-9.]/g, '')) 
+                : item.price;
+              return sum + price * item.quantity;
+            },
             0
           );
 
