@@ -94,7 +94,7 @@ const BookingPageComponent = () => {
   }
 
   const calculateTotal = useMemo(() => {
-    return selectedItems.reduce((total, selectedItem) => {
+    return selectedItems.reduce((total: number, selectedItem) => {
       const item = dryCleaningItems.find(i => i.id === selectedItem.id);
       if (!item) {
         const keyType = keyTypes.find(i => i.id === selectedItem.id);
@@ -106,7 +106,7 @@ const BookingPageComponent = () => {
   }, [selectedItems, dryCleaningItems, keyTypes]);
 
   const getTotalItemCount = () => {
-    return selectedItems.reduce((total, item) => total + item.quantity, 0)
+    return selectedItems.reduce((total: number, item) => total + item.quantity, 0)
   }
 
   const handleServiceSelect = (serviceId: string) => {

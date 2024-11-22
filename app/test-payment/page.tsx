@@ -16,7 +16,7 @@ export default function TestPaymentPage() {
   const [clientSecret, setClientSecret] = useState('')
   const [selectedServices, setSelectedServices] = useState<typeof testServices>([])
 
-  const total = selectedServices.reduce((sum, service) => sum + service.price, 0)
+  const total = selectedServices.reduce((sum: number, service) => sum + service.price, 0)
 
   useEffect(() => {
     if (total > 0) {

@@ -25,7 +25,7 @@ export default function CartPage() {
   const [isInitializing, setIsInitializing] = useState(true)
   const [isCheckingOut, setIsCheckingOut] = useState(false)
 
-  const total = items.reduce((sum, item) => {
+  const total = items.reduce((sum: number, item) => {
     const price = typeof item.price === 'string' 
       ? parseFloat(item.price.toString().replace(/[^0-9.]/g, '')) 
       : item.price
@@ -244,7 +244,7 @@ export default function CartPage() {
                 <span className="text-lg font-medium">Total:</span>
                 <span className="text-2xl font-semibold">${total.toFixed(2)}</span>
               </div>
-              
+　　 　 　 　
               <div className="flex justify-end space-x-4">
                 <button
                   onClick={() => router.push('/booking')}

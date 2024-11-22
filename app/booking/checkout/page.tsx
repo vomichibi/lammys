@@ -123,7 +123,7 @@ export default function CheckoutPage() {
                 <div className="border-t pt-4">
                   <div className="flex justify-between font-bold">
                     <span>Total</span>
-                    <span>£{items.reduce((total, item) => total + (Number(item.price) * item.quantity), 0)}</span>
+                    <span>£{items.reduce((total: number, item) => total + (Number(item.price) * item.quantity), 0)}</span>
                   </div>
                 </div>
               </div>
