@@ -1,6 +1,7 @@
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { inter } from './fonts';
+import Navigation from './components/Navigation';
 import "./globals.css";
 import { Metadata } from 'next';
 
@@ -18,6 +19,7 @@ export default function RootLayout({
     <html lang="en" className={inter.className}>
       <body>
         <AuthProvider>
+          <Navigation />
           {children}
           <Toaster />
         </AuthProvider>
