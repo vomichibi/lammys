@@ -5,6 +5,8 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/store/cartStore';
 import { useOrderStore } from '@/store/orderStore';
+import type { OrderItem } from '@/store/orderStore';
+import type { CartItem } from '@/store/cartStore';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import Link from 'next/link';
@@ -21,7 +23,7 @@ export default function BookingConfirmation() {
         try {
           // Calculate total
           const total = items.reduce(
-            (sum: number, item) => {
+            (sum: number, item: CartItem) => {
               const price = typeof item.price === 'string' 
                 ? parseFloat(item.price.toString().replace(/[^0-9.]/g, '')) 
                 : item.price;
@@ -31,11 +33,14 @@ export default function BookingConfirmation() {
           );
 
           // Convert cart items to order items with correct price type
-          const orderItems = items.map(item => ({
-            ...item,
+          const orderItems: OrderItem[] = items.map(item => ({
+            id: item.id,
+            name: item.name,
             price: typeof item.price === 'string' 
               ? parseFloat(item.price.toString().replace(/[^0-9.]/g, ''))
-              : item.price
+              : item.price,
+            quantity: item.quantity,
+            category: item.category
           }));
 
           // Create the order
