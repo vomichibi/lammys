@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { Facebook, Instagram, Mail, Phone, MapPin } from 'lucide-react';
 
 const Footer = () => {
+  const currentYear = new Date().getFullYear();
+
   return (
     <footer className="bg-gray-900 text-gray-300">
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
@@ -14,14 +16,14 @@ const Footer = () => {
             <div className="space-y-3">
               <div className="flex items-center">
                 <Phone className="h-5 w-5 mr-2" />
-                <a href="tel:+61893712344" className="hover:text-white">
-                  (08) 9371 2344
+                <a href="tel:+61483876223" className="hover:text-white">
+                  0483 876 223
                 </a>
               </div>
               <div className="flex items-center">
                 <Mail className="h-5 w-5 mr-2" />
-                <a href="mailto:info@lammys.com.au" className="hover:text-white">
-                  info@lammys.com.au
+                <a href="mailto:team@lammys.au" className="hover:text-white">
+                  team@lammys.au
                 </a>
               </div>
               <div className="flex items-center">
@@ -53,6 +55,16 @@ const Footer = () => {
               <li>
                 <Link href="/contact" className="hover:text-white">
                   Contact
+                </Link>
+              </li>
+              <li>
+                <Link href="/legal/terms" className="hover:text-white">
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link href="/legal/privacy" className="hover:text-white">
+                  Privacy Policy
                 </Link>
               </li>
             </ul>
@@ -90,7 +102,7 @@ const Footer = () => {
         
         {/* Copyright */}
         <div className="border-t border-gray-800 mt-8 pt-8 text-center">
-          <p> {new Date().getFullYear()} Lammy's Multi Services. All rights reserved.</p>
+          <p> {currentYear} Lammy's Multi Services. All rights reserved.</p>
         </div>
       </div>
     </footer>
