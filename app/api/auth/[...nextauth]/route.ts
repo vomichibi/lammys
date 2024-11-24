@@ -3,7 +3,7 @@ import GoogleProvider from "next-auth/providers/google";
 import { ClientAdapter } from "@/lib/auth/client-adapter";
 
 const handler = NextAuth({
-  adapter: ClientAdapter(),
+  adapter: ClientAdapter,
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,

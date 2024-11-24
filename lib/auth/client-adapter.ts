@@ -1,4 +1,4 @@
-import { Adapter } from 'next-auth/adapters';
+import { Adapter, AdapterUser } from 'next-auth/adapters';
 import { db } from '@/lib/firebaseInit';
 import { 
   doc, 
@@ -12,131 +12,172 @@ import {
   getDocs
 } from 'firebase/firestore';
 
-export const ClientAdapter = (): Adapter => {
-  return {
-    async createUser(user) {
-      const userRef = doc(db, 'users', user.email!);
-      const newUser = {
-        email: user.email,
-        name: user.name,
-        image: user.image,
-        emailVerified: user.emailVerified ?? null,
-      };
-      await setDoc(userRef, newUser);
-      return { ...newUser, id: user.email! };
-    },
+interface CreateUserParams {
+  email: string;
+  name?: string | null;
+  image?: string | null;
+  emailVerified?: Date | null;
+}
 
-    async getUser(id) {
-      const userRef = doc(db, 'users', id);
-      const userDoc = await getDoc(userRef);
-      if (!userDoc.exists()) return null;
-      const userData = userDoc.data();
-      return {
-        ...userData,
-        id,
-        emailVerified: userData.emailVerified ?? null,
-      };
-    },
+class FirebaseClientAdapter implements Adapter {
+  constructor() {
+    // Bind methods to ensure 'this' context
+    this.createUser = this.createUser.bind(this);
+    this.getUser = this.getUser.bind(this);
+    this.getUserByEmail = this.getUserByEmail.bind(this);
+    this.getUserByAccount = this.getUserByAccount.bind(this);
+    this.updateUser = this.updateUser.bind(this);
+    this.deleteUser = this.deleteUser.bind(this);
+    this.linkAccount = this.linkAccount.bind(this);
+    this.unlinkAccount = this.unlinkAccount.bind(this);
+    this.getSessionAndUser = this.getSessionAndUser.bind(this);
+    this.createSession = this.createSession.bind(this);
+    this.updateSession = this.updateSession.bind(this);
+    this.deleteSession = this.deleteSession.bind(this);
+  }
 
-    async getUserByEmail(email) {
-      const userRef = doc(db, 'users', email);
-      const userDoc = await getDoc(userRef);
-      if (!userDoc.exists()) return null;
-      const userData = userDoc.data();
-      return {
-        ...userData,
-        id: email,
-        emailVerified: userData.emailVerified ?? null,
-      };
-    },
+  async createUser(user: CreateUserParams): Promise<AdapterUser> {
+    const userRef = doc(db, 'users', user.email);
+    const newUser: AdapterUser = {
+      id: user.email,
+      email: user.email,
+      name: user.name || undefined,
+      image: user.image || undefined,
+      emailVerified: user.emailVerified || null,
+    };
+    await setDoc(userRef, {
+      email: newUser.email,
+      name: newUser.name,
+      image: newUser.image,
+      emailVerified: newUser.emailVerified,
+    });
+    return newUser;
+  }
 
-    async getUserByAccount({ providerAccountId, provider }) {
-      const accountsRef = collection(db, 'accounts');
-      const q = query(
-        accountsRef, 
-        where('provider', '==', provider),
-        where('providerAccountId', '==', providerAccountId)
-      );
-      
-      const querySnapshot = await getDocs(q);
-      if (querySnapshot.empty) return null;
-      
-      const accountData = querySnapshot.docs[0].data();
-      return this.getUser(accountData.userId);
-    },
+  async getUser(id: string): Promise<AdapterUser | null> {
+    const userRef = doc(db, 'users', id);
+    const userDoc = await getDoc(userRef);
+    if (!userDoc.exists()) return null;
+    const userData = userDoc.data();
+    return {
+      id,
+      email: userData.email,
+      name: userData.name || undefined,
+      image: userData.image || undefined,
+      emailVerified: userData.emailVerified || null,
+    };
+  }
 
-    async updateUser(user) {
-      const userRef = doc(db, 'users', user.id);
-      const updates = {
-        name: user.name,
-        email: user.email,
-        image: user.image,
-        emailVerified: user.emailVerified ?? null,
-      };
-      await updateDoc(userRef, updates);
-      return { ...updates, id: user.id };
-    },
+  async getUserByEmail(email: string): Promise<AdapterUser | null> {
+    const userRef = doc(db, 'users', email);
+    const userDoc = await getDoc(userRef);
+    if (!userDoc.exists()) return null;
+    const userData = userDoc.data();
+    return {
+      id: email,
+      email: userData.email,
+      name: userData.name || undefined,
+      image: userData.image || undefined,
+      emailVerified: userData.emailVerified || null,
+    };
+  }
 
-    async linkAccount(account) {
-      const accountId = `${account.provider}_${account.providerAccountId}`;
-      const accountRef = doc(db, 'accounts', accountId);
-      await setDoc(accountRef, {
-        ...account,
-        userId: account.userId,
-      });
-      return account;
-    },
+  async getUserByAccount({ providerAccountId, provider }: { providerAccountId: string; provider: string }): Promise<AdapterUser | null> {
+    const accountsRef = collection(db, 'accounts');
+    const q = query(
+      accountsRef,
+      where('providerAccountId', '==', providerAccountId),
+      where('provider', '==', provider)
+    );
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.empty) return null;
 
-    async createSession(session) {
-      const sessionRef = doc(db, 'sessions', session.sessionToken);
-      await setDoc(sessionRef, {
-        userId: session.userId,
-        expires: session.expires.toISOString(),
-      });
-      return session;
-    },
+    const accountDoc = querySnapshot.docs[0];
+    const userData = accountDoc.data();
+    if (!userData || !userData.userId) return null;
+    
+    return this.getUser(userData.userId);
+  }
 
-    async getSessionAndUser(sessionToken) {
-      const sessionRef = doc(db, 'sessions', sessionToken);
-      const sessionDoc = await getDoc(sessionRef);
-      if (!sessionDoc.exists()) return null;
+  async updateUser(user: Partial<AdapterUser> & { id: string }): Promise<AdapterUser> {
+    const userRef = doc(db, 'users', user.id);
+    const updates = {
+      email: user.email,
+      name: user.name,
+      image: user.image,
+      emailVerified: user.emailVerified || null,
+    };
+    await updateDoc(userRef, updates);
+    const updatedUser = await getDoc(userRef);
+    const userData = updatedUser.data();
+    return {
+      id: user.id,
+      email: userData.email,
+      name: userData.name || undefined,
+      image: userData.image || undefined,
+      emailVerified: userData.emailVerified || null,
+    };
+  }
 
-      const session = sessionDoc.data();
-      const user = await this.getUser(session.userId);
-      if (!user) return null;
+  async deleteUser(userId: string): Promise<void> {
+    const userRef = doc(db, 'users', userId);
+    await deleteDoc(userRef);
+  }
 
-      return {
-        session: {
-          ...session,
-          expires: new Date(session.expires),
-          sessionToken,
-          userId: session.userId,
-        },
-        user,
-      };
-    },
+  async linkAccount(account: any): Promise<void> {
+    const accountRef = doc(db, 'accounts', `${account.provider}_${account.providerAccountId}`);
+    await setDoc(accountRef, {
+      ...account,
+      userId: account.userId,
+    });
+  }
 
-    async updateSession(session) {
-      const sessionRef = doc(db, 'sessions', session.sessionToken);
-      const updates = {
-        expires: session.expires.toISOString(),
-      };
-      await updateDoc(sessionRef, updates);
-      return {
+  async unlinkAccount({ providerAccountId, provider }): Promise<void> {
+    const accountRef = doc(db, 'accounts', `${provider}_${providerAccountId}`);
+    await deleteDoc(accountRef);
+  }
+
+  async createSession({ sessionToken, userId, expires }): Promise<any> {
+    const sessionRef = doc(db, 'sessions', sessionToken);
+    const session = { sessionToken, userId, expires };
+    await setDoc(sessionRef, session);
+    return session;
+  }
+
+  async getSessionAndUser(sessionToken: string): Promise<any> {
+    const sessionRef = doc(db, 'sessions', sessionToken);
+    const sessionDoc = await getDoc(sessionRef);
+    if (!sessionDoc.exists()) return null;
+
+    const session = sessionDoc.data();
+    const user = await this.getUser(session.userId);
+    if (!user) return null;
+
+    return {
+      session: {
         ...session,
-        expires: new Date(updates.expires),
-      };
-    },
+        expires: session.expires,
+      },
+      user,
+    };
+  }
 
-    async deleteSession(sessionToken) {
-      const sessionRef = doc(db, 'sessions', sessionToken);
-      await deleteDoc(sessionRef);
-    },
+  async updateSession({ sessionToken }: { sessionToken: string }): Promise<any> {
+    const sessionRef = doc(db, 'sessions', sessionToken);
+    const sessionDoc = await getDoc(sessionRef);
+    if (!sessionDoc.exists()) return null;
 
-    async unlinkAccount({ providerAccountId, provider }) {
-      const accountId = `${provider}_${providerAccountId}`;
-      const accountRef = doc(db, 'accounts', accountId);
-      await deleteDoc(accountRef);
-    },
-  };
-};
+    const session = sessionDoc.data();
+    const expires = session.expires;
+
+    await updateDoc(sessionRef, { expires });
+    return { sessionToken, userId: session.userId, expires };
+  }
+
+  async deleteSession(sessionToken: string): Promise<void> {
+    const sessionRef = doc(db, 'sessions', sessionToken);
+    await deleteDoc(sessionRef);
+  }
+}
+
+export const ClientAdapter = new FirebaseClientAdapter();

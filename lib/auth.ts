@@ -14,7 +14,7 @@ interface User {
   email: string;
   name?: string;
   password: string;
-  role?: string;
+  role?: 'user' | 'admin';
 }
 
 export const authOptions: NextAuthOptions = {
@@ -57,7 +57,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name || '',
           isAdmin: adminEmails.includes(user.email),
-          role: user.role || 'user'
+          role: (user.role || 'user') as 'user' | 'admin'
         };
       },
     }),
@@ -71,7 +71,7 @@ export const authOptions: NextAuthOptions = {
     error: '/auth/error',
   },
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ user }) {
       try {
         if (user.email) {
           await createUser({
@@ -88,24 +88,16 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.isAdmin = adminEmails.includes(token.email || '');
-        token.role = user.role || 'user';
+        token.role = (user.role || 'user') as 'user' | 'admin';
       }
       return token;
     },
     async session({ session, token }) {
       if (session?.user) {
         session.user.isAdmin = token.isAdmin as boolean;
-        session.user.role = token.role as string;
+        session.user.role = token.role as 'user' | 'admin';
       }
       return session;
     },
-    async redirect({ url, baseUrl }) {
-      if (url.startsWith(baseUrl)) {
-        if (url.includes('/login') || url === baseUrl) {
-          return token?.isAdmin ? `${baseUrl}/admindash/dashboard` : `${baseUrl}/dashboard`;
-        }
-      }
-      return url;
-    }
   },
 };
