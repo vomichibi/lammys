@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
+import { hash } from 'bcryptjs';
+import { db } from '@/lib/firebaseAdmin';
 
-// Temporary user store (replace with database in production)
-let users: any[] = [];
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
   try {
@@ -17,7 +18,10 @@ export async function POST(req: Request) {
     }
 
     // Check if user already exists
-    if (users.find(user => user.email === email)) {
+    const userRef = db.collection('users').doc(email);
+    const userDoc = await userRef.get();
+
+    if (userDoc.exists) {
       return NextResponse.json(
         { message: 'User already exists' },
         { status: 400 }
@@ -25,17 +29,19 @@ export async function POST(req: Request) {
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await hash(password, 10);
 
-    // Create user (in memory for now)
+    // Create user in Firestore
     const newUser = {
-      id: String(users.length + 1),
+      id: email, // Using email as ID for simplicity
       name,
       email,
       password: hashedPassword,
+      role: 'user', // Default role
+      createdAt: new Date().toISOString()
     };
 
-    users.push(newUser);
+    await userRef.set(newUser);
 
     // Return success response (exclude password)
     const { password: _, ...userWithoutPassword } = newUser;
