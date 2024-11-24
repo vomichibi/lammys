@@ -8,23 +8,18 @@ const KeyCuttingPage = () => {
   const services = [
     {
       icon: <Key className="w-6 h-6" />,
-      title: "Precision Cutting",
-      description: "High-precision key cutting for all types of keys using state-of-the-art equipment"
-    },
-    {
-      icon: <Shield className="w-6 h-6" />,
-      title: "Security Keys",
-      description: "Cutting of high-security and restricted key systems with proper authorization"
+      title: "House Key Cutting",
+      description: "Precise cutting of basic house keys using reliable equipment"
     },
     {
       icon: <Clock className="w-6 h-6" />,
       title: "Quick Service",
-      description: "Most keys cut while you wait - typically under 10 minutes"
+      description: "Keys cut while you wait - typically under 10 minutes"
     },
     {
-      icon: <Lock className="w-6 h-6" />,
-      title: "Wide Selection",
-      description: "Extensive range of key blanks for residential, commercial, and automotive use"
+      icon: <Shield className="w-6 h-6" />,
+      title: "Quality Assurance",
+      description: "Each key is tested to ensure proper function before handover"
     },
     {
       icon: <CreditCard className="w-6 h-6" />,
@@ -35,47 +30,23 @@ const KeyCuttingPage = () => {
 
   const keyTypes = [
     {
-      category: "Residential",
+      category: "House Keys We Cut",
       types: [
-        "House keys",
-        "Apartment keys",
-        "Mailbox keys",
-        "Gate keys",
-        "Garage door keys",
-        "Window lock keys"
-      ]
-    },
-    {
-      category: "Automotive",
-      types: [
-        "Car keys",
-        "Motorcycle keys",
-        "Van keys",
-        "Truck keys",
-        "Boat keys",
-        "Transponder keys"
-      ]
-    },
-    {
-      category: "Commercial",
-      types: [
-        "Office keys",
-        "Cabinet keys",
-        "Safe keys",
-        "Filing cabinet keys",
-        "Master key systems",
-        "Restricted keys"
+        "Standard house door keys",
+        "Basic deadbolt keys",
+        "Common residential keys",
+        "Basic mailbox keys",
+        "Simple gate keys"
       ]
     }
   ]
 
   const features = [
-    "Latest key cutting technology",
-    "Experienced technicians",
+    "Reliable key cutting equipment",
+    "Experienced service",
     "Quality guarantee",
-    "Wide range of key blanks",
-    "Duplicate key testing",
-    "Key matching service"
+    "Key testing included",
+    "Affordable prices"
   ]
 
   return (
@@ -93,123 +64,69 @@ const KeyCuttingPage = () => {
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Professional Key Cutting Services</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">House Key Cutting Service</h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Fast, accurate, and reliable key cutting service for all your needs. From simple house keys
-            to complex security systems, we've got you covered.
+            Quick and reliable key cutting service for your basic house keys. We ensure accurate cuts and test each key for proper function.
           </p>
         </div>
       </div>
 
       {/* Services Grid */}
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div className="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
           {services.map((service, index) => (
-            <div key={index} className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="p-3 bg-blue-100 rounded-full text-blue-600">
-                  {service.icon}
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900">{service.title}</h3>
-              </div>
+            <div key={index} className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+              <div className="text-blue-600 mb-4">{service.icon}</div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">{service.title}</h3>
               <p className="text-gray-600">{service.description}</p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Key Types */}
-      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">Types of Keys We Cut</h2>
-          <div className="grid gap-8 grid-cols-1 md:grid-cols-3">
-            {keyTypes.map((type, index) => (
-              <div key={index} className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">{type.category}</h3>
-                <ul className="space-y-2">
-                  {type.types.map((keyType, keyIndex) => (
-                    <li key={keyIndex} className="flex items-center gap-2 text-gray-700">
-                      <Key className="w-4 h-4 text-blue-600" />
-                      {keyType}
-                    </li>
-                  ))}
-                </ul>
+      {/* Key Types Section */}
+      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8 bg-white shadow-md rounded-lg">
+        <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Available Key Types</h2>
+        <div className="grid grid-cols-1 gap-8">
+          {keyTypes.map((category, index) => (
+            <div key={index} className="bg-gray-50 p-6 rounded-lg">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">{category.category}</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {category.types.map((type, typeIndex) => (
+                  <div key={typeIndex} className="flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                    <span className="text-gray-700">{type}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Features */}
+      {/* Features List */}
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div className="bg-blue-50 rounded-lg p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Why Choose Our Key Cutting Service?</h2>
-          <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {features.map((feature, index) => (
-              <div key={index} className="flex items-center gap-2 text-gray-700">
-                <CheckCircle2 className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                <span>{feature}</span>
-              </div>
-            ))}
-          </div>
+        <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Why Choose Our Service</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {features.map((feature, index) => (
+            <div key={index} className="flex items-center gap-3">
+              <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+              <span className="text-gray-700">{feature}</span>
+            </div>
+          ))}
         </div>
       </div>
 
       {/* CTA Section */}
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8 text-center">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Need Keys Cut?</h2>
-        <p className="text-gray-600 mb-8">
-          Visit our store today for fast, professional key cutting service.
-          No appointment necessary for most key types.
+        <h2 className="text-3xl font-bold text-gray-900 mb-4">Need a Key Cut?</h2>
+        <p className="text-xl text-gray-600 mb-8">
+          Visit us today for quick and reliable house key cutting service.
         </p>
-        <div className="flex gap-4 justify-center">
-          <Button asChild>
-            <Link href="/contact">Visit Store</Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link href="/contact">Contact Us</Link>
-          </Button>
-        </div>
+        <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg">
+          <Link href="/contact">Contact Us</Link>
+        </Button>
       </div>
-
-      {/* Footer */}
-      <footer className="bg-slate-900 text-slate-300 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-4">Contact Us</h3>
-              <div className="space-y-2">
-                <p>123 High Street</p>
-                <p>Birmingham, B1 1AA</p>
-                <p>Phone: 0121 XXX XXXX</p>
-                <p>Email: info@lammys.co.uk</p>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-4">Quick Links</h3>
-              <ul className="space-y-2">
-                <li><Link href="/services" className="hover:text-white">All Services</Link></li>
-                <li><Link href="/booking" className="hover:text-white">Book Appointment</Link></li>
-                <li><Link href="/contact" className="hover:text-white">Find Us</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-4">Business Hours</h3>
-              <div className="space-y-2">
-                <p>Monday - Friday: 9:00 AM - 6:00 PM</p>
-                <p>Saturday: 9:00 AM - 5:00 PM</p>
-                <p>Sunday: Closed</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-slate-800 mt-8 pt-8 text-center">
-            <p>&copy; {new Date().getFullYear()} Lammy's. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
     </div>
   )
 }
