@@ -1,4 +1,4 @@
-import { Adapter, AdapterUser } from 'next-auth/adapters';
+import { Adapter, AdapterUser, AdapterSession } from 'next-auth/adapters';
 import { db } from '@/lib/firebaseInit';
 import { 
   doc, 
@@ -59,6 +59,9 @@ class FirebaseClientAdapter implements Adapter {
     const userDoc = await getDoc(userRef);
     if (!userDoc.exists()) return null;
     const userData = userDoc.data();
+    
+    if (!userData) return null;
+
     return {
       id,
       email: userData.email,
@@ -73,6 +76,9 @@ class FirebaseClientAdapter implements Adapter {
     const userDoc = await getDoc(userRef);
     if (!userDoc.exists()) return null;
     const userData = userDoc.data();
+    
+    if (!userData) return null;
+
     return {
       id: email,
       email: userData.email,
@@ -110,6 +116,11 @@ class FirebaseClientAdapter implements Adapter {
     await updateDoc(userRef, updates);
     const updatedUser = await getDoc(userRef);
     const userData = updatedUser.data();
+    
+    if (!userData) {
+      throw new Error('User data not found after update');
+    }
+
     return {
       id: user.id,
       email: userData.email,
@@ -132,46 +143,52 @@ class FirebaseClientAdapter implements Adapter {
     });
   }
 
-  async unlinkAccount({ providerAccountId, provider }): Promise<void> {
+  async unlinkAccount({ providerAccountId, provider }: { providerAccountId: string; provider: string }): Promise<void> {
     const accountRef = doc(db, 'accounts', `${provider}_${providerAccountId}`);
     await deleteDoc(accountRef);
   }
 
-  async createSession({ sessionToken, userId, expires }): Promise<any> {
+  async createSession({ sessionToken, userId, expires }: { sessionToken: string; userId: string; expires: Date }): Promise<AdapterSession> {
     const sessionRef = doc(db, 'sessions', sessionToken);
-    const session = { sessionToken, userId, expires };
+    const session = {
+      sessionToken,
+      userId,
+      expires,
+    };
     await setDoc(sessionRef, session);
     return session;
   }
 
-  async getSessionAndUser(sessionToken: string): Promise<any> {
+  async getSessionAndUser(sessionToken: string): Promise<{ session: AdapterSession; user: AdapterUser } | null> {
     const sessionRef = doc(db, 'sessions', sessionToken);
     const sessionDoc = await getDoc(sessionRef);
     if (!sessionDoc.exists()) return null;
 
-    const session = sessionDoc.data();
+    const session = sessionDoc.data() as AdapterSession;
     const user = await this.getUser(session.userId);
     if (!user) return null;
 
     return {
-      session: {
-        ...session,
-        expires: session.expires,
-      },
+      session,
       user,
     };
   }
 
-  async updateSession({ sessionToken }: { sessionToken: string }): Promise<any> {
-    const sessionRef = doc(db, 'sessions', sessionToken);
+  async updateSession(
+    session: Partial<AdapterSession> & Pick<AdapterSession, "sessionToken">
+  ): Promise<AdapterSession | null> {
+    const sessionRef = doc(db, 'sessions', session.sessionToken);
     const sessionDoc = await getDoc(sessionRef);
     if (!sessionDoc.exists()) return null;
 
-    const session = sessionDoc.data();
-    const expires = session.expires;
-
-    await updateDoc(sessionRef, { expires });
-    return { sessionToken, userId: session.userId, expires };
+    const updates = {
+      ...session,
+      ...(session.expires && { expires: session.expires }),
+    };
+    
+    await updateDoc(sessionRef, updates);
+    const updatedSession = await getDoc(sessionRef);
+    return updatedSession.data() as AdapterSession;
   }
 
   async deleteSession(sessionToken: string): Promise<void> {
