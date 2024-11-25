@@ -66,9 +66,6 @@ export function LandingPageComponent() {
                       </div>
                       <p className="ml-4 text-base sm:text-lg font-medium text-gray-900">Dry Cleaning</p>
                     </dt>
-                    <dd className="text-sm sm:text-base text-gray-500">
-                      Professional dry cleaning services for all your garments, ensuring they look their best.
-                    </dd>
                   </div>
                 </Link>
 
@@ -80,9 +77,6 @@ export function LandingPageComponent() {
                       </div>
                       <p className="ml-4 text-base sm:text-lg font-medium text-gray-900">Alterations</p>
                     </dt>
-                    <dd className="text-sm sm:text-base text-gray-500">
-                      Expert tailoring and alterations to ensure your clothes fit perfectly.
-                    </dd>
                   </div>
                 </Link>
 
@@ -94,9 +88,6 @@ export function LandingPageComponent() {
                       </div>
                       <p className="ml-4 text-base sm:text-lg font-medium text-gray-900">Key Cutting</p>
                     </dt>
-                    <dd className="text-sm sm:text-base text-gray-500">
-                      Quick and accurate key cutting services for all your duplication needs.
-                    </dd>
                   </div>
                 </Link>
               </dl>
@@ -113,10 +104,7 @@ export function LandingPageComponent() {
                   About Us
                 </h2>
                 <p className="mt-3 max-w-3xl text-lg text-gray-500">
-                  At Lammy's, we've been serving our community for over 20 years. Our commitment to quality service and customer satisfaction has made us the go-to place for dry cleaning, alterations, and key cutting.
-                </p>
-                <p className="mt-3 max-w-3xl text-lg text-gray-500">
-                  We use eco-friendly cleaning methods and employ skilled professionals to ensure your items are treated with the utmost care.
+                  At Lammy's, our commitment to quality service and customer satisfaction has made us the go-to place for dry cleaning, alterations, and key cutting.
                 </p>
               </div>
               <div className="mt-8 lg:mt-0">
@@ -145,7 +133,7 @@ export function LandingPageComponent() {
             <TestimonialCarousel
               testimonials={[
                 {
-                  text: "Very reasonable prices. Reliable and will get an item altered with little turn around time if it's urgent. Highly recommended! 🤩",
+                  text: "Very reasonable prices. Reliable and will get an item altered with little turn around time if it's urgent. Highly recommended! ",
                   author: "Jennie Collins",
                   role: "Google Review"
                 },
