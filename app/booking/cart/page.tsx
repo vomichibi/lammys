@@ -2,12 +2,12 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { useSession } from 'next-auth/react'
+import { useAuth } from 'firebase/auth'
 import { useCartStore } from '@/store/cartStore'
 
 export default function CartPage() {
   const router = useRouter()
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const { 
     items, 
     removeItem, 
@@ -36,15 +36,15 @@ export default function CartPage() {
     let mounted = true;
 
     const initCart = async () => {
-      if (!session?.user?.email) return;
+      if (!user?.email) return;
       
       try {
         setIsInitializing(true);
-        await initializeCart(session.user.email);
+        await initializeCart(user.email);
         
         if (mounted) {
-          await loadFromFirestore(session.user.email);
-          await syncWithFirestore(session.user.email);
+          await loadFromFirestore(user.email);
+          await syncWithFirestore(user.email);
         }
       } catch (error) {
         console.error('Error initializing/loading cart:', error);
@@ -63,14 +63,14 @@ export default function CartPage() {
     return () => {
       mounted = false;
     };
-  }, [session?.user?.email]);
+  }, [user?.email]);
 
   const handleRemoveItem = async (id: string) => {
-    if (!session?.user?.email) return;
+    if (!user?.email) return;
     
     try {
       await removeItem(id);
-      await syncWithFirestore(session.user.email);
+      await syncWithFirestore(user.email);
     } catch (error) {
       console.error('Error removing item:', error);
       setError('Failed to remove item. Please try again.');
@@ -78,14 +78,14 @@ export default function CartPage() {
   }
 
   const handleUpdateQuantity = async (id: string, change: number) => {
-    if (!session?.user?.email) return;
+    if (!user?.email) return;
 
     const item = items.find(item => item.id === id)
     if (item) {
       const newQuantity = Math.max(1, item.quantity + change)
       try {
         await updateQuantity(id, newQuantity);
-        await syncWithFirestore(session.user.email);
+        await syncWithFirestore(user.email);
       } catch (error) {
         console.error('Error updating quantity:', error);
         setError('Failed to update quantity. Please try again.');
@@ -94,7 +94,7 @@ export default function CartPage() {
   }
 
   const handleCheckout = async () => {
-    if (!session?.user?.email) {
+    if (!user?.email) {
       router.push('/api/auth/signin');
       return;
     }
@@ -112,7 +112,7 @@ export default function CartPage() {
     }
   };
 
-  if (!session) {
+  if (!user) {
     return (
       <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
@@ -244,7 +244,7 @@ export default function CartPage() {
                 <span className="text-lg font-medium">Total:</span>
                 <span className="text-2xl font-semibold">${total.toFixed(2)}</span>
               </div>
-　　 　 　 　
+　　 　　 　 　　 　
               <div className="flex justify-end space-x-4">
                 <button
                   onClick={() => router.push('/booking')}

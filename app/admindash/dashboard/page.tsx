@@ -1,23 +1,20 @@
-'use client';
-
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import AdminDashboard from '../dashboard';
+import { useAuth } from '@/hooks/useAuth';
+import AdminDashboard from './AdminDashboard';
 
 export default function AdminDashboardPage() {
-  const { data: session, status } = useSession();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
+    if (!loading && !user) {
       router.push('/login');
-    } else if (session?.user && !session.user.isAdmin) {
+    } else if (user && !user.isAdmin) {
       router.push('/dashboard');
     }
-  }, [status, session, router]);
+  }, [loading, user, router]);
 
-  if (status === 'loading') {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
