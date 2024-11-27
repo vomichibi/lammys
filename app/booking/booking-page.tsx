@@ -294,7 +294,7 @@ const BookingPageComponent = () => {
                   </div>
                 )}
               </div>
-　
+　　 　 　 　
               {/* Clothing Items */}
               <div className="mb-6">
                 <h4 className="text-md font-medium mb-3">Clothing Items</h4>
@@ -414,3 +414,12 @@ const BookingPageComponent = () => {
                   </div>
                 )}
               </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default BookingPageComponent;
