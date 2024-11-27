@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
-import { useSession } from 'next-auth/react'
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/hooks/useAuth'
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore'
+import { db } from '@/firebase-config'
 import { formatDate } from '@/lib/utils/date'
 import {
   Table,
@@ -13,20 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-
-// Mock data - Replace with actual data fetching
-const orders = {
-  current: [
-    { id: '1', customer: 'John Doe', service: 'Dry Cleaning', status: 'In Progress', date: '2024-01-15', total: '$45.00' },
-    { id: '2', customer: 'Sarah Smith', service: 'Laundry', status: 'Processing', date: '2024-01-15', total: '$32.00' },
-    { id: '3', customer: 'Mike Brown', service: 'Alterations', status: 'Pending', date: '2024-01-14', total: '$28.00' },
-  ],
-  completed: [
-    { id: '4', customer: 'Emma Wilson', service: 'Dry Cleaning', status: 'Completed', date: '2024-01-13', total: '$55.00' },
-    { id: '5', customer: 'James Miller', service: 'Laundry', status: 'Completed', date: '2024-01-12', total: '$42.00' },
-    { id: '6', customer: 'Lisa Anderson', service: 'Alterations', status: 'Completed', date: '2024-01-11', total: '$35.00' },
-  ]
-}
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 const getStatusStyle = (status: string) => {
   switch (status.toLowerCase()) {
@@ -75,10 +64,42 @@ const OrdersTable = ({ orders }: { orders: any[] }) => (
 )
 
 export default function OrdersPage() {
-  const { data: session, status } = useSession()
-  const [activeTab, setActiveTab] = useState('current')
+  const router = useRouter()
+  const { user } = useAuth()
+  const [orders, setOrders] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  if (status === 'loading') {
+  useEffect(() => {
+    if (!user) {
+      router.push('/login')
+      return
+    }
+
+    const fetchOrders = async () => {
+      try {
+        const ordersRef = collection(db, 'orders')
+        const q = query(ordersRef, where('userId', '==', user.uid), orderBy('createdAt', 'desc'))
+        const querySnapshot = await getDocs(q)
+        
+        const ordersData = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }))
+        
+        setOrders(ordersData)
+      } catch (err) {
+        console.error('Error fetching orders:', err)
+        setError('Failed to load orders')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchOrders()
+  }, [user, router])
+
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -86,10 +107,10 @@ export default function OrdersPage() {
     )
   }
 
-  if (!session?.user?.isAdmin) {
+  if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-red-600">Access Denied. Admin privileges required.</div>
+        <div className="text-red-600">{error}</div>
       </div>
     )
   }
@@ -111,10 +132,10 @@ export default function OrdersPage() {
               <TabsTrigger value="completed">Completed Orders</TabsTrigger>
             </TabsList>
             <TabsContent value="current" className="mt-6">
-              <OrdersTable orders={orders.current} />
+              <OrdersTable orders={orders.filter(order => order.status !== 'Completed')} />
             </TabsContent>
             <TabsContent value="completed" className="mt-6">
-              <OrdersTable orders={orders.completed} />
+              <OrdersTable orders={orders.filter(order => order.status === 'Completed')} />
             </TabsContent>
           </Tabs>
         </CardContent>

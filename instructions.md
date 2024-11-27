@@ -88,9 +88,10 @@ This file provides detailed step-by-step instructions for you to help build the 
   - Payments using Stripe.
 
 ### 2. Authentication
-- Install and configure NextAuth.js:
+use firebase auth
+- Install Firebase SDK:
   ```bash
-  npm install next-auth@latest
+  npm install firebase@latest 
   ```
 - Use email/password providers with JWT or session-based authentication.
 

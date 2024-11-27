@@ -1,25 +1,31 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useAuth } from '@/hooks/useAuth';
 import { useCartStore } from '@/store/cartStore';
 import { useOrderStore } from '@/store/orderStore';
-import type { OrderItem } from '@/store/orderStore';
-import type { CartItem } from '@/store/cartStore';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import Link from 'next/link';
+
+interface OrderItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  category: string;
+}
 
 export default function BookingConfirmation() {
-  const { data: session } = useSession();
+  const { user, loading } = useAuth();
   const router = useRouter();
   const { items, completeCart } = useCartStore();
   const { createOrder } = useOrderStore();
 
   useEffect(() => {
     const handleOrderCompletion = async () => {
-      if (session?.user?.email && items.length > 0) {
+      if (!loading && user?.email && items.length > 0) {
         try {
           // Calculate total with proper type handling
           const total = items.reduce<number>(
@@ -33,7 +39,7 @@ export default function BookingConfirmation() {
           );
 
           // Convert cart items to order items with correct price type
-          const orderItems: OrderItem[] = items.map((item: CartItem) => ({
+          const orderItems: OrderItem[] = items.map((item) => ({
             id: item.id,
             name: item.name,
             price: typeof item.price === 'string' 
@@ -45,15 +51,15 @@ export default function BookingConfirmation() {
 
           // Create the order
           await createOrder({
-            userId: session.user.email,
-            userEmail: session.user.email,
+            userId: user.email,
+            userEmail: user.email,
             items: orderItems,
             status: 'pending',
             total: parseFloat(total.toFixed(2)) // Ensure total is a number with 2 decimal places
           });
 
           // Complete the cart
-          await completeCart(session.user.email, session.user.email);
+          await completeCart(user.email, user.email);
         } catch (error) {
           console.error('Error completing order:', error);
         }
@@ -61,7 +67,7 @@ export default function BookingConfirmation() {
     };
 
     handleOrderCompletion();
-  }, [session, items, createOrder, completeCart]);
+  }, [loading, user, items, createOrder, completeCart]);
 
   const formatPrice = (price: string | number): string => {
     const numericPrice = typeof price === 'string' 
@@ -69,6 +75,14 @@ export default function BookingConfirmation() {
       : price;
     return numericPrice.toFixed(2);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
@@ -94,7 +108,7 @@ export default function BookingConfirmation() {
             Booking Confirmed!
           </h2>
           <p className="text-gray-600 mb-4">
-            Thank you for choosing Lammy&apos;s Dry Cleaning. We have received your booking
+            Thank you for choosing Lammy's Dry Cleaning. We have received your booking
             and will send you a confirmation email shortly.
           </p>
           

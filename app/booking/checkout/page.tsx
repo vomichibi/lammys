@@ -1,42 +1,42 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { useCartStore } from '@/store/cartStore';
 import { loadStripe } from '@stripe/stripe-js';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { formatDate } from '@/lib/utils/date';
 
-// Initialize Stripe
+const auth = getAuth();
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 export default function CheckoutPage() {
-  const { data: session } = useSession();
   const router = useRouter();
-  const { items, isLoading: cartLoading, initializeCart } = useCartStore();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [user, setUser] = useState(null);
+  const { items, clearCart, isLoading: cartLoading, initializeCart } = useCartStore();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!session) {
-      router.push('/login');
-      return;
-    }
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
 
-    // Initialize cart when session is available
-    if (session.user?.email) {
-      const userId = session.user.email;
+    return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      const userId = user.uid;
       initializeCart(userId).catch((error) => {
         console.error('Failed to initialize cart:', error);
         setError('Failed to load cart data');
       });
     }
-  }, [session, router, initializeCart]);
+  }, [user, initializeCart]);
 
   const handleCheckout = async () => {
-    if (!session?.user?.email) {
+    if (!user) {
       setError('Please log in to checkout');
       return;
     }
@@ -47,8 +47,8 @@ export default function CheckoutPage() {
     }
 
     try {
-      setIsProcessing(true);
-      setError(null);
+      setLoading(true);
+      setError('');
 
       const response = await fetch('/api/checkout', {
         method: 'POST',
@@ -57,7 +57,7 @@ export default function CheckoutPage() {
         },
         body: JSON.stringify({ 
           items,
-          userEmail: session.user.email 
+          userEmail: user.email 
         }),
       });
 
@@ -82,17 +82,17 @@ export default function CheckoutPage() {
       console.error('Checkout error:', err);
       setError(err.message || 'An error occurred during checkout');
     } finally {
-      setIsProcessing(false);
+      setLoading(false);
     }
   };
 
-  if (!session) {
+  if (!user) {
     return null;
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Card className="p-6">
+      <div className="p-6">
         <h1 className="text-2xl font-bold mb-4">Checkout</h1>
         
         {error && (
@@ -103,10 +103,10 @@ export default function CheckoutPage() {
 
         {cartLoading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin" />
+            <div className="h-8 w-8 animate-spin" />
           </div>
         ) : (
-          <>
+          <div>
             {items.length === 0 ? (
               <p className="text-gray-600">Your cart is empty</p>
             ) : (
@@ -129,23 +129,23 @@ export default function CheckoutPage() {
               </div>
             )}
 
-            <Button
+            <button
               onClick={handleCheckout}
-              disabled={isProcessing || items.length === 0}
+              disabled={loading || items.length === 0}
               className="w-full mt-6"
             >
-              {isProcessing ? (
+              {loading ? (
                 <div className="flex items-center justify-center">
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  <div className="h-4 w-4 animate-spin mr-2" />
                   Processing...
                 </div>
               ) : (
                 'Proceed to Payment'
               )}
-            </Button>
-          </>
+            </button>
+          </div>
         )}
-      </Card>
+      </div>
     </div>
   );
 }

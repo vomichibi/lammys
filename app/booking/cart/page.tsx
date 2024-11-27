@@ -2,12 +2,15 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { useAuth } from 'firebase/auth'
+import { useAuth } from '@/hooks/useAuth'
 import { useCartStore } from '@/store/cartStore'
+import { useToast } from '@/components/ui/use-toast'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 
 export default function CartPage() {
+  const { user, loading } = useAuth()
   const router = useRouter()
-  const { user } = useAuth()
   const { 
     items, 
     removeItem, 
@@ -21,116 +24,117 @@ export default function CartPage() {
     initialized,
     checkout 
   } = useCartStore()
+  const { toast } = useToast()
 
   const [isInitializing, setIsInitializing] = useState(true)
   const [isCheckingOut, setIsCheckingOut] = useState(false)
 
-  const total = items.reduce((sum: number, item) => {
-    const price = typeof item.price === 'string' 
-      ? parseFloat(item.price.toString().replace(/[^0-9.]/g, '')) 
-      : item.price
-    return sum + (price * item.quantity)
-  }, 0)
-
   useEffect(() => {
-    let mounted = true;
+    let mounted = true
 
     const initCart = async () => {
-      if (!user?.email) return;
+      if (!user?.email) return
       
       try {
-        setIsInitializing(true);
-        await initializeCart(user.email);
+        setIsInitializing(true)
+        await initializeCart(user.email)
         
         if (mounted) {
-          await loadFromFirestore(user.email);
-          await syncWithFirestore(user.email);
+          await loadFromFirestore(user.email)
+          await syncWithFirestore(user.email)
         }
       } catch (error) {
-        console.error('Error initializing/loading cart:', error);
+        console.error('Error initializing/loading cart:', error)
         if (mounted) {
-          setError('Failed to load cart. Please try again or refresh the page.');
+          setError('Failed to load cart. Please try again or refresh the page.')
         }
       } finally {
         if (mounted) {
-          setIsInitializing(false);
+          setIsInitializing(false)
         }
       }
-    };
+    }
 
-    initCart();
+    initCart()
 
     return () => {
-      mounted = false;
-    };
-  }, [user?.email]);
+      mounted = false
+    }
+  }, [user?.email])
 
   const handleRemoveItem = async (id: string) => {
-    if (!user?.email) return;
+    if (!user?.email) return
     
     try {
-      await removeItem(id);
-      await syncWithFirestore(user.email);
+      await removeItem(id)
+      await syncWithFirestore(user.email)
     } catch (error) {
-      console.error('Error removing item:', error);
-      setError('Failed to remove item. Please try again.');
+      console.error('Error removing item:', error)
+      setError('Failed to remove item. Please try again.')
     }
   }
 
   const handleUpdateQuantity = async (id: string, change: number) => {
-    if (!user?.email) return;
+    if (!user?.email) return
 
     const item = items.find(item => item.id === id)
     if (item) {
       const newQuantity = Math.max(1, item.quantity + change)
       try {
-        await updateQuantity(id, newQuantity);
-        await syncWithFirestore(user.email);
+        await updateQuantity(id, newQuantity)
+        await syncWithFirestore(user.email)
       } catch (error) {
-        console.error('Error updating quantity:', error);
-        setError('Failed to update quantity. Please try again.');
+        console.error('Error updating quantity:', error)
+        setError('Failed to update quantity. Please try again.')
       }
     }
   }
 
   const handleCheckout = async () => {
     if (!user?.email) {
-      router.push('/api/auth/signin');
-      return;
+      router.push('/login')
+      return
     }
 
     try {
-      setIsCheckingOut(true);
-      setError(null);
-      const checkoutUrl = await checkout();
-      window.location.href = checkoutUrl;
+      setIsCheckingOut(true)
+      setError(null)
+      const checkoutUrl = await checkout()
+      window.location.href = checkoutUrl
     } catch (error) {
-      console.error('Checkout error:', error);
-      setError('Failed to start checkout. Please try again.');
+      console.error('Checkout error:', error)
+      setError('Failed to start checkout. Please try again.')
     } finally {
-      setIsCheckingOut(false);
+      setIsCheckingOut(false)
     }
-  };
+  }
 
-  if (!user) {
+  const calculateTotal = () => {
+    return items.reduce((total, item) => {
+      const price = typeof item.price === 'string' 
+        ? parseFloat(item.price.toString().replace(/[^0-9.]/g, '')) 
+        : item.price
+      return total + (price * item.quantity)
+    }, 0)
+  }
+
+  if (loading || isInitializing || isLoading) {
     return (
-      <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center">
-            <h2 className="text-2xl font-semibold text-gray-900">Please sign in to view your cart</h2>
-          </div>
-        </div>
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
       </div>
     )
   }
 
-  if (isInitializing || isLoading) {
+  if (!user) {
     return (
-      <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center">
-            <h2 className="text-2xl font-semibold text-gray-900">Loading cart...</h2>
-          </div>
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Please Sign In</h2>
+          <p className="text-gray-600 mb-4">You need to be signed in to view your cart.</p>
+          <Button onClick={() => router.push('/login')}>
+            Sign In
+          </Button>
         </div>
       </div>
     )
@@ -138,17 +142,12 @@ export default function CartPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center">
-            <h2 className="text-2xl font-semibold text-red-600">{error}</h2>
-            <button 
-              onClick={() => setError(null)}
-              className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Dismiss
-            </button>
-          </div>
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">{error}</h2>
+          <Button onClick={() => setError(null)}>
+            Dismiss
+          </Button>
         </div>
       </div>
     )
@@ -156,117 +155,83 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center">
-            <h2 className="text-2xl font-semibold text-gray-900">Your cart is empty</h2>
-            <p className="mt-4 text-gray-500">Add some items to your cart to get started.</p>
-            <button
-              onClick={() => router.push('/booking')}
-              className="mt-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Continue Shopping
-            </button>
-          </div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Your Cart is Empty</h2>
+          <p className="text-gray-600 mb-4">Add some items to your cart to get started.</p>
+          <Button onClick={() => router.push('/booking')}>
+            Browse Services
+          </Button>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-3xl mx-auto">
-        <div className="bg-white rounded-lg shadow p-6 space-y-6">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-semibold">Your Cart</h1>
-            <button
-              onClick={() => router.back()}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-            >
-              Back to Booking
-            </button>
-          </div>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-8">Your Cart</h1>
 
-          {error && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
-              <p className="text-yellow-800">{error}</p>
-            </div>
-          )}
-
-          <div className="space-y-4">
-            <div className="border-b border-gray-200 pb-4">
-              <h2 className="text-lg font-medium mb-3">Selected Items</h2>
-              <div className="space-y-3">
-                {items.map((item) => (
-                  <div 
-                    key={item.id} 
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+      <div className="grid gap-4">
+        {items.map((item) => (
+          <Card key={item.id} className="p-4">
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="text-lg font-semibold">{item.name}</h3>
+                <p className="text-gray-600">
+                  {item.category} - Quantity: {item.quantity}
+                </p>
+              </div>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleUpdateQuantity(item.id, -1)}
+                    disabled={item.quantity <= 1}
                   >
-                    <div className="flex-1">
-                      <h3 className="font-medium">{item.name}</h3>
-                      <p className="text-sm text-gray-500">
-                        ${typeof item.price === 'number' ? item.price.toFixed(2) : item.price}
-                      </p>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => handleUpdateQuantity(item.id, -1)}
-                          className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100"
-                          disabled={isCheckingOut}
-                        >
-                          -
-                        </button>
-                        <span className="w-8 text-center">{item.quantity}</span>
-                        <button
-                          onClick={() => handleUpdateQuantity(item.id, 1)}
-                          className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100"
-                          disabled={isCheckingOut}
-                        >
-                          +
-                        </button>
-                      </div>
-                      <button
-                        onClick={() => handleRemoveItem(item.id)}
-                        className="text-red-600 hover:text-red-800"
-                        disabled={isCheckingOut}
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                    -
+                  </Button>
+                  <span>{item.quantity}</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleUpdateQuantity(item.id, 1)}
+                  >
+                    +
+                  </Button>
+                </div>
+                <div className="text-right">
+                  <p className="text-lg font-bold">
+                    ${typeof item.price === 'string'
+                      ? parseFloat(item.price.toString().replace(/[^0-9.]/g, '')) * item.quantity
+                      : item.price * item.quantity}
+                  </p>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleRemoveItem(item.id)}
+                  >
+                    Remove
+                  </Button>
+                </div>
               </div>
             </div>
+          </Card>
+        ))}
 
-            <div className="border-t border-gray-200 pt-4">
-              <div className="flex justify-between items-center mb-6">
-                <span className="text-lg font-medium">Total:</span>
-                <span className="text-2xl font-semibold">${total.toFixed(2)}</span>
-              </div>
-　　 　　 　 　　 　
-              <div className="flex justify-end space-x-4">
-                <button
-                  onClick={() => router.push('/booking')}
-                  className="px-6 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-                  disabled={isCheckingOut}
-                >
-                  Continue Shopping
-                </button>
-                <button
-                  onClick={handleCheckout}
-                  disabled={isCheckingOut || items.length === 0}
-                  className={`px-6 py-2 text-sm font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-                    isCheckingOut || items.length === 0
-                      ? 'bg-blue-400 cursor-not-allowed'
-                      : 'bg-blue-600 hover:bg-blue-700'
-                  }`}
-                >
-                  {isCheckingOut ? 'Processing...' : 'Proceed to Checkout'}
-                </button>
-              </div>
-            </div>
+        <div className="mt-8">
+          <div className="flex justify-between items-center mb-4">
+            <span className="text-xl font-semibold">Total:</span>
+            <span className="text-2xl font-bold">${calculateTotal()}</span>
           </div>
+          <Button
+            className="w-full"
+            size="lg"
+            onClick={handleCheckout}
+            disabled={isCheckingOut}
+          >
+            {isCheckingOut ? 'Processing...' : 'Proceed to Checkout'}
+          </Button>
         </div>
       </div>
     </div>

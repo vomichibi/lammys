@@ -1,18 +1,21 @@
-import { useRouter } from 'next/navigation';
+'use client';
+
 import { useAuth } from '@/hooks/useAuth';
-import AdminDashboard from './AdminDashboard';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import AdminDashboard from '@/components/AdminDashboard';
 
 export default function AdminDashboardPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, isAdmin } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
-    } else if (user && !user.isAdmin) {
+    } else if (user && !isAdmin) {
       router.push('/dashboard');
     }
-  }, [loading, user, router]);
+  }, [loading, user, isAdmin, router]);
 
   if (loading) {
     return (

@@ -2,14 +2,14 @@
 
 import { Phone, Mail, MapPin, Clock, Scissors, Key, Shirt } from 'lucide-react'
 import Link from 'next/link'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/hooks/useAuth'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { ParallaxHero } from './components/ParallaxHero'
 import { TestimonialCarousel } from './components/TestimonialCarousel'
 
 export function LandingPageComponent() {
-  const { data: session } = useSession()
+  const { user, loading } = useAuth()
   const router = useRouter()
 
   const handleBookNowClick = (e: React.MouseEvent) => {

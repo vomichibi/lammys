@@ -9,17 +9,13 @@ import {
   BellIcon,
   SearchIcon
 } from 'lucide-react'
-import { useSession, signOut } from 'next-auth/react'
+import { useAuth } from '@/hooks/useAuth'
+import { signOut } from 'firebase/auth'
+import { auth } from '@/lib/firebase'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Link from 'next/link'
-import { createHash } from 'crypto';
-
-const getGravatarUrl = (email: string) => {
-  const hash = createHash('md5').update(email.toLowerCase().trim()).digest('hex');
-  return `https://www.gravatar.com/avatar/${hash}?d=mp`;
-};
 
 const sidebarLinks = [
   { name: 'Dashboard', icon: LayoutDashboardIcon, href: '/admindash/dashboard' },
@@ -33,8 +29,17 @@ export default function OrdersLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth)
+      window.location.href = '/login'
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
+  }
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -65,15 +70,15 @@ export default function OrdersLayout({
             <div className="flex items-center">
               <div>
                 <Avatar>
-                  <AvatarImage src={session?.user?.email ? getGravatarUrl(session.user.email) : ''} />
-                  <AvatarFallback>{session?.user?.name?.[0]}</AvatarFallback>
+                  <AvatarImage src={user?.email ? `https://www.gravatar.com/avatar/${user.email}` : ''} />
+                  <AvatarFallback>{user?.displayName?.[0]}</AvatarFallback>
                 </Avatar>
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-700">{session?.user?.name}</p>
+                <p className="text-sm font-medium text-gray-700">{user?.displayName}</p>
                 <Button 
                   variant="ghost" 
-                  onClick={() => signOut({ callbackUrl: '/login' })}
+                  onClick={handleSignOut}
                   className="text-sm text-gray-500 hover:text-gray-700"
                 >
                   Sign out

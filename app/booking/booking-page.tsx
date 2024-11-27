@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Head from 'next/head'
-import { useSession } from 'next-auth/react'
+import { useAuth } from 'firebase/auth'
 import { useCartStore } from '@/store/cartStore'
 import { formatDate } from '@/lib/utils/date'
 
@@ -21,7 +21,7 @@ interface SelectedItem {
 
 const BookingPageComponent = () => {
   const router = useRouter()
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const { items, addItem, initializeCart, error: cartError } = useCartStore()
 
   const [step, setStep] = useState(1)
@@ -174,7 +174,7 @@ const BookingPageComponent = () => {
   }
 
   const handleAddToCart = async () => {
-    if (!session?.user?.email) {
+    if (!user) {
       router.push('/api/auth/signin');
       return;
     }
@@ -182,7 +182,7 @@ const BookingPageComponent = () => {
     try {
       // Initialize cart if not already initialized
       if (!cartInitialized) {
-        await initializeCart(session.user.email);
+        await initializeCart(user);
         setCartInitialized(true);
       }
 
@@ -209,7 +209,7 @@ const BookingPageComponent = () => {
   };
 
   const handleViewCart = async () => {
-    if (!session?.user?.email) {
+    if (!user) {
       router.push('/api/auth/signin');
       return;
     }
@@ -217,7 +217,7 @@ const BookingPageComponent = () => {
     try {
       // Initialize cart if not already initialized
       if (!cartInitialized) {
-        await initializeCart(session.user.email);
+        await initializeCart(user);
         setCartInitialized(true);
       }
 
@@ -244,12 +244,12 @@ const BookingPageComponent = () => {
   };
 
   useEffect(() => {
-    if (session?.user?.email && !cartInitialized) {
-      initializeCart(session.user.email)
+    if (user && !cartInitialized) {
+      initializeCart(user)
         .then(() => setCartInitialized(true))
         .catch((error) => console.error('Failed to initialize cart:', error));
     }
-  }, [session, cartInitialized]);
+  }, [user, cartInitialized]);
 
   useEffect(() => {
     if (cartError) {
@@ -299,7 +299,7 @@ const BookingPageComponent = () => {
                 )}
               </div>
 　
-　
+
               {/* Clothing Items */}
               <div className="mb-6">
                 <h4 className="text-md font-medium mb-3">Clothing Items</h4>
@@ -419,220 +419,3 @@ const BookingPageComponent = () => {
                   </div>
                 )}
               </div>
-　　 　 　 　
-              <div className="mb-4">
-                <p className="text-sm text-gray-600 italic mb-4">Only normal keys available.</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {keyTypes.map((keyType) => (
-                    <div
-                      key={keyType.id}
-                      className={`p-4 rounded-lg border ${
-                        isItemSelected(keyType.id)
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-blue-300'
-                      }`}
-                    >
-                      <label className="flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={isItemSelected(keyType.id)}
-                          onChange={() => handleItemSelect(keyType.id)}
-                          className="h-4 w-4 text-blue-600 rounded border-gray-300"
-                        />
-                        <span className="ml-3 flex-1">
-                          <span className="block font-medium">{keyType.name}</span>
-                          <span className="block text-sm text-gray-500">
-                            ${keyType.price}
-                          </span>
-                        </span>
-                      </label>
-                      {isItemSelected(keyType.id) && (
-                        <div className="mt-2 flex items-center justify-end space-x-2">
-                          <button
-                            onClick={() => handleQuantityChange(keyType.id, -1)}
-                            className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100"
-                          >
-                            -
-                          </button>
-                          <span className="w-8 text-center">
-                            {getItemQuantity(keyType.id)}
-                          </span>
-                          <button
-                            onClick={() => handleQuantityChange(keyType.id, 1)}
-                            className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100"
-                          >
-                            +
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Navigation Buttons */}
-          <div className="flex justify-between items-center mt-6">
-            <div className="flex items-center space-x-4">
-              {step > 1 && (
-                <button
-                  onClick={() => setStep(step - 1)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-                >
-                  Back
-                </button>
-              )}
-              {selectedItems.length > 0 && (
-                <div className="text-lg font-semibold text-blue-600">
-                  Total: ${calculateTotal.toFixed(2)}
-                </div>
-              )}
-            </div>
-            {selectedItems.length > 0 && (
-              <button
-                onClick={() => setStep(step + 1)}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
-              >
-                Next
-              </button>
-            )}
-          </div>
-
-          {/* Date and Time Selection */}
-          {step === 3 && (
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Select Date</h2>
-              <div className="grid grid-cols-3 gap-4">
-                {[...Array(7)].map((_, i) => {
-                  const date = new Date();
-                  date.setDate(date.getDate() + i);
-                  const dateStr = date.toISOString().split('T')[0];
-                  return (
-                    <button
-                      key={dateStr}
-                      onClick={() => handleDateSelect(dateStr)}
-                      className={`p-4 rounded-lg border ${
-                        selectedDate === dateStr
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-blue-500'
-                      }`}
-                    >
-                      {formatDate(dateStr)}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-          {step === 3 && (
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Select Time</h2>
-              <select
-                onChange={(e) => handleTimeSelect(e.target.value)}
-                className="w-full p-2 border rounded-md"
-              >
-                <option value="">Choose a time</option>
-                {availableTimes.map(time => (
-                  <option key={time} value={time}>
-                    {time.replace(':', ':')} {parseInt(time) < 12 ? 'AM' : 'PM'}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {/* Confirmation */}
-          {step === 4 && (
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-2xl font-semibold mb-4">Review Your Order</h2>
-              <div className="space-y-4">
-                <div className="bg-gray-50 p-4 rounded-md">
-                  <h3 className="text-lg font-medium mb-2">Selected Items:</h3>
-                  <ul className="space-y-2">
-                    {selectedItems.map(selectedItem => {
-                      const item = dryCleaningItems.find(i => i.id === selectedItem.id)
-                      if (!item) {
-                        const keyType = keyTypes.find(i => i.id === selectedItem.id);
-                        if (!keyType) return null;
-                        const itemTotal = keyType.price * selectedItem.quantity;
-                        return (
-                          <li key={selectedItem.id} className="flex justify-between items-center">
-                            <span>
-                              {keyType.name} (Quantity: {selectedItem.quantity})
-                            </span>
-                            <span className="text-gray-600">
-                              ${itemTotal.toFixed(2)}
-                            </span>
-                          </li>
-                        )
-                      }
-                      const itemTotal = getBasePrice(item.price) * selectedItem.quantity;
-                      return (
-                        <li key={selectedItem.id} className="flex justify-between items-center">
-                          <span>
-                            {item.name} (Quantity: {selectedItem.quantity})
-                          </span>
-                          <span className="text-gray-600">
-                            ${itemTotal.toFixed(2)}
-                          </span>
-                        </li>
-                      )
-                    })}
-                  </ul>
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <div className="flex justify-between items-center font-semibold">
-                      <span>Total:</span>
-                      <span className="text-blue-600">${calculateTotal.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-                <p>Date: {formatDate(selectedDate)}</p>
-                <p>Time: {selectedTime}</p>
-
-                {/* Dry Cleaning Disclaimer Checkbox */}
-                {selectedService === 'dry-cleaning' && (
-                  <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-md">
-                    <label className="flex items-start space-x-3">
-                      <input
-                        type="checkbox"
-                        checked={disclaimerAccepted}
-                        onChange={(e) => setDisclaimerAccepted(e.target.checked)}
-                        className="mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
-                      />
-                      <span className="text-sm text-amber-800">
-                        I understand that some stains, such as old stains, bodily fluids, or dye transfers, may not be fully removable during dry cleaning, depending on the fabric and stain type.
-                      </span>
-                    </label>
-                  </div>
-                )}
-
-                <div className="mt-6 flex justify-between items-center">
-                  <button
-                    onClick={() => setStep(3)}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-                  >
-                    Back
-                  </button>
-                  <button
-                    onClick={handleViewCart}
-                    disabled={selectedService === 'dry-cleaning' && !disclaimerAccepted}
-                    className={`px-6 py-2 text-sm font-medium text-white rounded-md ${
-                      selectedService === 'dry-cleaning' && !disclaimerAccepted
-                        ? 'bg-gray-400 cursor-not-allowed'
-                        : 'bg-blue-600 hover:bg-blue-700'
-                    }`}
-                  >
-                    Proceed to Checkout
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-export default BookingPageComponent;

@@ -1,48 +1,78 @@
-'use client';
+'use client'
 
-import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { getAllUsers, User } from '@/lib/userManagement';
+import { useState, useEffect } from 'react'
+import { useAuth } from '@/hooks/useAuth'
+import { useRouter } from 'next/navigation'
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore'
+import { db } from '@/lib/firebase-config'
+
+interface User {
+  id: string;
+  email: string;
+  name?: string;
+  role: string;
+  createdAt: any;
+  lastLoginAt: any;
+}
 
 export default function AdminUsersPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { user, loading, isAdmin } = useAuth()
+  const router = useRouter()
+  const [users, setUsers] = useState<User[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (status === 'loading') return;
+    const fetchUsers = async () => {
+      if (!user || !isAdmin) return;
 
-    if (!session?.user?.role || session.user.role !== 'admin') {
-      router.push('/');
-      return;
+      try {
+        const usersRef = collection(db, 'users')
+        const q = query(
+          usersRef,
+          orderBy('createdAt', 'desc')
+        )
+        const snapshot = await getDocs(q)
+        
+        const usersData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate(),
+          lastLoginAt: doc.data().lastLoginAt?.toDate()
+        })) as User[]
+
+        setUsers(usersData)
+      } catch (error) {
+        setError('Failed to fetch users')
+        console.error('Error fetching users:', error)
+      } finally {
+        setIsLoading(false)
+      }
     }
 
-    const fetchUsers = async () => {
-      try {
-        const allUsers = await getAllUsers();
-        setUsers(allUsers);
-      } catch (err) {
-        setError('Failed to fetch users');
-        console.error('Error fetching users:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    fetchUsers()
+  }, [user, isAdmin])
 
-    fetchUsers();
-  }, [session, status, router]);
-
-  if (loading) {
+  if (loading || isLoading) {
     return (
       <div className="min-h-screen bg-gray-100 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">Loading...</div>
+          <div className="flex justify-center items-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+          </div>
         </div>
       </div>
-    );
+    )
+  }
+
+  if (!user || !isAdmin) {
+    return (
+      <div className="min-h-screen bg-gray-100 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center text-red-600">Access denied. Admin privileges required.</div>
+        </div>
+      </div>
+    )
   }
 
   if (error) {
@@ -52,7 +82,7 @@ export default function AdminUsersPage() {
           <div className="text-center text-red-600">{error}</div>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -100,10 +130,10 @@ export default function AdminUsersPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {new Date(user.createdAt).toLocaleDateString()}
+                        {user.createdAt?.toLocaleDateString() || 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {new Date(user.lastLoginAt).toLocaleDateString()}
+                        {user.lastLoginAt?.toLocaleDateString() || 'Never'}
                       </td>
                     </tr>
                   ))}
@@ -114,5 +144,5 @@ export default function AdminUsersPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }
