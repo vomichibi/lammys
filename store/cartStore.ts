@@ -1,26 +1,28 @@
 'use client';
 
 import { create } from 'zustand';
-import { db } from '@/lib/firebaseInit';
-import type { Firestore } from 'firebase/firestore';
+import { db } from '@/src/firebase';
+import type { CartData } from '@/src/firebase/firestore';
 import {
   collection,
-  getDocs,
   doc,
+  getDoc,
+  getDocs,
   setDoc,
   deleteDoc,
   updateDoc,
-  getDoc,
   query,
   where,
+  serverTimestamp,
 } from 'firebase/firestore';
 
-interface CartItem {
+export interface CartItem {
   id: string;
   name: string;
   price: number | string;
   quantity: number;
-  category: string;
+  service: string;
+  category?: string;
 }
 
 interface CartStore {
@@ -48,25 +50,13 @@ const useCartStore = create<CartStore>((set, get) => ({
   userId: null,
   initialized: false,
 
-  setError: (error: string | null) => set({ error }),
+  setError: (error) => set({ error }),
 
-  initializeCart: async (userId: string) => {
-    if (!userId) {
-      set({ error: 'Invalid user ID' });
-      return;
-    }
+  initializeCart: async (userId) => {
+    set({ isLoading: true, userId });
     try {
-      set({ isLoading: true, userId });
-      const userCartRef = doc(db, 'carts', userId);
-      const cartDoc = await getDoc(userCartRef);
-      
-      if (cartDoc.exists()) {
-        const cartData = cartDoc.data();
-        set({ items: cartData.items || [], initialized: true });
-      } else {
-        await setDoc(userCartRef, { items: [] });
-        set({ items: [], initialized: true });
-      }
+      await get().loadFromFirestore(userId);
+      set({ initialized: true });
     } catch (error) {
       set({ error: 'Failed to initialize cart' });
       console.error('Error initializing cart:', error);
@@ -75,138 +65,139 @@ const useCartStore = create<CartStore>((set, get) => ({
     }
   },
 
-  loadFromFirestore: async (userId: string) => {
-    if (!userId) {
-      set({ error: 'Invalid user ID' });
-      return;
-    }
+  loadFromFirestore: async (userId) => {
     try {
-      set({ isLoading: true });
-      const userCartRef = doc(db, 'carts', userId);
-      const cartDoc = await getDoc(userCartRef);
+      const cartRef = doc(db, 'carts', userId);
+      const cartDoc = await getDoc(cartRef);
       
       if (cartDoc.exists()) {
-        const cartData = cartDoc.data();
-        set({ items: cartData.items || [], initialized: true });
+        const cartData = cartDoc.data() as CartData;
+        set({ items: cartData.items || [] });
+      } else {
+        await setDoc(cartRef, { items: [], updatedAt: serverTimestamp() });
+        set({ items: [] });
       }
     } catch (error) {
-      set({ error: 'Failed to load cart from Firestore' });
+      set({ error: 'Failed to load cart' });
       console.error('Error loading cart:', error);
-    } finally {
-      set({ isLoading: false });
     }
   },
 
-  syncWithFirestore: async (userId: string) => {
-    if (!userId) {
-      set({ error: 'Invalid user ID' });
-      return;
-    }
+  syncWithFirestore: async (userId) => {
+    if (!userId) return;
     try {
-      set({ isLoading: true });
       const { items } = get();
-      const userCartRef = doc(db, 'carts', userId);
-      await setDoc(userCartRef, { items }, { merge: true });
+      const cartRef = doc(db, 'carts', userId);
+      await setDoc(cartRef, {
+        items,
+        updatedAt: serverTimestamp()
+      });
     } catch (error) {
-      set({ error: 'Failed to sync cart with Firestore' });
+      set({ error: 'Failed to sync cart' });
       console.error('Error syncing cart:', error);
-    } finally {
-      set({ isLoading: false });
     }
   },
 
-  addItem: async (item: CartItem) => {
+  addItem: async (item) => {
     const { items, userId } = get();
-    const existingItem = items.find((i) => i.id === item.id);
-
-    if (existingItem) {
-      const updatedItems = items.map((i) =>
-        i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
-      );
-      set({ items: updatedItems });
-    } else {
-      set({ items: [...items, { ...item, quantity: 1 }] });
-    }
-
-    if (userId) {
-      await get().syncWithFirestore(userId);
-    }
-  },
-
-  removeItem: async (itemId: string) => {
-    const { items, userId } = get();
-    set({ items: items.filter((item) => item.id !== itemId) });
+    const existingItem = items.find(i => i.id === item.id);
     
-    if (userId) {
-      await get().syncWithFirestore(userId);
+    let newItems;
+    if (existingItem) {
+      newItems = items.map(i => 
+        i.id === item.id 
+          ? { ...i, quantity: i.quantity + item.quantity }
+          : i
+      );
+    } else {
+      newItems = [...items, item];
     }
+    
+    set({ items: newItems });
+    if (userId) await get().syncWithFirestore(userId);
   },
 
-  updateQuantity: async (itemId: string, quantity: number) => {
+  removeItem: async (itemId) => {
     const { items, userId } = get();
-    if (quantity < 1) {
-      await get().removeItem(itemId);
-      return;
-    }
+    const newItems = items.filter(item => item.id !== itemId);
+    set({ items: newItems });
+    if (userId) await get().syncWithFirestore(userId);
+  },
 
-    const updatedItems = items.map((item) =>
+  updateQuantity: async (itemId, quantity) => {
+    const { items, userId } = get();
+    if (quantity < 1) return;
+
+    const newItems = items.map(item =>
       item.id === itemId ? { ...item, quantity } : item
     );
-    set({ items: updatedItems });
-
-    if (userId) {
-      await get().syncWithFirestore(userId);
-    }
+    
+    set({ items: newItems });
+    if (userId) await get().syncWithFirestore(userId);
   },
 
   clearCart: async () => {
     const { userId } = get();
-    set({ items: [], initialized: false });
-    
+    set({ items: [] });
     if (userId) {
-      const userCartRef = doc(db, 'carts', userId);
-      await setDoc(userCartRef, { items: [] });
+      try {
+        await setDoc(doc(db, 'carts', userId), {
+          items: [],
+          updatedAt: serverTimestamp()
+        });
+      } catch (error) {
+        set({ error: 'Failed to clear cart' });
+        console.error('Error clearing cart:', error);
+      }
     }
   },
 
   checkout: async () => {
     const { items, userId } = get();
-    if (!userId || items.length === 0) {
-      throw new Error('Cannot checkout with empty cart or without user ID');
-    }
+    if (!userId) throw new Error('User not authenticated');
+    if (items.length === 0) throw new Error('Cart is empty');
 
     try {
-      set({ isLoading: true });
-      const response = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ items }),
-      });
+      const orderRef = doc(collection(db, 'orders'));
+      const order = {
+        userId,
+        items,
+        status: 'pending',
+        total: items.reduce((sum, item) => {
+          const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+          return sum + price * item.quantity;
+        }, 0),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
 
-      if (!response.ok) {
-        throw new Error('Checkout failed');
-      }
-
-      const data = await response.json();
-      return data.url;
+      await setDoc(orderRef, order);
+      await get().clearCart();
+      return orderRef.id;
     } catch (error) {
-      console.error('Checkout error:', error);
+      set({ error: 'Checkout failed' });
+      console.error('Error during checkout:', error);
       throw error;
-    } finally {
-      set({ isLoading: false });
     }
   },
 
-  completeCart: async (userId: string, userEmail: string) => {
+  completeCart: async (userId, userEmail) => {
+    const { items } = get();
+    if (items.length === 0) return;
+
     try {
-      set({ isLoading: true });
+      const orderRef = doc(collection(db, 'orders'));
+      await setDoc(orderRef, {
+        userId,
+        userEmail,
+        items,
+        status: 'completed',
+        createdAt: serverTimestamp(),
+      });
       await get().clearCart();
-      set({ isLoading: false });
     } catch (error) {
       set({ error: 'Failed to complete cart' });
-      throw error;
+      console.error('Error completing cart:', error);
     }
   },
 }));
