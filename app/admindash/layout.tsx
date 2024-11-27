@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
-import { collection, doc, getDoc } from 'firebase/firestore'
-import { db } from '@/firebase-config'
+import { db } from '@/src/firebase'
+import { doc, getDoc } from 'firebase/firestore'
 
 export default function AdminDashboardLayout({
   children,
@@ -14,48 +14,39 @@ export default function AdminDashboardLayout({
   const router = useRouter()
   const { user, loading } = useAuth()
   const [isAdmin, setIsAdmin] = useState(false)
+  const [checkingAdmin, setCheckingAdmin] = useState(true)
 
   useEffect(() => {
     const checkAdminStatus = async () => {
       if (!user) {
-        router.push('/login')
+        setCheckingAdmin(false)
         return
       }
 
       try {
-        const userRef = doc(collection(db, 'users'), user.uid)
-        const userDoc = await getDoc(userRef)
-        
-        if (!userDoc.exists() || !userDoc.data()?.isAdmin) {
-          router.push('/dashboard')
-          return
-        }
-
-        setIsAdmin(true)
+        const userDoc = await getDoc(doc(db, 'users', user.uid))
+        const userData = userDoc.data()
+        setIsAdmin(userData?.role === 'admin')
       } catch (error) {
         console.error('Error checking admin status:', error)
-        router.push('/dashboard')
+        setIsAdmin(false)
       }
+      setCheckingAdmin(false)
     }
 
-    checkAdminStatus()
-  }, [user, router])
+    if (!loading) {
+      checkAdminStatus()
+    }
+  }, [user, loading])
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    )
+  if (loading || checkingAdmin) {
+    return <div>Loading...</div>
   }
 
-  if (!isAdmin) {
+  if (!user || !isAdmin) {
+    router.push('/login')
     return null
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {children}
-    </div>
-  )
+  return <>{children}</>
 }

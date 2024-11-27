@@ -1,4 +1,3 @@
-
 ### **LammysPlan.md**
 
 ```markdown
@@ -101,10 +100,152 @@ Lammy’s Dry Cleaning Website is a user-friendly platform designed to streamlin
 
 - **Next.js Framework** for server-side rendering and static generation.
 - **Tailwind CSS** for responsive and clean UI design.
-- **NextAuth.js** for secure user authentication.
+- **Firebase Authentication** for secure user authentication and role management.
 - **Stripe API** for payment processing.
 - **Chart.js/Recharts** for admin dashboard data visualization.
-- **Firebase or MongoDB** for scalable database management.
+- **Firebase** for scalable database management.
+
+---
+
+## Firebase Integration Architecture
+
+### 1. Firebase Services Integration
+- **Authentication**
+  - Email/Password authentication
+  - Role-based access control
+  - Protected routes management
+  - User session handling
+
+- **Firestore Database**
+  - Collections:
+    ```
+    /users
+      |- userId
+         |- profile
+         |- preferences
+         |- role
+    /bookings
+      |- bookingId
+         |- userId
+         |- services
+         |- status
+         |- payment
+    /services
+      |- serviceId
+         |- name
+         |- price
+         |- description
+    /orders
+      |- orderId
+         |- userId
+         |- items
+         |- status
+         |- payment
+    ```
+
+- **Firebase Storage**
+  - User avatars
+  - Service images
+  - Receipt documents
+
+### 2. Project Structure
+```
+src/
+  └── firebase/
+      ├── config.ts        # Firebase configuration
+      ├── auth.ts          # Authentication methods
+      ├── firestore.ts     # Database operations
+      ├── storage.ts       # File storage operations
+      ├── admin.ts         # Admin SDK operations
+      └── index.ts         # Main export file
+```
+
+### 3. Authentication Flow
+1. **User Registration**
+   - Create Firebase Auth account
+   - Create Firestore user document
+   - Set default role and preferences
+
+2. **User Login**
+   - Firebase Auth verification
+   - Fetch user data from Firestore
+   - Initialize user session
+
+3. **Admin Authentication**
+   - Role-based access verification
+   - Admin dashboard access control
+   - Elevated permissions management
+
+### 4. Data Management
+1. **User Data**
+   - Profile management
+   - Order history
+   - Preferences storage
+
+2. **Booking System**
+   - Service selection
+   - Appointment scheduling
+   - Payment processing
+   - Status tracking
+
+3. **Admin Operations**
+   - User management
+   - Order processing
+   - Service management
+   - Analytics tracking
+
+### 5. Security Rules
+```javascript
+// Firestore Rules
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // User profiles
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth.uid == userId;
+    }
+    
+    // Bookings
+    match /bookings/{bookingId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    
+    // Admin access
+    match /{document=**} {
+      allow read, write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+  }
+}
+```
+
+### 6. Environment Configuration
+```
+NEXT_PUBLIC_FIREBASE_API_KEY=
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+NEXT_PUBLIC_FIREBASE_APP_ID=
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=
+FIREBASE_ADMIN_PROJECT_ID=
+FIREBASE_ADMIN_CLIENT_EMAIL=
+FIREBASE_ADMIN_PRIVATE_KEY=
+```
+
+### 7. Performance Optimization
+- Firestore data caching
+- Lazy loading of Firebase services
+- Optimistic UI updates
+- Batch operations for multiple updates
+
+### 8. Monitoring and Analytics
+- Firebase Analytics integration
+- User behavior tracking
+- Error monitoring
+- Performance metrics
 
 ---
 
@@ -117,4 +258,3 @@ Lammy’s Dry Cleaning Website is a user-friendly platform designed to streamlin
 ---
 
 Lammy’s Dry Cleaning Website promises a seamless user experience for customers and administrators, simplifying the process of managing dry cleaning services online.
-```

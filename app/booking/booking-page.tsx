@@ -2,10 +2,9 @@
 
 import React, { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Head from 'next/head'
-import { useAuth } from 'firebase/auth'
+import { useAuth } from '@/src/hooks'
 import { useCartStore } from '@/store/cartStore'
-import { formatDate } from '@/lib/utils/date'
+import { formatDate } from '@/src/utils/date'
 
 interface DryCleaningItem {
   id: string;
@@ -175,42 +174,39 @@ const BookingPageComponent = () => {
 
   const handleAddToCart = async () => {
     if (!user) {
-      router.push('/api/auth/signin');
+      router.push('/login?redirect=/booking');
       return;
     }
 
     try {
-      // Initialize cart if not already initialized
-      if (!cartInitialized) {
-        await initializeCart(user);
-        setCartInitialized(true);
-      }
-
-      // Add selected items to cart with their quantities
-      for (const selectedItem of selectedItems) {
+      const selectedItemsData = selectedItems.map(selectedItem => {
         const item = dryCleaningItems.find(i => i.id === selectedItem.id);
-        if (item) {
-          await addItem({
-            id: item.id,
-            name: item.name,
-            price: item.price,
-            quantity: selectedItem.quantity,
-            category: item.category
-          });
-        }
+        if (!item) throw new Error(`Item not found: ${selectedItem.id}`);
+        
+        return {
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: selectedItem.quantity,
+          service: selectedService,
+          category: item.category
+        };
+      });
+
+      for (const item of selectedItemsData) {
+        await addItem(item);
       }
 
-      // Navigate to cart page
-      router.push('/booking/cart');
+      router.push('/cart');
     } catch (error) {
       console.error('Error adding items to cart:', error);
-      // Handle error appropriately
+      // TODO: Show error toast
     }
   };
 
   const handleViewCart = async () => {
     if (!user) {
-      router.push('/api/auth/signin');
+      router.push('/login?redirect=/booking');
       return;
     }
 
@@ -299,7 +295,6 @@ const BookingPageComponent = () => {
                 )}
               </div>
 　
-
               {/* Clothing Items */}
               <div className="mb-6">
                 <h4 className="text-md font-medium mb-3">Clothing Items</h4>
