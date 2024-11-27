@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { signOut } from 'firebase/auth'
-import { auth } from '@/firebase-config'
+import { auth } from '@/src/firebase/config'
 import { Button } from '@/components/ui/button'
 import { LogOutIcon } from 'lucide-react'
 import Footer from '@/components/ui/Footer';

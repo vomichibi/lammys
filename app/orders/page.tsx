@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase-config';
+import { db } from '@/src/firebase/config';
 import { Card } from '@/components/ui/card';
 import Footer from '@/components/ui/Footer';
 

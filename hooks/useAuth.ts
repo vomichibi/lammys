@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/firebase-config';
+import { auth } from '@/src/firebase/config';
+import { getUserData } from '@/src/firebase/firestore';
 
 export interface AuthUser {
   id: string;

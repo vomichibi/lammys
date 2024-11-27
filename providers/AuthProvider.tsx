@@ -3,9 +3,9 @@
 import { ReactNode } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useEffect, useState } from 'react';
-import { auth } from '@/firebase-config';
+import { auth } from '@/src/firebase/config';
 import { useRouter } from 'next/navigation';
-import { AuthUser, isAdmin } from '@/lib/firebase-auth';
+import { AuthUser, isAdmin } from '@/src/firebase/auth';
 
 interface AuthContextType {
   user: AuthUser | null;

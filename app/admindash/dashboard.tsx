@@ -24,7 +24,7 @@ import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore'
-import { db } from '@/lib/firebase-config'
+import { auth, db } from '@/src/firebase/config'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://your-vps-ip:3001';
 

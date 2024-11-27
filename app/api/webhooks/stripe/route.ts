@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { addDoc, collection } from 'firebase/firestore';
-import { db } from '../../../../lib/firebaseInit';
+import { db } from '@/src/firebase/admin';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2023-10-16',
@@ -39,9 +38,9 @@ export async function POST(req: Request) {
         paymentId: session.payment_intent as string,
       };
 
-      // Add order to Firestore
-      const ordersRef = collection(db, 'orders');
-      await addDoc(ordersRef, orderData);
+      // Add order to Firestore using Admin SDK
+      const ordersRef = db.collection('orders');
+      await ordersRef.add(orderData);
 
       return NextResponse.json({ received: true });
     }
@@ -49,9 +48,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ received: true });
   } catch (err) {
     console.error('Error processing webhook:', err);
-    return NextResponse.json(
-      { error: (err as Error).message },
-      { status: 400 }
-    );
+    return new NextResponse('Webhook Error', { status: 400 });
   }
 }

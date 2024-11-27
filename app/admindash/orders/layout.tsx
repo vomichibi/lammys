@@ -11,7 +11,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { signOut } from 'firebase/auth'
-import { auth } from '@/lib/firebase'
+import { auth } from '@/src/firebase/config'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"

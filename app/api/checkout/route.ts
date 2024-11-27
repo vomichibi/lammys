@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/firebase-admin';
+import { auth, db } from '@/src/firebase/admin';
 import { cookies } from 'next/headers';
 
 export async function POST(request: Request) {
@@ -33,14 +33,22 @@ export async function POST(request: Request) {
       );
     }
 
-    // Process the checkout with the authenticated user's information
-    // Add your checkout logic here
-    // For example, create an order in your database
+    // Create order in Firestore
+    const orderData = {
+      userId: decodedClaims.uid,
+      userEmail: decodedClaims.email,
+      items,
+      total,
+      status: 'pending',
+      createdAt: new Date(),
+    };
+
+    const orderRef = await db.collection('orders').add(orderData);
 
     return NextResponse.json({
       success: true,
       message: 'Checkout successful',
-      orderId: 'generated-order-id', // Replace with actual order ID
+      orderId: orderRef.id,
       userId: decodedClaims.uid,
       userEmail: decodedClaims.email,
       items,

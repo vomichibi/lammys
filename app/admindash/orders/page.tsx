@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore'
-import { db } from '@/firebase-config'
+import { db } from '@/src/firebase/config'
 import { formatDate } from '@/lib/utils/date'
 import {
   Table,
