@@ -2,7 +2,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { db } from '@/lib/firebaseInit';
+import { db } from '@/src/firebase/config';
 import { 
   collection, 
   doc, 

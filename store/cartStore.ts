@@ -1,7 +1,7 @@
 'use client';
 
 import { create } from 'zustand';
-import { db } from '@/src/firebase';
+import { db } from '@/src/firebase/config';
 import type { CartData } from '@/src/firebase/firestore';
 import {
   collection,
