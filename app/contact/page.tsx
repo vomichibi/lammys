@@ -177,6 +177,12 @@ export default function ContactPage() {
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   required
                 />
+                <p className="mt-1 text-sm text-gray-500 flex items-center">
+                  <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  We respect your privacy and do not send spam
+                </p>
               </div>
 
               <div>
@@ -280,7 +286,7 @@ export default function ContactPage() {
 
         {/* Map Section */}
         <div className="bg-white rounded-lg shadow-lg p-8">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8 text-center">Find Us</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8 text-center">Our Location</h2>
           <div className="w-full h-[450px] relative">
             <iframe 
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3386.146741907736!2d115.88884337645949!3d-31.92977598124055!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2a32baf380f6d011%3A0xd2f2c713b6db2a9d!2sLammy&#39;s%20Multi%20Service!5e0!3m2!1sen!2sau!4v1699405283644!5m2!1sen!2sau"

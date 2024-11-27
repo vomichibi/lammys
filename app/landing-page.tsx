@@ -165,62 +165,13 @@ export function LandingPageComponent() {
         {/* Location section */}
         <div id="location" className="py-16 bg-blue-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="lg:text-center mb-12">
-              <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+            <div className="flex justify-center">
+              <Link
+                href="/contact"
+                className="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200 md:py-4 md:text-lg md:px-10 w-full max-w-lg"
+              >
                 Find Us
-              </h2>
-              <p className="mt-3 max-w-2xl mx-auto text-xl text-gray-500 sm:mt-4">
-                Conveniently located in the heart of the city
-              </p>
-            </div>
-            <div className="mt-10 sm:mt-0">
-              <div className="md:grid md:grid-cols-2 md:gap-6">
-                <div className="mt-5 md:mt-0">
-                  <div className="space-y-6">
-                    <div className="flex items-center">
-                      <MapPin className="h-6 w-6 text-blue-600" />
-                      <a 
-                        href="https://www.google.com/maps/search/?api=1&query=36+Eighth+Ave+Maylands+WA+6051"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="ml-3 text-gray-700 hover:text-blue-600 transition-colors duration-200"
-                      >
-                        36 Eighth Ave, Maylands WA 6051
-                      </a>
-                    </div>
-                    <div className="flex items-center">
-                      <Clock className="h-6 w-6 text-blue-600" />
-                      <span className="ml-3 text-gray-700">
-                        Monday-Friday: 9am-5pm<br />
-                        Saturday: 9am-1pm<br />
-                        Sunday: Closed
-                      </span>
-                    </div>
-                    <div className="flex items-center">
-                      <Phone className="h-6 w-6 text-blue-600" />
-                      <span className="ml-3 text-gray-700">0483 876 223</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Mail className="h-6 w-6 text-blue-600" />
-                      <a 
-                        href="mailto:team@lammys.au"
-                        className="ml-3 text-gray-700 hover:text-blue-600 transition-colors duration-200"
-                      >
-                        team@lammys.au
-                      </a>
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-5 md:mt-0 flex items-center justify-center">
-                  <a 
-                    href="/contact" 
-                    className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
-                  >
-                    <MapPin className="h-5 w-5 mr-2" />
-                    Our Location
-                  </a>
-                </div>
-              </div>
+              </Link>
             </div>
           </div>
         </div>
