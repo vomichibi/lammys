@@ -2,11 +2,17 @@
 
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
+import { useAuth } from '@/lib/auth-context';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { useRouter } from 'next/navigation';
 
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const { user, loading } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -25,6 +31,15 @@ export default function Navigation() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.push('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   return (
     <nav className="bg-white shadow-md fixed w-full z-50">
@@ -49,40 +64,89 @@ export default function Navigation() {
             <svg 
               className="w-6 h-6" 
               fill="none" 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth="2" 
-              viewBox="0 0 24 24" 
-              stroke="currentColor"
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
             >
               {isMenuOpen ? (
-                <path d="M6 18L18 6M6 6l12 12" />
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M6 18L18 6M6 6l12 12" 
+                />
               ) : (
-                <path d="M4 6h16M4 12h16M4 18h16" />
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M4 6h16M4 12h16m-7 6h7" 
+                />
               )}
             </svg>
           </button>
-        </div>
 
-        {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div ref={menuRef} className="mt-4 pb-4">
-            <div className="flex flex-col space-y-4">
-              <Link href="/" className="text-gray-700 hover:text-blue-600" onClick={() => setIsMenuOpen(false)}>Home</Link>
-              <Link href="/booking" className="text-gray-700 hover:text-blue-600" onClick={() => setIsMenuOpen(false)}>Book Now</Link>
-              <Link href="/contact" className="text-gray-700 hover:text-blue-600" onClick={() => setIsMenuOpen(false)}>Contact</Link>
-              <Link href="/faq" className="text-gray-700 hover:text-blue-600" onClick={() => setIsMenuOpen(false)}>FAQ</Link>
-              <Link href="/login" className="text-gray-700 hover:text-blue-600" onClick={() => setIsMenuOpen(false)}>Login</Link>
-              <Link 
-                href="/register" 
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 inline-block text-center"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Register
-              </Link>
-            </div>
+          {/* Mobile Menu */}
+          <div
+            ref={menuRef}
+            className={`${
+              isMenuOpen ? 'block' : 'hidden'
+            } absolute right-0 top-full mt-2 py-2 w-48 bg-white rounded-lg shadow-xl z-20`}
+          >
+            <Link
+              href="/"
+              className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Home
+            </Link>
+            <Link
+              href="/services"
+              className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Services
+            </Link>
+            {!loading && (
+              <>
+                {user ? (
+                  <>
+                    <Link
+                      href="/booking"
+                      className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Book Now
+                    </Link>
+                    <Link
+                      href="/dashboard"
+                      className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Dashboard
+                    </Link>
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setIsMenuOpen(false);
+                      }}
+                      className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100"
+                    >
+                      Sign Out
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    href="/login"
+                    className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Login
+                  </Link>
+                )}
+              </>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </nav>
   );

@@ -1,23 +1,25 @@
-import { Toaster } from "sonner";
-import { AuthProvider } from "@/providers/AuthProvider";
-import { inter } from './fonts';
-import Navigation from './components/Navigation';
-import "./globals.css";
-import { Metadata } from 'next';
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import './globals.css'
+import { Toaster } from 'sonner'
+import { AuthProvider } from '@/lib/auth-context'
+import Navigation from './components/Navigation'
+
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: "Lammy's Dry Cleaning",
-  description: "Professional Dry Cleaning Services",
-};
+  title: "Lammy's Multi Services",
+  description: 'Quality dry cleaning, expert alterations, and quick key cutting services',
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={inter.className}>
-      <body>
+    <html lang="en">
+      <body className={inter.className}>
         <AuthProvider>
           <Navigation />
           {children}
@@ -25,5 +27,5 @@ export default function RootLayout({
         </AuthProvider>
       </body>
     </html>
-  );
+  )
 }

@@ -1,195 +1,207 @@
-### **Instructions.md**
+---
 
-```markdown
-# Instructions for Building Lammy’s Dry Cleaning Website
+### **Updated Goals for Lammy's Dry Cleaning Project**
+1. **Public Website**:
+   - Pages for Home, Services, Booking, Contact Us, FAQs.
+   - Mobile-friendly, fast-loading, and SEO-optimized.
 
-This file provides detailed step-by-step instructions for you to help build the project. Follow this guide to implement all required features and ensure compatibility with the specified dependencies.
+2. **Admin Dashboard**:
+   - **Full CRUD Access**:
+     - Manage services (e.g., add, update, delete dry cleaning offerings).
+     - Manage items (e.g., inventory or specific service items).
+   - **Sales Analytics**:
+     - Beautiful, responsive UI with detailed sales charts using data from Stripe and bookings.
+     - Visualizations include revenue trends, top services, and user activity.
+
+3. **Authentication**:
+   - Admin and user roles using Firebase Authentication.
+
+4. **Payment Handling**:
+   - Use Stripe for secure payment processing.
+   - Display real-time sales data from Stripe webhook events.
+
+5. **Hosting**:
+   - Use Vercel for hosting the frontend and serverless functions.
+   - Minimize infrastructure management with a scalable architecture.
 
 ---
 
-## Setup and Configuration
+### **Tech Stack**
 
-### 1. Upgrade Droplet
-- Upgrade the DigitalOcean droplet to at least **2 GB RAM**.
-- Verify the upgrade:
-  ```bash
-  free -m
-  ```
+#### **1. Hosting and Backend**
+- **Vercel**:
+  - Host the Next.js app and deploy serverless functions for backend tasks like:
+    - Handling Stripe webhooks for payment events.
+    - CRUD operations for services and items.
 
-### 2. Domain Setup
-- Point `lammys.au` domain to the DigitalOcean droplet using the DNS settings.
+#### **2. Authentication**
+- **Firebase Authentication**:
+  - Manage user sign-up/login and admin roles.
 
-### 3. Install Dependencies on the Server
-- Install Node.js (v18 or higher):
-  ```bash
-  curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-  sudo apt-get install -y nodejs
-  ```
-- Install Git, PM2, and Nginx:
-  ```bash
-  sudo apt update
-  sudo apt install git nginx -y
-  npm install -g pm2@latest
-  ```
+#### **3. Database**
+- **Firebase Firestore**:
+  - Store structured data for:
+    - Users.
+    - Services and items.
+    - Bookings.
+    - Payment and sales data (e.g., amounts, timestamps).
 
-### 4. SSL Setup
-- Install Certbot and secure the domain using Let's Encrypt:
-  ```bash
-  sudo apt install certbot python3-certbot-nginx -y
-  sudo certbot --nginx -d lammys.au
-  ```
+#### **4. Frontend Framework**
+- **Next.js**:
+  - Build a fast, SEO-optimized website with server-side rendering (SSR).
+  - Create dynamic admin dashboard pages for CRUD operations and analytics.
 
----
+#### **5. Payment Handling**
+- **Stripe**:
+  - Use serverless functions to handle Stripe webhook events.
+  - Automatically log payment data to Firestore (e.g., user ID, payment amount, timestamp).
 
-## Frontend Development
-
-### 1. Framework
-- Set up a Next.js project:
-  ```bash
-  npx create-next-app@latest lammys
-  cd lammys
-  ```
-
-### 2. Dependencies
-- Install React and React DOM:
-  ```bash
-  npm install react@latest react-dom@latest
-  ```
-- Install Tailwind CSS and its dependencies:
-  ```bash
-  npm install tailwindcss@latest postcss@latest autoprefixer@latest
-  npx tailwindcss init
-  ```
-
-### 3. State Management
-- Install Redux Toolkit if Redux is chosen for state management:
-  ```bash
-  npm install @reduxjs/toolkit@latest react-redux@latest
-  ```
-
-### 4. Routing
-- Use Next.js dynamic routing for public and private pages:
-  - **Public Pages**: Home, Services, Booking, Login/Register, Contact Us, FAQs.
-  - **User Pages**: Dashboard, Profile Settings, Order History.
-  - **Admin Portal**: Dashboard, Manage Services, Manage Bookings, User Management, Settings.
-
-### 5. Styling
-- Use Tailwind CSS for responsive and clean UI.
+#### **6. Admin Dashboard**
+- **Chart.js**:
+  - Build detailed, interactive charts for sales and analytics.
+  - Example chart types:
+    - **Line Chart**: Daily/weekly/monthly revenue trends.
+    - **Bar Chart**: Breakdown of top-selling services or items.
+    - **Pie Chart**: Distribution of sales by category.
+    - **Table View**: List of recent transactions with filtering options.
+- **Tailwind CSS**:
+  - Create a beautiful, responsive UI for the admin portal.
 
 ---
 
-## Backend Development
+### **Updated Architecture**
 
-### 1. API Development
-- Create API routes within the `pages/api` directory to handle:
-  - Booking management.
-  - User authentication.
-  - Service listings.
-  - Payments using Stripe.
+1. **Frontend**:
+   - **Public Pages**: Home, Services, Booking, Contact Us, FAQs.
+   - **User Pages**: Dashboard, Profile, Order History.
+   - **Admin Pages**:
+     - Manage Services: CRUD for services and items.
+     - Sales Analytics: Visual charts and data tables.
 
-### 2. Authentication
-- Install and configure NextAuth.js:
-  ```bash
-  npm install next-auth@latest
-  ```
-- Use email/password providers with JWT or session-based authentication.
+2. **Backend**:
+   - **Serverless Functions**:
+     - Handle Stripe webhooks.
+     - CRUD operations for services and items via API routes.
+   - **Firestore**:
+     - Store all structured data (e.g., services, bookings, payments).
 
-### 3. Database Setup
-- **Cloud Database** (Preferred):
-  - Install Firebase SDK:
-    ```bash
-    npm install firebase@latest
-    ```
-  - Configure Firestore in the Firebase console.
-  - For MongoDB:
-    ```bash
-    npm install mongoose@latest
-    ```
-    - Configure MongoDB Atlas.
-
-- **SQLite** (Alternative for lightweight use):
-  ```bash
-  npm install sqlite3@latest
-  ```
-
-### 4. Payment Integration
-- Install Stripe SDK and set up payment processing:
-  ```bash
-  npm install stripe@latest
-  ```
-- Create webhook routes for handling payment events.
-
-### 5. Email Service
-- Install and configure SendGrid or Mailgun:
-  ```bash
-  npm install @sendgrid/mail@latest
-  ```
-  or
-  ```bash
-  npm install mailgun-js@latest
-  ```
+3. **Admin Role Management**:
+   - Secure admin routes using Firebase claims.
 
 ---
 
-## Admin Portal Development
+### **Implementation Details**
 
-### 1. Secure Routes
-- Implement role-based access control (RBAC) for admin pages.
+#### **Admin Dashboard**
+- Build pages using **Next.js dynamic routes**:
+  - `/admin/dashboard`: Overview with charts for revenue, bookings, and user activity.
+  - `/admin/services`: List, add, update, or delete services.
+  - `/admin/items`: Manage specific inventory or service items.
 
-### 2. Dashboard
-- Use Chart.js or Recharts for data visualization:
-  ```bash
-  npm install chart.js@latest
-  ```
-  or
-  ```bash
-  npm install recharts@latest
-  ```
+#### **Stripe Webhooks**
+1. Create a serverless function in `pages/api/webhooks.js`:
+   ```javascript
+   import { buffer } from "micro";
+   import Stripe from "stripe";
+   import { getFirestore } from "firebase-admin/firestore";
 
-### 3. CRUD Operations
-- Build interfaces for managing services, bookings, and users.
+   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+   export const config = {
+       api: { bodyParser: false },
+   };
+
+   export default async function handler(req, res) {
+       if (req.method === "POST") {
+           const buf = await buffer(req);
+           const sig = req.headers["stripe-signature"];
+           const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+           let event;
+
+           try {
+               event = stripe.webhooks.constructEvent(buf, sig, webhookSecret);
+           } catch (err) {
+               return res.status(400).send(`Webhook Error: ${err.message}`);
+           }
+
+           if (event.type === "payment_intent.succeeded") {
+               const paymentIntent = event.data.object;
+               const db = getFirestore();
+
+               // Save payment data to Firestore
+               await db.collection("payments").add({
+                   userId: paymentIntent.metadata.user_id,
+                   amount: paymentIntent.amount_received,
+                   createdAt: new Date(),
+               });
+           }
+
+           res.status(200).send("Event received");
+       } else {
+           res.setHeader("Allow", "POST");
+           res.status(405).end("Method Not Allowed");
+       }
+   }
+   ```
+
+2. Add the function's URL as a webhook endpoint in Stripe's dashboard.
+
+#### **Sales Analytics Charts**
+- Fetch payment data from Firestore:
+   ```javascript
+   const { data: payments, error } = await supabase
+       .from("payments")
+       .select("amount, createdAt");
+   ```
+
+- Generate charts with Chart.js:
+   ```javascript
+   import { Line } from "react-chartjs-2";
+
+   const data = {
+       labels: payments.map(payment => new Date(payment.createdAt).toLocaleDateString()),
+       datasets: [
+           {
+               label: "Daily Revenue",
+               data: payments.map(payment => payment.amount),
+               fill: false,
+               borderColor: "rgba(75, 192, 192, 1)",
+           },
+       ],
+   };
+
+   return <Line data={data} />;
+   ```
 
 ---
 
-## Testing
+### **Deployment**
+1. **Vercel**:
+   - Deploy the frontend and serverless functions.
+   - Add environment variables for Firebase and Stripe:
+     - `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, etc.
+     - `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`.
 
-### 1. Unit Testing
-- Test frontend components and backend API routes.
+2. **Firestore**:
+   - Configure database rules to allow admin-only access to sensitive data.
 
-### 2. Integration Testing
-- Test the complete user flow: booking, authentication, payments, and email automation.
-
-### 3. Performance Testing
-- Ensure fast load times on mobile and desktop devices.
-
----
-
-## Deployment
-
-### 1. Setup Nginx
-- Configure Nginx as a reverse proxy for the Next.js application.
-
-### 2. Process Management
-- Use PM2 to manage the application processes:
-  ```bash
-  pm2 start npm --name "lammys" -- start
-  ```
-
-### 3. CI/CD Pipeline
-- Optional: Set up GitHub Actions for automated deployments.
+3. **Domain Setup**:
+   - Point `lammys.au` to Vercel for live deployment.
 
 ---
 
-## Monitoring and Maintenance
-
-### 1. Error Logging
-- Implement error tracking using tools like Sentry.
-
-### 2. Analytics
-- Integrate Google Analytics to monitor user behavior.
-
-### 3. Backup Strategy
-- Schedule regular backups for the database and critical data.
-```
+### **How Detailed Can the Charts Be?**
+With **Chart.js**, you can make charts as detailed as your data allows. For example:
+- **Filterable Time Periods**: Daily, weekly, monthly revenue trends.
+- **Comparative Views**: Compare revenue by services or categories.
+- **Custom Metrics**: Display metrics like average order value, total users, or repeat customers.
 
 ---
+
+### **Summary**
+- Hosting: **Vercel** (frontend + serverless functions).
+- Backend: **Firebase Firestore** for CRUD and Stripe webhook data.
+- Authentication: **Firebase Authentication** for user and admin roles.
+- Payment: **Stripe** for transactions and webhooks.
+- Admin Dashboard: **Next.js** with **Chart.js** and **Tailwind CSS**.

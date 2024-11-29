@@ -1,10 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Elements } from '@stripe/react-stripe-js'
-import { getStripe } from '@/lib/stripe'
-import CheckoutForm from '@/components/payment/CheckoutForm'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { toast } from 'sonner'
 
 const testServices = [
   { id: 1, name: 'Dry Cleaning - Shirt', price: 5.99 },
@@ -13,25 +12,43 @@ const testServices = [
 ]
 
 export default function TestPaymentPage() {
-  const [clientSecret, setClientSecret] = useState('')
+  const router = useRouter()
   const [selectedServices, setSelectedServices] = useState<typeof testServices>([])
+  const [loading, setLoading] = useState(false)
 
   const total = selectedServices.reduce((sum: number, service) => sum + service.price, 0)
 
-  useEffect(() => {
-    if (total > 0) {
-      fetch('/api/create-payment-intent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: total,
-          items: selectedServices,
-        }),
-      })
-        .then((res) => res.json())
-        .then((data) => setClientSecret(data.clientSecret))
+  const handleCheckout = () => {
+    if (selectedServices.length === 0) {
+      toast.error('Please select at least one service')
+      return
     }
-  }, [total])
+
+    try {
+      setLoading(true)
+      console.log('Selected services:', selectedServices)
+      console.log('Total amount:', total)
+
+      const searchParams = new URLSearchParams()
+      const itemsJson = JSON.stringify(selectedServices)
+      searchParams.set('items', itemsJson)
+      searchParams.set('total', total.toString())
+
+      console.log('URL parameters:', {
+        items: itemsJson,
+        total: total.toString()
+      })
+
+      const checkoutUrl = `/test-payment/checkout?${searchParams.toString()}`
+      console.log('Navigating to:', checkoutUrl)
+      
+      router.push(checkoutUrl)
+    } catch (error) {
+      console.error('Navigation error:', error)
+      toast.error('Failed to proceed to checkout')
+      setLoading(false)
+    }
+  }
 
   const toggleService = (service: typeof testServices[0]) => {
     setSelectedServices((prev) =>
@@ -75,24 +92,17 @@ export default function TestPaymentPage() {
           </div>
 
           <div className="border-t pt-4">
-            <p className="text-lg font-medium">
+            <p className="text-lg font-medium mb-4">
               Total: ${total.toFixed(2)}
             </p>
-          </div>
-
-          {clientSecret && (
-            <Elements
-              stripe={getStripe()}
-              options={{
-                clientSecret,
-                appearance: {
-                  theme: 'stripe',
-                },
-              }}
+            <button
+              onClick={handleCheckout}
+              disabled={loading || selectedServices.length === 0}
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <CheckoutForm amount={total} />
-            </Elements>
-          )}
+              {loading ? 'Processing...' : 'Proceed to Checkout'}
+            </button>
+          </div>
         </CardContent>
       </Card>
     </div>

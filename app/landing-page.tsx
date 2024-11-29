@@ -2,18 +2,23 @@
 
 import { Phone, Mail, MapPin, Clock, Scissors, Key, Shirt } from 'lucide-react'
 import Link from 'next/link'
-import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { ParallaxHero } from './components/ParallaxHero'
 import { TestimonialCarousel } from './components/TestimonialCarousel'
+import { useAuth } from '@/lib/auth-context'
 
 export function LandingPageComponent() {
-  const { data: session } = useSession()
+  const { user, loading } = useAuth()
   const router = useRouter()
 
   const handleBookNowClick = (e: React.MouseEvent) => {
     e.preventDefault()
+    if (!user && !loading) {
+      // If user is not logged in, redirect to login page
+      router.push('/login')
+      return
+    }
     router.push('/booking')
   }
 
@@ -38,7 +43,7 @@ export function LandingPageComponent() {
                     onClick={handleBookNowClick}
                     className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10"
                   >
-                    Book Now
+                    {loading ? 'Loading...' : user ? 'Book Now' : 'Login to Book'}
                   </button>
                 </div>
               </div>
