@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { useAuth } from 'firebase/auth'
+import { useAuth } from '@/lib/auth-context'
 import { useCartStore } from '@/store/cartStore'
 
 export default function CartPage() {
@@ -244,7 +244,9 @@ export default function CartPage() {
                 <span className="text-lg font-medium">Total:</span>
                 <span className="text-2xl font-semibold">${total.toFixed(2)}</span>
               </div>
-　　 　　 　 　　 　
+　
+　
+　
               <div className="flex justify-end space-x-4">
                 <button
                   onClick={() => router.push('/booking')}

@@ -1,64 +1,62 @@
-import { NextResponse } from 'next/server';
-import Stripe from 'stripe';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { NextRequest, NextResponse } from 'next/server'
+import Stripe from 'stripe'
+import { auth } from '@/lib/firebase-admin'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2023-10-16',
-});
+})
 
-export async function POST(req: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    const body = await request.json()
+    const { items, authToken } = body
+
+    if (!authToken) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await req.json();
-    const { items } = body;
+    // Verify Firebase auth token
+    const decodedToken = await auth.verifyIdToken(authToken)
+    if (!decodedToken) {
+      return NextResponse.json({ error: 'Invalid auth token' }, { status: 401 })
+    }
+
+    const userId = decodedToken.uid
+    const userEmail = decodedToken.email
 
     if (!items?.length) {
-      return NextResponse.json(
-        { error: 'No items provided' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'No items provided' }, { status: 400 })
     }
 
-    // Create Stripe line items
-    const lineItems = items.map((item: any) => ({
-      price_data: {
-        currency: 'usd',
-        product_data: {
-          name: item.name,
-          description: `${item.category} - Dry Cleaning Service`,
-        },
-        unit_amount: Math.round(item.price * 100), // Convert to cents
-      },
-      quantity: item.quantity,
-    }));
-
     // Create Stripe checkout session
-    const stripeSession = await stripe.checkout.sessions.create({
-      customer_email: session.user.email,
-      client_reference_id: session.user.email,
-      line_items: lineItems,
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: items.map((item: any) => ({
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: item.name,
+            description: item.description,
+          },
+          unit_amount: Math.round(item.price * 100),
+        },
+        quantity: item.quantity,
+      })),
       mode: 'payment',
-      success_url: `${process.env.NEXTAUTH_URL}/booking/confirmation?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXTAUTH_URL}/booking/cart`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/booking/confirmation?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/booking/cart`,
+      customer_email: userEmail,
       metadata: {
-        userId: session.user.email,
+        userId: userId,
       },
-    });
+    })
 
-    return NextResponse.json({ sessionId: stripeSession.id });
-  } catch (error: any) {
-    console.error('Checkout error:', error);
+    return NextResponse.json({ sessionId: session.id })
+  } catch (error) {
+    console.error('Checkout error:', error)
     return NextResponse.json(
-      { error: error.message },
+      { error: 'Internal server error' },
       { status: 500 }
-    );
+    )
   }
 }

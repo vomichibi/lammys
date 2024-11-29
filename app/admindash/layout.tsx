@@ -1,36 +1,55 @@
-'use client';
+'use client'
 
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
-import { signOut } from '@/lib/firebase-auth';
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/lib/auth-context'
 
 export default function AdminDashboardLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
-  const { user, loading } = useAuth();
-  const router = useRouter();
+  const router = useRouter()
+  const { user, loading } = useAuth()
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    } else if (user && !user.isAdmin) {
-      router.push('/dashboard');
+    const checkAdminAccess = async () => {
+      if (!loading) {
+        if (!user) {
+          router.push('/login')
+          return
+        }
+
+        try {
+          const token = await user.getIdToken()
+          const response = await fetch('/api/check-admin', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ token }),
+          })
+
+          if (!response.ok) {
+            router.push('/')
+          }
+        } catch (error) {
+          console.error('Admin check error:', error)
+          router.push('/')
+        }
+      }
     }
-  }, [loading, user, router]);
+
+    checkAdminAccess()
+  }, [user, loading, router])
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
-    );
+    )
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {children}
-    </div>
-  );
+  return children
 }

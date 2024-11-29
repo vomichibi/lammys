@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/lib/auth-context';
 import { useOrderStore } from '@/store/orderStore';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,27 +9,16 @@ import { formatDistance } from 'date-fns';
 import Footer from '@/components/ui/Footer';
 
 function OrdersPageContent() {
-  const { data: session } = useSession();
-  const { orders, fetchUserOrders } = useOrderStore();
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const { orders, loadOrders, isLoading } = useOrderStore();
 
   useEffect(() => {
-    const loadOrders = async () => {
-      if (session?.user?.email) {
-        try {
-          await fetchUserOrders(session.user.email);
-        } catch (error) {
-          console.error('Error fetching orders:', error);
-        } finally {
-          setLoading(false);
-        }
-      }
-    };
+    if (user?.email) {
+      loadOrders(user.email);
+    }
+  }, [user, loadOrders]);
 
-    loadOrders();
-  }, [session, fetchUserOrders]);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 p-4">
         <div className="max-w-4xl mx-auto">

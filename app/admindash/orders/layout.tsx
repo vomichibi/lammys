@@ -9,12 +9,13 @@ import {
   BellIcon,
   SearchIcon
 } from 'lucide-react'
-import { useSession, signOut } from 'next-auth/react'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Link from 'next/link'
-import { createHash } from 'crypto';
+import { useAuth } from '@/lib/auth-context'
+import { signOut } from 'firebase/auth'
+import { auth } from '@/lib/firebase';
 
 const getGravatarUrl = (email: string) => {
   const hash = createHash('md5').update(email.toLowerCase().trim()).digest('hex');
@@ -33,7 +34,7 @@ export default function OrdersLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   return (
@@ -65,15 +66,15 @@ export default function OrdersLayout({
             <div className="flex items-center">
               <div>
                 <Avatar>
-                  <AvatarImage src={session?.user?.email ? getGravatarUrl(session.user.email) : ''} />
-                  <AvatarFallback>{session?.user?.name?.[0]}</AvatarFallback>
+                  <AvatarImage src={user?.email ? getGravatarUrl(user.email) : ''} />
+                  <AvatarFallback>{user?.displayName?.[0]}</AvatarFallback>
                 </Avatar>
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-700">{session?.user?.name}</p>
+                <p className="text-sm font-medium text-gray-700">{user?.displayName}</p>
                 <Button 
                   variant="ghost" 
-                  onClick={() => signOut({ callbackUrl: '/login' })}
+                  onClick={() => signOut(auth)}
                   className="text-sm text-gray-500 hover:text-gray-700"
                 >
                   Sign out

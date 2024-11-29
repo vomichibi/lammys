@@ -1,57 +1,55 @@
-import { NextResponse } from 'next/server';
-import Stripe from 'stripe';
-import { addDoc, collection } from 'firebase/firestore';
-import { db } from '../../../../lib/firebaseInit';
+import { headers } from 'next/headers'
+import { NextResponse } from 'next/server'
+import Stripe from 'stripe'
+import { db } from '@/lib/firebase-admin'
+import { stripe } from '@/lib/stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-10-16',
-});
-
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 
 export async function POST(req: Request) {
-  const body = await req.text();
-  const sig = req.headers.get('stripe-signature')!;
-
   try {
-    const event = stripe.webhooks.constructEvent(
-      body,
-      sig,
-      webhookSecret
-    );
+    const body = await req.text()
+    const signature = headers().get('stripe-signature')!
 
-    if (event.type === 'checkout.session.completed') {
-      const session = event.data.object as Stripe.Checkout.Session;
-      const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
+    let event: Stripe.Event
 
-      const orderData = {
-        items: lineItems.data.map(item => ({
-          quantity: item.quantity,
-          price: item.amount_total / 100, // Convert from cents to dollars
-          category: (item.price?.product as Stripe.Product)?.name || 'Uncategorized'
-        })),
-        status: 'pending',
-        total: session.amount_total ? session.amount_total / 100 : 0,
-        customerEmail: session.customer_details?.email || '',
-        customerName: session.customer_details?.name || '',
-        createdAt: new Date(),
-        paymentStatus: session.payment_status,
-        paymentId: session.payment_intent as string,
-      };
-
-      // Add order to Firestore
-      const ordersRef = collection(db, 'orders');
-      await addDoc(ordersRef, orderData);
-
-      return NextResponse.json({ received: true });
+    try {
+      event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
+    } catch (err) {
+      console.error('Webhook signature verification failed:', err)
+      return new NextResponse('Webhook signature verification failed', { status: 400 })
     }
 
-    return NextResponse.json({ received: true });
+    const session = event.data.object as Stripe.Checkout.Session
+
+    if (event.type === 'checkout.session.completed') {
+      const customerId = session.client_reference_id // This should be the Firebase UID
+      
+      if (!customerId) {
+        console.error('No customer ID found in session')
+        return new NextResponse('No customer ID found', { status: 400 })
+      }
+
+      // Update order status in Firestore
+      const orderRef = db.collection('orders').doc(session.id)
+      await orderRef.update({
+        status: 'paid',
+        stripePaymentId: session.payment_intent as string,
+        updatedAt: new Date().toISOString()
+      })
+
+      // Update user's orders in Firestore
+      const userRef = db.collection('users').doc(customerId)
+      await userRef.update({
+        orders: db.FieldValue.arrayUnion(session.id)
+      })
+
+      console.log(`Payment successful for order ${session.id}`)
+    }
+
+    return new NextResponse('Webhook processed successfully', { status: 200 })
   } catch (err) {
-    console.error('Error processing webhook:', err);
-    return NextResponse.json(
-      { error: (err as Error).message },
-      { status: 400 }
-    );
+    console.error('Error processing webhook:', err)
+    return new NextResponse('Webhook error', { status: 500 })
   }
 }
