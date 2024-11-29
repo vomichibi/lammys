@@ -10,7 +10,7 @@ import {
   SearchIcon
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
-import { signOut } from 'firebase/auth'
+import { signOut, User } from 'firebase/auth'
 import { auth } from '@/src/firebase/config'; 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -46,7 +46,7 @@ export default function CustomersLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { user } = useAuth()
+  const { user } = useAuth() as { user: User | null };
   const router = useRouter()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 

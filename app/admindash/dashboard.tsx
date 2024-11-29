@@ -28,11 +28,20 @@ import { auth, db } from '@/src/firebase/config'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://your-vps-ip:3001';
 
+interface Order {
+  id: string;
+  total: number;
+  createdAt: Date;
+  userEmail: string;
+  status: string;
+  // Add other order fields as needed
+}
+
 interface DashboardStats {
   totalOrders: number;
   totalRevenue: number;
   totalCustomers: number;
-  recentOrders: any[];
+  recentOrders: Order[];
   salesData: any[];
 }
 
@@ -60,10 +69,10 @@ export default function Dashboard() {
         
         let totalOrders = 0;
         let totalRevenue = 0;
-        const recentOrders: any[] = [];
+        const recentOrders: Order[] = [];
         
         ordersSnapshot.forEach(doc => {
-          const order = { id: doc.id, ...doc.data() };
+          const order = { id: doc.id, ...doc.data() } as Order;
           totalOrders++;
           totalRevenue += order.total || 0;
           if (recentOrders.length < 5) {

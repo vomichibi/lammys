@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { signIn } from '@/src/firebase/auth';
+import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,11 +17,13 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
 
     try {
-      await signIn(email, password);
-      router.push('/dashboard');
+      await signIn('credentials', {
+        email,
+        password,
+        callbackUrl: '/dashboard'
+      });
     } catch (error: any) {
       console.error('Login error:', error);
       toast.error(error.message || 'Failed to sign in');

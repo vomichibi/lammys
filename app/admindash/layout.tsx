@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/hooks/useAuth'
+import { useAuth, AuthUser } from '@/hooks/useAuth'
 import { db } from '@/src/firebase/config'
 import { doc, getDoc } from 'firebase/firestore'
 
@@ -24,7 +24,7 @@ export default function AdminDashboardLayout({
       }
 
       try {
-        const userDoc = await getDoc(doc(db, 'users', user.uid))
+        const userDoc = await getDoc(doc(db, 'users', user.id))
         const userData = userDoc.data()
         setIsAdmin(userData?.role === 'admin')
       } catch (error) {
