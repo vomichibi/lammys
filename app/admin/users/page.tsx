@@ -1,21 +1,24 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import { getAllUsers, User } from '@/lib/userManagement';
 
 export default function AdminUsersPage() {
-  const { data: session, status } = useSession();
+  const { user, isAdmin } = useAuth();
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (status === 'loading') return;
+    if (!user) {
+      router.push('/login');
+      return;
+    }
 
-    if (!session?.user?.role || session.user.role !== 'admin') {
+    if (!isAdmin) {
       router.push('/');
       return;
     }
@@ -24,16 +27,16 @@ export default function AdminUsersPage() {
       try {
         const allUsers = await getAllUsers();
         setUsers(allUsers);
-      } catch (err) {
+      } catch (error) {
         setError('Failed to fetch users');
-        console.error('Error fetching users:', err);
+        console.error('Error fetching users:', error);
       } finally {
         setLoading(false);
       }
     };
 
     fetchUsers();
-  }, [session, status, router]);
+  }, [user, isAdmin, router]);
 
   if (loading) {
     return (

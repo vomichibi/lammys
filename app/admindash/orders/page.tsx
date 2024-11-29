@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/lib/auth-context'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { formatDate } from '@/lib/utils/date'
@@ -75,18 +75,10 @@ const OrdersTable = ({ orders }: { orders: any[] }) => (
 )
 
 export default function OrdersPage() {
-  const { data: session, status } = useSession()
+  const { user } = useAuth()
   const [activeTab, setActiveTab] = useState('current')
 
-  if (status === 'loading') {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    )
-  }
-
-  if (!session?.user?.isAdmin) {
+  if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-red-600">Access Denied. Admin privileges required.</div>

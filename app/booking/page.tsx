@@ -1,25 +1,31 @@
 'use client';
 
-import dynamic from 'next/dynamic';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth-context';
+import BookingPageComponent from './booking-page';
+import LoadingSpinner from '@/components/ui/loading-spinner';
 import Footer from '@/components/ui/Footer';
 
-// Improved dynamic import with better loading state and error handling
-const BookingPageComponent = dynamic(
-  () => import('./booking-page').then(mod => mod.default),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-          <p className="text-gray-600">Loading booking page...</p>
-        </div>
-      </div>
-    )
-  }
-);
-
 export default function BookingPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!loading) {
+      if (!user) {
+        router.push('/login');
+      } else {
+        setIsLoading(false);
+      }
+    }
+  }, [user, loading, router]);
+
+  if (isLoading || loading) {
+    return <LoadingSpinner />;
+  }
+
   return (
     <>
       <BookingPageComponent />

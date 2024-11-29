@@ -1,42 +1,41 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/store/cartStore';
 import { loadStripe } from '@stripe/stripe-js';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
 
 // Initialize Stripe
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 export default function CheckoutPage() {
-  const { data: session } = useSession();
+  const { user } = useAuth();
   const router = useRouter();
   const { items, isLoading: cartLoading, initializeCart } = useCartStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!session) {
+    if (!user) {
       router.push('/login');
       return;
     }
 
-    // Initialize cart when session is available
-    if (session.user?.email) {
-      const userId = session.user.email;
-      initializeCart(userId).catch((error) => {
+    // Initialize cart when user is available
+    if (user.email) {
+      initializeCart(user.email).catch((error) => {
         console.error('Failed to initialize cart:', error);
         setError('Failed to load cart data');
       });
     }
-  }, [session, router, initializeCart]);
+  }, [user, router, initializeCart]);
 
   const handleCheckout = async () => {
-    if (!session?.user?.email) {
+    if (!user?.email) {
       setError('Please log in to checkout');
       return;
     }
@@ -57,7 +56,7 @@ export default function CheckoutPage() {
         },
         body: JSON.stringify({ 
           items,
-          userEmail: session.user.email 
+          userEmail: user.email 
         }),
       });
 
@@ -86,7 +85,7 @@ export default function CheckoutPage() {
     }
   };
 
-  if (!session) {
+  if (!user) {
     return null;
   }
 
@@ -106,7 +105,7 @@ export default function CheckoutPage() {
             <Loader2 className="h-8 w-8 animate-spin" />
           </div>
         ) : (
-          <>
+          <div>
             {items.length === 0 ? (
               <p className="text-gray-600">Your cart is empty</p>
             ) : (
@@ -143,7 +142,7 @@ export default function CheckoutPage() {
                 'Proceed to Payment'
               )}
             </Button>
-          </>
+          </div>
         )}
       </Card>
     </div>
