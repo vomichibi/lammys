@@ -1,7 +1,7 @@
 import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { db } from '@/lib/firebase-admin'
+import { db } from '@/lib/firebaseAdmin'
 import { stripe } from '@/lib/stripe'
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
