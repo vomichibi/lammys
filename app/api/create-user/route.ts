@@ -1,36 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/firebase-admin'
-import { db } from '@/lib/firebase-admin'
+import { auth, db } from '@/lib/firebaseAdmin'
 
 export async function POST(request: NextRequest) {
   try {
-    const { uid, email, name } = await request.json()
-
-    if (!uid || !email || !name) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      )
-    }
-
+    const { token } = await request.json()
+    const decodedToken = await auth.verifyIdToken(token)
+    
     // Create user document in Firestore
-    await db.collection('users').doc(uid).set({
-      email,
-      name,
-      role: 'customer',
+    await db.collection('users').doc(decodedToken.uid).set({
+      email: decodedToken.email,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      role: 'user'
     })
-
-    // Set custom claims for role-based access
-    await auth.setCustomUserClaims(uid, { role: 'customer' })
 
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Create user error:', error)
-    return NextResponse.json(
-      { error: 'Failed to create user' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to create user' }, { status: 500 })
   }
 }
