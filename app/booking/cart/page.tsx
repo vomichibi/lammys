@@ -95,7 +95,7 @@ export default function CartPage() {
 
   const handleCheckout = async () => {
     if (!user?.email) {
-      router.push('/api/auth/signin');
+      router.push('/login');
       return;
     }
 

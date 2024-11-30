@@ -22,7 +22,7 @@ const adminPaths = [
 ]
 
 export async function middleware(request: NextRequest) {
-  const token = request.cookies.get('session')?.value
+  const token = request.cookies.get('__session')?.value // Firebase uses __session cookie
   const path = request.nextUrl.pathname
 
   // Check if path requires authentication
@@ -52,8 +52,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url))
   }
 
-  // For admin paths, we'll let the client-side handle the check
-  // since we need to verify the Firebase token
+  // For admin paths, we'll let the client-side handle admin verification
+  // since we can't verify custom claims in middleware
 
   return NextResponse.next()
 }

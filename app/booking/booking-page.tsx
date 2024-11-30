@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Head from 'next/head'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/lib/auth-context'
 import { useCartStore } from '@/store/cartStore'
 import { formatDate } from '@/lib/utils/date'
 
@@ -21,7 +21,7 @@ interface SelectedItem {
 
 const BookingPageComponent = () => {
   const router = useRouter()
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const { items, addItem, initializeCart, error: cartError } = useCartStore()
 
   const [step, setStep] = useState(1)
@@ -174,15 +174,15 @@ const BookingPageComponent = () => {
   }
 
   const handleAddToCart = async () => {
-    if (!session?.user?.email) {
-      router.push('/api/auth/signin');
+    if (!user?.email) {
+      router.push('/login');
       return;
     }
 
     try {
       // Initialize cart if not already initialized
       if (!cartInitialized) {
-        await initializeCart(session.user.email);
+        await initializeCart(user.email);
         setCartInitialized(true);
       }
 
@@ -209,15 +209,15 @@ const BookingPageComponent = () => {
   };
 
   const handleViewCart = async () => {
-    if (!session?.user?.email) {
-      router.push('/api/auth/signin');
+    if (!user?.email) {
+      router.push('/login');
       return;
     }
 
     try {
       // Initialize cart if not already initialized
       if (!cartInitialized) {
-        await initializeCart(session.user.email);
+        await initializeCart(user.email);
         setCartInitialized(true);
       }
 
@@ -244,12 +244,12 @@ const BookingPageComponent = () => {
   };
 
   useEffect(() => {
-    if (session?.user?.email && !cartInitialized) {
-      initializeCart(session.user.email)
+    if (user?.email && !cartInitialized) {
+      initializeCart(user.email)
         .then(() => setCartInitialized(true))
         .catch((error) => console.error('Failed to initialize cart:', error));
     }
-  }, [session, cartInitialized]);
+  }, [user, cartInitialized]);
 
   useEffect(() => {
     if (cartError) {
