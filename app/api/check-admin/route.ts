@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/firebase-admin'
+import { auth } from '@/lib/firebaseAdmin'
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,9 +20,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ isAdmin: true })
   } catch (error) {
     console.error('Admin check error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
   }
 }

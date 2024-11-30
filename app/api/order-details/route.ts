@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { auth } from '@/lib/firebase-admin'
+import { auth } from '@/lib/firebaseAdmin'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2023-10-16',
@@ -52,5 +52,32 @@ export async function POST(request: NextRequest) {
       { error: 'Internal server error' },
       { status: 500 }
     )
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const token = request.headers.get('Authorization')?.split('Bearer ')[1]
+    if (!token) {
+      return NextResponse.json({ error: 'No token provided' }, { status: 401 })
+    }
+
+    const decodedToken = await auth.verifyIdToken(token)
+    const sessionId = request.nextUrl.searchParams.get('session_id')
+
+    if (!sessionId) {
+      return NextResponse.json({ error: 'No session ID provided' }, { status: 400 })
+    }
+
+    const session = await stripe.checkout.sessions.retrieve(sessionId)
+    
+    if (session.metadata?.userId !== decodedToken.uid) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    }
+
+    return NextResponse.json({ session })
+  } catch (error) {
+    console.error('Get order details error:', error)
+    return NextResponse.json({ error: 'Failed to get order details' }, { status: 500 })
   }
 }
