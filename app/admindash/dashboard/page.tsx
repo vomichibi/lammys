@@ -2,8 +2,8 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
-import AdminDashboard from './AdminDashboard';
+import { useAuth } from '@/lib/auth-context';
+import AdminDashboard from './components/AdminDashboard';
 
 export default function AdminDashboardPage() {
   const { user, loading } = useAuth();
