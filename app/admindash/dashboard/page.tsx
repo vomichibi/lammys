@@ -1,3 +1,6 @@
+'use client';
+
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import AdminDashboard from './AdminDashboard';
@@ -20,6 +23,10 @@ export default function AdminDashboardPage() {
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
+  }
+
+  if (!user || !user.isAdmin) {
+    return null;
   }
 
   return <AdminDashboard />;
