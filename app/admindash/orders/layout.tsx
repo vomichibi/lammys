@@ -16,6 +16,7 @@ import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
 import { signOut } from 'firebase/auth'
 import { auth } from '@/lib/firebase';
+import { createHash } from 'crypto';
 
 const getGravatarUrl = (email: string) => {
   const hash = createHash('md5').update(email.toLowerCase().trim()).digest('hex');
