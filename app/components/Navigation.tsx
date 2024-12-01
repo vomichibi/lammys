@@ -86,66 +86,61 @@ export default function Navigation() {
           </button>
 
           {/* Mobile Menu */}
-          <div
-            ref={menuRef}
-            className={`${
-              isMenuOpen ? 'block' : 'hidden'
-            } absolute right-0 top-full mt-2 py-2 w-48 bg-white rounded-lg shadow-xl z-20`}
-          >
-            <Link
-              href="/"
-              className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
-              onClick={() => setIsMenuOpen(false)}
+          {isMenuOpen && (
+            <div
+              ref={menuRef}
+              className="absolute inset-x-0 top-full bg-white shadow-lg z-20"
             >
-              Home
-            </Link>
-            <Link
-              href="/services"
-              className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Services
-            </Link>
-            {!loading && (
-              <>
-                {user ? (
-                  <>
+              <div className="container mx-auto px-6">
+                <div className="py-4">
+                  <div className="flex flex-col space-y-4">
+                    <Link
+                      href="/"
+                      className="text-gray-700 hover:text-blue-600"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Home
+                    </Link>
                     <Link
                       href="/booking"
-                      className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
+                      className="text-gray-700 hover:text-blue-600"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Book Now
                     </Link>
                     <Link
-                      href="/dashboard"
-                      className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
+                      href="/contact"
+                      className="text-gray-700 hover:text-blue-600"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      Dashboard
+                      Contact
                     </Link>
-                    <button
-                      onClick={() => {
-                        handleLogout();
-                        setIsMenuOpen(false);
-                      }}
-                      className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100"
+                    <Link
+                      href="/faq"
+                      className="text-gray-700 hover:text-blue-600"
+                      onClick={() => setIsMenuOpen(false)}
                     >
-                      Sign Out
-                    </button>
-                  </>
-                ) : (
-                  <Link
-                    href="/login"
-                    className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Login
-                  </Link>
-                )}
-              </>
-            )}
-          </div>
+                      FAQ
+                    </Link>
+                    <Link
+                      href="/login"
+                      className="text-gray-700 hover:text-blue-600"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      href="/register"
+                      className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 inline-block text-center"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Register
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </nav>
