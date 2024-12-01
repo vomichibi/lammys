@@ -6,16 +6,16 @@ import { useAuth } from '@/lib/auth-context';
 import AdminDashboard from './components/AdminDashboard';
 
 export default function AdminDashboardPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, isAdmin } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
-    } else if (user && !user.isAdmin) {
+    } else if (user && !isAdmin) {
       router.push('/dashboard');
     }
-  }, [loading, user, router]);
+  }, [loading, user, router, isAdmin]);
 
   if (loading) {
     return (
@@ -25,7 +25,7 @@ export default function AdminDashboardPage() {
     );
   }
 
-  if (!user || !user.isAdmin) {
+  if (!user || !isAdmin) {
     return null;
   }
 

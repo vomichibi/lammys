@@ -1,27 +1,22 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { 
   LayoutDashboardIcon,
   ClipboardListIcon,
   UsersIcon,
   SettingsIcon,
   BellIcon,
-  SearchIcon,
-  LogOutIcon
+  SearchIcon
 } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Link from 'next/link'
-import { onAuthStateChanged, User, Auth, signOut } from 'firebase/auth'
-import { auth } from '@/lib/firebase'
+import { useAuth } from '@/lib/auth-context'
+import { signOut } from 'firebase/auth'
+import { auth } from '@/lib/firebase';
 import { createHash } from 'crypto';
-
-interface LayoutProps {
-  children: React.ReactNode
-}
 
 const getGravatarUrl = (email: string) => {
   const hash = createHash('md5').update(email.toLowerCase().trim()).digest('hex');
@@ -35,49 +30,13 @@ const sidebarLinks = [
   { name: 'Settings', icon: SettingsIcon, href: '/admindash/settings' },
 ]
 
-export default function OrdersLayout({ children }: LayoutProps) {
-  const [loading, setLoading] = useState(true);
-  const [isAuthorized, setIsAuthorized] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-  const router = useRouter();
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth as Auth, (user: User | null) => {
-      if (!user || user.email !== 'team@lammys.au') {
-        router.push('/login');
-      } else {
-        setIsAuthorized(true);
-        setUser(user);
-      }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [router]);
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      // Clear cookies
-      document.cookie = '__session=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-      document.cookie = 'user_email=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-      router.push('/login');
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-gray-900"></div>
-      </div>
-    );
-  }
-
-  if (!isAuthorized) {
-    return null;
-  }
+export default function OrdersLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  const { user } = useAuth()
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -105,63 +64,70 @@ export default function OrdersLayout({ children }: LayoutProps) {
             </nav>
           </div>
           <div className="flex-shrink-0 flex border-t border-gray-200 p-4">
-            <div className="flex items-center w-full justify-between">
-              <div className="flex items-center">
+            <div className="flex items-center">
+              <div>
                 <Avatar>
                   <AvatarImage src={user?.email ? getGravatarUrl(user.email) : ''} />
-                  <AvatarFallback>{user?.email?.[0]?.toUpperCase()}</AvatarFallback>
+                  <AvatarFallback>{user?.displayName?.[0]}</AvatarFallback>
                 </Avatar>
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-700">{user?.email}</p>
-                  <p className="text-xs font-medium text-gray-500">Admin</p>
-                </div>
               </div>
-              <button
-                onClick={handleLogout}
-                className="p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-              >
-                <LogOutIcon className="h-5 w-5" />
-              </button>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-700">{user?.displayName}</p>
+                <Button 
+                  variant="ghost" 
+                  onClick={() => signOut(auth)}
+                  className="text-sm text-gray-500 hover:text-gray-700"
+                >
+                  Sign out
+                </Button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="flex flex-col flex-1">
-        <div className="sticky top-0 z-10 flex-shrink-0 flex h-16 bg-white shadow">
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top Navigation */}
+        <div className="flex-shrink-0 flex h-16 bg-white border-b border-gray-200">
+          <button
+            type="button"
+            className="md:hidden px-4 border-r border-gray-200 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            <span className="sr-only">Open sidebar</span>
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
           <div className="flex-1 px-4 flex justify-between">
             <div className="flex-1 flex">
               <div className="w-full flex md:ml-0">
                 <div className="relative w-full">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <SearchIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                    <SearchIcon className="h-5 w-5 text-gray-400" />
                   </div>
                   <Input
-                    type="text"
-                    placeholder="Search"
-                    className="pl-10 focus-visible:ring-0"
+                    className="pl-10"
+                    placeholder="Search orders..."
                   />
                 </div>
               </div>
             </div>
             <div className="ml-4 flex items-center md:ml-6">
-              <button className="p-1 rounded-full text-gray-400 hover:text-gray-500">
+              <button className="p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none">
                 <span className="sr-only">View notifications</span>
-                <BellIcon className="h-6 w-6" aria-hidden="true" />
+                <BellIcon className="h-6 w-6" />
               </button>
             </div>
           </div>
         </div>
 
-        <main className="flex-1 overflow-y-auto bg-gray-100">
-          <div className="py-6">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-              {children}
-            </div>
-          </div>
+        {/* Page Content */}
+        <main className="flex-1 overflow-y-auto bg-gray-50">
+          {children}
         </main>
       </div>
     </div>
-  );
+  )
 }
