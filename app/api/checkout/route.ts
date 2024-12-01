@@ -9,7 +9,20 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 export async function POST(request: NextRequest) {
   try {
     const { token, items } = await request.json()
+
+    if (!token) {
+      return NextResponse.json({ error: 'No token provided' }, { status: 401 })
+    }
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return NextResponse.json({ error: 'Invalid items data' }, { status: 400 })
+    }
+
+    // Verify Firebase auth token
     const decodedToken = await auth.verifyIdToken(token)
+    if (!decodedToken.email) {
+      return NextResponse.json({ error: 'User email not found' }, { status: 400 })
+    }
 
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
@@ -30,13 +43,16 @@ export async function POST(request: NextRequest) {
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/booking`,
       customer_email: decodedToken.email,
       metadata: {
-        userId: decodedToken.uid,
-      },
+        userId: decodedToken.uid
+      }
     })
 
     return NextResponse.json({ sessionId: session.id })
   } catch (error) {
     console.error('Checkout error:', error)
-    return NextResponse.json({ error: 'Failed to create checkout session' }, { status: 500 })
+    if (error instanceof Stripe.errors.StripeError) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+    return NextResponse.json({ error: 'Checkout failed' }, { status: 500 })
   }
 }
