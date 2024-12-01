@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { db } from '@/lib/firebaseAdmin'
 import { stripe } from '@/lib/stripe'
+import * as admin from 'firebase-admin'
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
       // Update user's orders in Firestore
       const userRef = db.collection('users').doc(customerId)
       await userRef.update({
-        orders: db.FieldValue.arrayUnion(session.id)
+        orders: admin.firestore.FieldValue.arrayUnion(session.id)
       })
 
       console.log(`Payment successful for order ${session.id}`)
@@ -49,7 +50,7 @@ export async function POST(req: Request) {
 
     return new NextResponse('Webhook processed successfully', { status: 200 })
   } catch (err) {
-    console.error('Error processing webhook:', err)
-    return new NextResponse('Webhook error', { status: 500 })
+    console.error('Webhook error:', err)
+    return new NextResponse('Webhook error occurred', { status: 500 })
   }
 }
