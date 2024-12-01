@@ -10,7 +10,7 @@ import {
   sendPasswordResetEmail,
   updateProfile,
 } from 'firebase/auth';
-import { auth } from '../firebase-config';
+import { auth } from './firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from './firebaseInit';
 
