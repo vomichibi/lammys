@@ -1,7 +1,8 @@
 'use client';
 
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, type Firestore } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 import { getPerformance } from 'firebase/performance';
 
 // Your web app's Firebase configuration
@@ -25,7 +26,10 @@ const validateFirebaseConfig = (config: typeof firebaseConfig) => {
     'appId'
   ];
 
-  const missingFields = requiredFields.filter(field => !config[field as keyof typeof config]);
+  const missingFields = requiredFields.filter(field => {
+    const value = config[field as keyof typeof config];
+    return !value || value === 'undefined';
+  });
   
   if (missingFields.length > 0) {
     throw new Error(`Missing required Firebase configuration fields: ${missingFields.join(', ')}`);
@@ -34,32 +38,33 @@ const validateFirebaseConfig = (config: typeof firebaseConfig) => {
 
 // Initialize Firebase with error handling
 let app;
+let db: Firestore;
+let auth;
+
 try {
   validateFirebaseConfig(firebaseConfig);
-  app = initializeApp(firebaseConfig);
+  
+  // Check if Firebase is already initialized
+  app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+  
+  // Initialize Firestore and Auth
+  db = getFirestore(app);
+  auth = getAuth(app);
+
+  // Initialize Performance Monitoring (optional)
+  if (typeof window !== 'undefined') {
+    try {
+      const perf = getPerformance(app);
+      console.log('Firebase Performance Monitoring initialized');
+    } catch (error) {
+      console.error('Performance Monitoring initialization error:', error);
+      // Non-critical error, don't throw
+    }
+  }
 } catch (error) {
   console.error('Firebase initialization error:', error);
   throw error;
 }
 
-// Initialize Firestore with error handling
-let db: Firestore;
-try {
-  db = getFirestore(app);
-} catch (error) {
-  console.error('Firestore initialization error:', error);
-  throw error;
-}
-
-// Initialize Performance Monitoring
-let perf;
-try {
-  perf = getPerformance(app);
-  console.log('Firebase Performance Monitoring initialized');
-} catch (error) {
-  console.error('Performance Monitoring initialization error:', error);
-  // Non-critical error, don't throw
-}
-
-export { db, perf };
+export { db, auth };
 export type { Firestore };

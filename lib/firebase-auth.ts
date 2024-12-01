@@ -9,8 +9,9 @@ import {
   signInWithPopup,
   sendPasswordResetEmail,
   updateProfile,
+  Auth,
 } from 'firebase/auth';
-import { auth } from '../firebase-config';
+import { auth } from './firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from './firebaseInit';
 
@@ -25,11 +26,11 @@ const AUTH_ERRORS = {
   'auth/wrong-password': 'Incorrect password',
   'auth/invalid-credential': 'Invalid login credentials',
   'default': 'An error occurred during authentication'
-};
+} as const;
 
 export const createUser = async (email: string, password: string, name?: string): Promise<UserCredential> => {
   try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const userCredential = await createUserWithEmailAndPassword(auth as Auth, email, password);
     
     // Create user profile in Firestore
     await setDoc(doc(db, 'users', email), {
@@ -54,8 +55,35 @@ export const createUser = async (email: string, password: string, name?: string)
 
 export const loginUser = async (email: string, password: string): Promise<UserCredential> => {
   try {
-    return await signInWithEmailAndPassword(auth, email, password);
+    const userCredential = await signInWithEmailAndPassword(auth as Auth, email, password);
+    
+    // Wait for auth state to be fully initialized
+    await new Promise<void>((resolve) => {
+      const unsubscribe = (auth as Auth).onAuthStateChanged((user: User | null) => {
+        if (user) {
+          unsubscribe();
+          resolve();
+        }
+      });
+      
+      // Add timeout to prevent infinite waiting
+      setTimeout(() => {
+        unsubscribe();
+        resolve();
+      }, 5000);
+    });
+    
+    // Update last login timestamp
+    await setDoc(doc(db, 'users', email), {
+      lastLogin: new Date().toISOString()
+    }, { merge: true });
+
+    // Set user email cookie
+    document.cookie = `user_email=${email}; path=/; max-age=7200; SameSite=Strict`;
+
+    return userCredential;
   } catch (error: any) {
+    console.error('Login error:', error);
     throw new Error(AUTH_ERRORS[error.code as keyof typeof AUTH_ERRORS] || AUTH_ERRORS.default);
   }
 };
@@ -63,17 +91,7 @@ export const loginUser = async (email: string, password: string): Promise<UserCr
 export const loginWithGoogle = async (): Promise<UserCredential> => {
   try {
     const provider = new GoogleAuthProvider();
-    const userCredential = await signInWithPopup(auth, provider);
-    
-    // Create/update user profile in Firestore
-    await setDoc(doc(db, 'users', userCredential.user.email!), {
-      email: userCredential.user.email,
-      name: userCredential.user.displayName || '',
-      role: 'user',
-      lastLogin: new Date().toISOString(),
-    }, { merge: true });
-
-    return userCredential;
+    return await signInWithPopup(auth as Auth, provider);
   } catch (error: any) {
     throw new Error(AUTH_ERRORS[error.code as keyof typeof AUTH_ERRORS] || AUTH_ERRORS.default);
   }
@@ -81,22 +99,24 @@ export const loginWithGoogle = async (): Promise<UserCredential> => {
 
 export const logoutUser = async (): Promise<void> => {
   try {
-    await signOut(auth);
+    await signOut(auth as Auth);
+    // Clear user email cookie
+    document.cookie = 'user_email=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
   } catch (error: any) {
-    throw new Error('Failed to sign out');
+    throw new Error(AUTH_ERRORS[error.code as keyof typeof AUTH_ERRORS] || AUTH_ERRORS.default);
   }
 };
 
 export const resetPassword = async (email: string): Promise<void> => {
   try {
-    await sendPasswordResetEmail(auth, email);
+    await sendPasswordResetEmail(auth as Auth, email);
   } catch (error: any) {
-    throw new Error(AUTH_ERRORS[error.code as keyof typeof AUTH_ERRORS] || 'Failed to send password reset email');
+    throw new Error(AUTH_ERRORS[error.code as keyof typeof AUTH_ERRORS] || AUTH_ERRORS.default);
   }
 };
 
 export const onAuthStateChange = (callback: (user: User | null) => void) => {
-  return onAuthStateChanged(auth, callback);
+  return onAuthStateChanged(auth as Auth, callback);
 };
 
 // Type for the authenticated user
@@ -108,6 +128,11 @@ export interface AuthUser {
 }
 
 // Helper function to check if user is admin
-export const isAdmin = (user: User | null): boolean => {
+export function isAdmin(user: User | null): boolean {
   return user?.email === 'team@lammys.au';
+}
+
+// Helper function to get current user
+export const getCurrentUser = (): User | null => {
+  return (auth as Auth).currentUser;
 };

@@ -20,7 +20,11 @@ let stripePromise: Promise<any> | null = null
 
 export const getStripe = () => {
   if (!stripePromise) {
-    stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_API_KEY)
+    const key = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_API_KEY;
+    if (!key) {
+      throw new Error('Stripe publishable key is not available');
+    }
+    stripePromise = loadStripe(key);
   }
-  return stripePromise
+  return stripePromise;
 }

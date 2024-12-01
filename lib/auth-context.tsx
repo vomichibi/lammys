@@ -1,8 +1,13 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { User, onAuthStateChanged } from 'firebase/auth'
+import { User as FirebaseUser, onAuthStateChanged } from 'firebase/auth'
 import { auth } from './firebase'
+
+// Extend the Firebase User type
+interface User extends FirebaseUser {
+  isAdmin?: boolean;
+}
 
 interface AuthContextType {
   user: User | null
