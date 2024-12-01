@@ -1,6 +1,5 @@
 import Stripe from 'stripe'
-import { loadStripe } from '@stripe/stripe-js'
-import type { Stripe as StripeClient } from '@stripe/stripe-js'
+import { loadStripe, Stripe } from '@stripe/stripe-js'
 
 if (!process.env.STRIPE_SECRET_API_KEY) {
   throw new Error('STRIPE_SECRET_API_KEY is not set in environment variables')
@@ -18,7 +17,7 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_API_KEY, {
 })
 
 // Initialize Stripe.js for client-side operations
-let stripePromise: Promise<StripeClient | null> | null = null
+let stripePromise: Promise<Stripe | null> | null = null
 
 export const getStripe = () => {
   if (!stripePromise) {
