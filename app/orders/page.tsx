@@ -10,13 +10,13 @@ import Footer from '@/components/ui/Footer';
 
 function OrdersPageContent() {
   const { user } = useAuth();
-  const { orders, loadOrders, isLoading } = useOrderStore();
+  const { orders, fetchUserOrders, isLoading } = useOrderStore();
 
   useEffect(() => {
     if (user?.email) {
-      loadOrders(user.email);
+      fetchUserOrders(user.email);
     }
-  }, [user, loadOrders]);
+  }, [user, fetchUserOrders]);
 
   if (isLoading) {
     return (
