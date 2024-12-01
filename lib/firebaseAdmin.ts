@@ -1,22 +1,31 @@
 import * as admin from 'firebase-admin';
 
-if (!admin.apps.length) {
-  try {
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      }),
-    });
-  } catch (error) {
-    console.error('Firebase admin initialization error:', error);
+// Initialize Firebase Admin
+function initializeFirebaseAdmin() {
+  if (!admin.apps.length) {
+    try {
+      if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !process.env.FIREBASE_PRIVATE_KEY) {
+        throw new Error('Missing Firebase Admin SDK credentials');
+      }
+
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId: process.env.FIREBASE_PROJECT_ID,
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+        }),
+      });
+    } catch (error) {
+      console.error('Firebase admin initialization error:', error);
+      throw error; // Re-throw to prevent silent failures
+    }
   }
+  return admin;
 }
 
-export const db = admin.firestore();
-export const auth = admin.auth();
+// Initialize Firebase Admin immediately
+const firebaseAdmin = initializeFirebaseAdmin();
 
-export const initializeFirebaseAdmin = () => {
-  return admin;
-};
+// Export initialized services
+export const db = firebaseAdmin.firestore();
+export const auth = firebaseAdmin.auth();
