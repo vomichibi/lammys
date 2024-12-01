@@ -70,27 +70,8 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Social Media & Hours */}
+          {/* Business Hours */}
           <div>
-            <h3 className="text-white text-lg font-semibold mb-4">Follow Us</h3>
-            <div className="flex space-x-4 mb-6">
-              <a
-                href="https://facebook.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-white"
-              >
-                <Facebook className="h-6 w-6" />
-              </a>
-              <a
-                href="https://instagram.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-white"
-              >
-                <Instagram className="h-6 w-6" />
-              </a>
-            </div>
             <h3 className="text-white text-lg font-semibold mb-4">Business Hours</h3>
             <div className="space-y-2">
               <p>Monday - Friday: 8:30 AM - 5:30 PM</p>
