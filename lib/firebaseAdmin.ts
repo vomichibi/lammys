@@ -8,19 +8,14 @@ function initializeFirebaseAdmin() {
         throw new Error('Missing Firebase Admin SDK credentials');
       }
 
-      // Ensure private key is properly formatted
-      let privateKey = process.env.FIREBASE_PRIVATE_KEY;
-      
-      // If the key doesn't start with the correct header, assume it needs processing
-      if (!privateKey.includes('-----BEGIN PRIVATE KEY-----')) {
-        privateKey = `-----BEGIN PRIVATE KEY-----\n${privateKey}\n-----END PRIVATE KEY-----\n`;
-      }
+      // Get the private key from environment variable
+      const privateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n');
 
       admin.initializeApp({
         credential: admin.credential.cert({
           projectId: process.env.FIREBASE_PROJECT_ID,
           clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-          privateKey: privateKey.replace(/\\n/g, '\n'),
+          privateKey: privateKey,
         }),
       });
 
