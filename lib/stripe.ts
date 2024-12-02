@@ -1,27 +1,30 @@
-import Stripe from 'stripe'
-import { loadStripe, Stripe } from '@stripe/stripe-js'
+// Server-side Stripe SDK
+import Stripe from 'stripe';
+
+// Client-side Stripe functions
+import { loadStripe } from '@stripe/stripe-js';
 
 if (!process.env.STRIPE_SECRET_API_KEY) {
-  throw new Error('STRIPE_SECRET_API_KEY is not set in environment variables')
+  throw new Error('STRIPE_SECRET_API_KEY is not set in environment variables');
 }
 
-const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_API_KEY
+const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_API_KEY;
 if (!PUBLISHABLE_KEY) {
-  throw new Error('Stripe publishable key is missing. Please check your environment variables.')
+  throw new Error('Stripe publishable key is missing. Please check your environment variables.');
 }
 
 // Initialize Stripe with the secret key for server-side operations
 export const stripe = new Stripe(process.env.STRIPE_SECRET_API_KEY, {
   apiVersion: '2023-10-16',
   typescript: true,
-})
+});
 
 // Initialize Stripe.js for client-side operations
-let stripePromise: Promise<Stripe | null> | null = null
+let stripePromise: Promise<any> | null = null;
 
 export const getStripe = () => {
   if (!stripePromise) {
-    stripePromise = loadStripe(PUBLISHABLE_KEY)
+    stripePromise = loadStripe(PUBLISHABLE_KEY);
   }
-  return stripePromise
+  return stripePromise;
 }
