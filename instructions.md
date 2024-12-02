@@ -1,5 +1,4 @@
 ---
-
 ### **Updated Goals for Lammy's Dry Cleaning Project**
 1. **Public Website**:
    - Pages for Home, Services, Booking, Contact Us, FAQs.
@@ -14,7 +13,7 @@
      - Visualizations include revenue trends, top services, and user activity.
 
 3. **Authentication**:
-   - Admin and user roles using Firebase Authentication.
+   - Admin and user roles using Supabase Authentication.
 
 4. **Payment Handling**:
    - Use Stripe for secure payment processing.
@@ -35,11 +34,11 @@
     - CRUD operations for services and items.
 
 #### **2. Authentication**
-- **Firebase Authentication**:
+- **Supabase Authentication**:
   - Manage user sign-up/login and admin roles.
 
 #### **3. Database**
-- **Firebase Firestore**:
+- **Supabase Database**:
   - Store structured data for:
     - Users.
     - Services and items.
@@ -54,7 +53,7 @@
 #### **5. Payment Handling**
 - **Stripe**:
   - Use serverless functions to handle Stripe webhook events.
-  - Automatically log payment data to Firestore (e.g., user ID, payment amount, timestamp).
+  - Automatically log payment data to Supabase (e.g., user ID, payment amount, timestamp).
 
 #### **6. Admin Dashboard**
 - **Chart.js**:
@@ -82,11 +81,11 @@
    - **Serverless Functions**:
      - Handle Stripe webhooks.
      - CRUD operations for services and items via API routes.
-   - **Firestore**:
+   - **Supabase**:
      - Store all structured data (e.g., services, bookings, payments).
 
 3. **Admin Role Management**:
-   - Secure admin routes using Firebase claims.
+   - Secure admin routes using Supabase Row Level Security (RLS) and user roles.
 
 ---
 
@@ -103,9 +102,12 @@
    ```javascript
    import { buffer } from "micro";
    import Stripe from "stripe";
-   import { getFirestore } from "firebase-admin/firestore";
+   import { createClient } from "@supabase/supabase-js";
 
    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+   const supabaseUrl = process.env.SUPABASE_URL;
+   const supabaseKey = process.env.SUPABASE_KEY;
+   const supabase = createClient(supabaseUrl, supabaseKey);
 
    export const config = {
        api: { bodyParser: false },
@@ -127,14 +129,19 @@
 
            if (event.type === "payment_intent.succeeded") {
                const paymentIntent = event.data.object;
-               const db = getFirestore();
+               const { data, error } = await supabase
+                   .from("payments")
+                   .insert([
+                       {
+                           user_id: paymentIntent.metadata.user_id,
+                           amount: paymentIntent.amount_received,
+                           created_at: new Date(),
+                       },
+                   ]);
 
-               // Save payment data to Firestore
-               await db.collection("payments").add({
-                   userId: paymentIntent.metadata.user_id,
-                   amount: paymentIntent.amount_received,
-                   createdAt: new Date(),
-               });
+               if (error) {
+                   console.error(error);
+               }
            }
 
            res.status(200).send("Event received");
@@ -148,11 +155,11 @@
 2. Add the function's URL as a webhook endpoint in Stripe's dashboard.
 
 #### **Sales Analytics Charts**
-- Fetch payment data from Firestore:
+- Fetch payment data from Supabase:
    ```javascript
    const { data: payments, error } = await supabase
        .from("payments")
-       .select("amount, createdAt");
+       .select("amount, created_at");
    ```
 
 - Generate charts with Chart.js:
@@ -160,7 +167,7 @@
    import { Line } from "react-chartjs-2";
 
    const data = {
-       labels: payments.map(payment => new Date(payment.createdAt).toLocaleDateString()),
+       labels: payments.map(payment => new Date(payment.created_at).toLocaleDateString()),
        datasets: [
            {
                label: "Daily Revenue",
@@ -179,11 +186,11 @@
 ### **Deployment**
 1. **Vercel**:
    - Deploy the frontend and serverless functions.
-   - Add environment variables for Firebase and Stripe:
-     - `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, etc.
+   - Add environment variables for Supabase and Stripe:
+     - `SUPABASE_URL`, `SUPABASE_KEY`, etc.
      - `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`.
 
-2. **Firestore**:
+2. **Supabase**:
    - Configure database rules to allow admin-only access to sensitive data.
 
 3. **Domain Setup**:
@@ -201,7 +208,7 @@ With **Chart.js**, you can make charts as detailed as your data allows. For exam
 
 ### **Summary**
 - Hosting: **Vercel** (frontend + serverless functions).
-- Backend: **Firebase Firestore** for CRUD and Stripe webhook data.
-- Authentication: **Firebase Authentication** for user and admin roles.
+- Backend: **Supabase** for CRUD and Stripe webhook data.
+- Authentication: **Supabase Authentication** for user and admin roles.
 - Payment: **Stripe** for transactions and webhooks.
 - Admin Dashboard: **Next.js** with **Chart.js** and **Tailwind CSS**.

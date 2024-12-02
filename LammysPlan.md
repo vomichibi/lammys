@@ -1,123 +1,6 @@
-
 ### **LammysPlan.md**
 
 ```markdown
-# Lammy’s Dry Cleaning Website Plan
-
-Lammy’s Dry Cleaning Website is a user-friendly platform designed to streamline online bookings for dry cleaning services. The site caters to customers and administrators, providing efficient tools for managing bookings, services, and payments.
-
----
-
-## Key Features
-
-1. **Public Pages**:
-   - Showcase services, prices, and store information.
-   - Enable users to book appointments seamlessly.
-
-2. **User Dashboard**:
-   - Track upcoming bookings, payment history, and personal details.
-
-3. **Admin Portal**:
-   - Manage services, view bookings, and monitor business metrics via charts.
-
-4. **Payment Integration**:
-   - Support secure payments through Stripe API.
-
-5. **Email Automation**:
-   - Send booking confirmations and reminders via SendGrid or Mailgun.
-
----
-
-## Site Map
-
-### Public Pages
-
-1. **Home**
-   - Introduction to Lammys.
-   - Highlights services and special offers.
-
-2. **Services**
-   - List of dry cleaning services.
-   - Prices and descriptions.
-
-3. **Booking**
-   - Service selection.
-   - Appointment scheduling.
-   - Payment processing via Stripe.
-
-4. **Login/Register**
-   - User authentication.
-   - Option to continue as guest.
-
-5. **Contact Us**
-   - Contact form.
-   - Store location and operating hours.
-
-6. **FAQs**
-   - Common questions and answers.
-
----
-
-### User Account Pages
-
-1. **Dashboard**
-   - View upcoming bookings.
-   - Access booking history.
-   - Update personal information.
-
-2. **Profile Settings**
-   - Update personal details.
-   - Change password.
-
-3. **Order History**
-   - View past services and payments.
-   - Option to re-book previous services.
-
----
-
-### Admin Portal (Secured Access)
-
-1. **Dashboard**
-   - Display graphs and charts showing website activity.
-   - View key metrics like total bookings, revenue, and user sign-ups.
-
-2. **Manage Services**
-   - Perform CRUD (Create, Read, Update, Delete) operations on services and prices.
-
-3. **Manage Bookings**
-   - View and modify customer bookings.
-
-4. **User Management**
-   - Manage customer accounts.
-   - Assign roles and permissions.
-
-5. **Settings**
-   - Update business information.
-   - Configure payment and email settings.
-
----
-
-## Technical Highlights
-
-- **Next.js Framework** for server-side rendering and static generation.
-- **Tailwind CSS** for responsive and clean UI design.
-- **NextAuth.js** for secure user authentication.
-- **Stripe API** for payment processing.
-- **Chart.js/Recharts** for admin dashboard data visualization.
-- **Firebase or MongoDB** for scalable database management.
-
----
-
-## Deployment and Maintenance
-
-- Hosted on **DigitalOcean** with a droplet upgraded to 2 GB RAM.
-- Secured with SSL certificates via **Let's Encrypt**.
-- Monitored with analytics tools and regular database backups.
-
----
-
-Lammy’s Dry Cleaning Website promises a seamless user experience for customers and administrators, simplifying the process of managing dry cleaning services online.
-``````markdown
 # Lammy’s Dry Cleaning Website Plan
 
 Lammy’s Dry Cleaning Website is a user-friendly platform designed to streamline online bookings for dry cleaning services. The site caters to customers and administrators, providing efficient tools for managing bookings, services, payments, and business metrics.
@@ -221,25 +104,47 @@ Lammy’s Dry Cleaning Website is a user-friendly platform designed to streamlin
 
 ## Technical Highlights
 
-- **Next.js Framework** for server-side rendering and static generation.
-- **Tailwind CSS** for responsive and clean UI design.
-- **Firebase Authentication** for secure user authentication and role management.
-- **Stripe API** for payment processing and webhook handling.
-- **Chart.js** for admin dashboard data visualization.
-- **Firebase Firestore** for scalable database management.
-- **Vercel Serverless Functions** to handle Stripe webhooks and backend logic.
+1. **Authentication & Database**
+   - Supabase for user authentication and data storage
+   - Row Level Security (RLS) for fine-grained access control
+   - Real-time subscriptions for live updates
+
+2. **Frontend**
+   - Next.js 13+ with App Router
+   - TypeScript for type safety
+   - Tailwind CSS for styling
+   - React Query for data fetching
+
+3. **Backend**
+   - Supabase Edge Functions for serverless computing
+   - PostgreSQL database with Supabase's real-time capabilities
+   - Stripe integration for payments
+   - SendGrid/Mailgun for email notifications
+
+4. **Security**
+   - Role-based access control via Supabase RLS
+   - Secure environment variables
+   - HTTPS encryption
+   - CSRF protection
+   - Rate limiting
+
+5. **Performance**
+   - Server-side rendering with Next.js
+   - Image optimization
+   - Edge caching
+   - Lazy loading components
 
 ---
 
-## Firebase Integration Architecture
+## Supabase Integration Architecture
 
-### 1. Firebase Services Integration
+### 1. Supabase Services Integration
 - **Authentication**:
   - Email/Password authentication.
   - Role-based access control for user and admin roles.
   - Protected route management.
 
-- **Firestore Database**:
+- **Database**:
   - Collections:
     ```
     /users
@@ -266,22 +171,22 @@ Lammy’s Dry Cleaning Website is a user-friendly platform designed to streamlin
          |- payment
     ```
 
-- **Firebase Storage**:
+- **Storage**:
   - Service images.
   - Receipt documents (if required).
 
 ---
 
 ### 2. Stripe Webhooks
-1. Handle Stripe payment events using Vercel serverless functions.
-2. Automatically log successful payments in Firestore.
+1. Handle Stripe payment events using Supabase Edge Functions.
+2. Automatically log successful payments in Supabase.
 3. Real-time updates ensure accurate sales analytics in the admin dashboard.
 
 Example Webhook Function:
 ```javascript
 import { buffer } from "micro";
 import Stripe from "stripe";
-import { getFirestore } from "firebase-admin/firestore";
+import { getSupabase } from "@supabase/auth-helpers-nextjs";
 
 export const config = {
     api: { bodyParser: false },
@@ -292,14 +197,14 @@ export default async function handler(req, res) {
         const buf = await buffer(req);
         const sig = req.headers["stripe-signature"];
         const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-        const db = getFirestore();
+        const supabase = getSupabase();
 
         try {
             const event = Stripe.webhooks.constructEvent(buf, sig, webhookSecret);
 
             if (event.type === "payment_intent.succeeded") {
                 const paymentIntent = event.data.object;
-                await db.collection("payments").add({
+                await supabase.from("payments").insert({
                     userId: paymentIntent.metadata.user_id,
                     amount: paymentIntent.amount_received,
                     createdAt: new Date(),
@@ -336,14 +241,14 @@ export default async function handler(req, res) {
 
 1. **Deployment**:
    - Host on **Vercel** for frontend and backend (serverless functions).
-   - Add environment variables for Firebase and Stripe configuration.
+   - Add environment variables for Supabase and Stripe configuration.
 
 2. **Domain Setup**:
    - Point `lammys.au` to Vercel for live deployment.
 
 3. **Monitoring**:
-   - Use Firebase Analytics for user behavior and performance tracking.
+   - Use Supabase Analytics for user behavior and performance tracking.
    - Enable error tracking with tools like Sentry.
 
 4. **Backup**:
-   - Enable Firestore database backups for data safety.
+   - Enable Supabase database backups for data safety.
