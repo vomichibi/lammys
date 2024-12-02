@@ -3,8 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth'
-import { auth } from '@/lib/firebase'
+import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -37,39 +36,39 @@ export default function RegisterPage() {
     setLoading(true)
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password)
-      
-      // Update user profile with display name
-      await updateProfile(userCredential.user, {
-        displayName: name
-      })
-
-      // Create user profile in your database if needed
-      await fetch('/api/create-user', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      // Sign up with Supabase
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name,
+          },
         },
-        body: JSON.stringify({
-          uid: userCredential.user.uid,
-          email: email,
-          name: name,
-        }),
       })
 
-      router.push('/')
-    } catch (err) {
-      if (err instanceof Error) {
-        if (err.message.includes('email-already-in-use')) {
-          setError('An account with this email already exists')
-        } else {
-          setError('Failed to create account. Please try again.')
-        }
-      } else {
-        setError('An unexpected error occurred')
+      if (authError) throw authError
+
+      // Create profile in profiles table
+      if (authData.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: authData.user.id,
+              full_name: name,
+              is_admin: false,
+            },
+          ])
+
+        if (profileError) throw profileError
       }
+
+      // Redirect to dashboard
+      router.push('/dashboard')
+    } catch (err) {
       console.error('Registration error:', err)
-    } finally {
+      setError(err instanceof Error ? err.message : 'An error occurred during registration')
       setLoading(false)
     }
   }
@@ -78,27 +77,24 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="max-w-md w-full space-y-8 p-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
             Create your account
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Already have an account?{' '}
-            <Link
-              href="/login"
-              className="font-medium text-blue-600 hover:text-blue-500"
-            >
+            <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
               Sign in
             </Link>
           </p>
         </div>
 
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
         <form className="mt-8 space-y-6" onSubmit={handleRegister}>
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
           <div className="space-y-4">
             <div>
               <Label htmlFor="name">Full Name</Label>
@@ -106,11 +102,10 @@ export default function RegisterPage() {
                 id="name"
                 name="name"
                 type="text"
-                autoComplete="name"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="mt-1"
+                disabled={loading}
               />
             </div>
 
@@ -124,7 +119,7 @@ export default function RegisterPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1"
+                disabled={loading}
               />
             </div>
 
@@ -138,7 +133,7 @@ export default function RegisterPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1"
+                disabled={loading}
               />
             </div>
 
@@ -152,30 +147,19 @@ export default function RegisterPage() {
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="mt-1"
+                disabled={loading}
               />
             </div>
           </div>
 
           <Button
             type="submit"
-            disabled={loading}
             className="w-full"
+            disabled={loading}
           >
             {loading ? 'Creating account...' : 'Create account'}
           </Button>
         </form>
-
-        <div className="text-sm text-center text-gray-600">
-          By creating an account, you agree to our{' '}
-          <Link href="/terms" className="font-medium text-blue-600 hover:text-blue-500">
-            Terms of Service
-          </Link>{' '}
-          and{' '}
-          <Link href="/privacy" className="font-medium text-blue-600 hover:text-blue-500">
-            Privacy Policy
-          </Link>
-        </div>
       </Card>
     </div>
   )
