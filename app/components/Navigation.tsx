@@ -3,8 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 
 export default function Navigation() {
@@ -34,7 +33,8 @@ export default function Navigation() {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
       router.push('/');
     } catch (error) {
       console.error('Error signing out:', error);

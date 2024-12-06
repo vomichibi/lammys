@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -25,14 +24,12 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
-      
-      // Set user email cookie
-      document.cookie = `user_email=${formData.email}; path=/; max-age=7200; SameSite=Strict`;
-      
-      // Set session cookie
-      const idToken = await userCredential.user.getIdToken();
-      document.cookie = `__session=${idToken}; path=/; max-age=7200; SameSite=Strict`;
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (signInError) throw signInError;
 
       // Redirect based on email
       if (formData.email === 'team@lammys.au') {
