@@ -51,13 +51,13 @@ const sidebarLinks = [
 ]
 
 export default function AdminDashboard() {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [orders, setOrders] = useState<Order[]>([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [revenueData, setRevenueData] = useState([])
   const [recentOrders, setRecentOrders] = useState<Order[]>([])
-  const [loading, setLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -75,7 +75,7 @@ export default function AdminDashboard() {
       } catch (error) {
         console.error('Error fetching analytics:', error);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
