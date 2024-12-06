@@ -3,8 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth'
-import { auth } from '@/lib/firebase'
+import { supabase } from '@/lib/supabaseClient'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -37,39 +36,35 @@ export default function RegisterPage() {
     setLoading(true)
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password)
-      
-      // Update user profile with display name
-      await updateProfile(userCredential.user, {
-        displayName: name
-      })
-
-      // Create user profile in your database if needed
-      await fetch('/api/create-user', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          uid: userCredential.user.uid,
-          email: email,
-          name: name,
-        }),
-      })
-
-      router.push('/')
-    } catch (err) {
-      if (err instanceof Error) {
-        if (err.message.includes('email-already-in-use')) {
-          setError('An account with this email already exists')
-        } else {
-          setError('Failed to create account. Please try again.')
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name,
+          }
         }
-      } else {
-        setError('An unexpected error occurred')
-      }
+      })
+
+      if (signUpError) throw signUpError
+
+      // Create user profile in Supabase profiles table
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert([
+          {
+            id: data.user?.id,
+            full_name: name,
+            email: email,
+          }
+        ])
+
+      if (profileError) throw profileError
+
+      router.push('/dashboard')
+    } catch (err) {
       console.error('Registration error:', err)
-    } finally {
+      setError(err instanceof Error ? err.message : 'Failed to create account')
       setLoading(false)
     }
   }

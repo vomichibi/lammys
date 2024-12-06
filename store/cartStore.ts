@@ -1,19 +1,7 @@
 'use client';
 
 import { create } from 'zustand';
-import { db } from '@/lib/firebaseInit';
-import type { Firestore } from 'firebase/firestore';
-import {
-  collection,
-  getDocs,
-  doc,
-  setDoc,
-  deleteDoc,
-  updateDoc,
-  getDoc,
-  query,
-  where,
-} from 'firebase/firestore';
+import { supabase } from '@/lib/supabaseClient';
 
 interface CartItem {
   id: string;
@@ -35,8 +23,8 @@ interface CartStore {
   updateQuantity: (itemId: string, quantity: number) => Promise<void>;
   initializeCart: (userId: string) => Promise<void>;
   clearCart: () => Promise<void>;
-  loadFromFirestore: (userId: string) => Promise<void>;
-  syncWithFirestore: (userId: string) => Promise<void>;
+  loadFromSupabase: (userId: string) => Promise<void>;
+  syncWithSupabase: (userId: string) => Promise<void>;
   checkout: () => Promise<string>;
   completeCart: (userId: string, userEmail: string) => Promise<void>;
 }
@@ -51,22 +39,10 @@ const useCartStore = create<CartStore>((set, get) => ({
   setError: (error: string | null) => set({ error }),
 
   initializeCart: async (userId: string) => {
-    if (!userId) {
-      set({ error: 'Invalid user ID' });
-      return;
-    }
     try {
       set({ isLoading: true, userId });
-      const userCartRef = doc(db, 'carts', userId);
-      const cartDoc = await getDoc(userCartRef);
-      
-      if (cartDoc.exists()) {
-        const cartData = cartDoc.data();
-        set({ items: cartData.items || [], initialized: true });
-      } else {
-        await setDoc(userCartRef, { items: [] });
-        set({ items: [], initialized: true });
-      }
+      await get().loadFromSupabase(userId);
+      set({ initialized: true });
     } catch (error) {
       set({ error: 'Failed to initialize cart' });
       console.error('Error initializing cart:', error);
@@ -75,140 +51,181 @@ const useCartStore = create<CartStore>((set, get) => ({
     }
   },
 
-  loadFromFirestore: async (userId: string) => {
-    if (!userId) {
-      set({ error: 'Invalid user ID' });
-      return;
-    }
+  loadFromSupabase: async (userId: string) => {
     try {
-      set({ isLoading: true });
-      const userCartRef = doc(db, 'carts', userId);
-      const cartDoc = await getDoc(userCartRef);
-      
-      if (cartDoc.exists()) {
-        const cartData = cartDoc.data();
-        set({ items: cartData.items || [], initialized: true });
-      }
+      const { data: cartItems, error } = await supabase
+        .from('cart_items')
+        .select('*')
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      set({ items: cartItems || [] });
     } catch (error) {
-      set({ error: 'Failed to load cart from Firestore' });
+      set({ error: 'Failed to load cart' });
       console.error('Error loading cart:', error);
-    } finally {
-      set({ isLoading: false });
     }
   },
 
-  syncWithFirestore: async (userId: string) => {
-    if (!userId) {
-      set({ error: 'Invalid user ID' });
-      return;
-    }
+  syncWithSupabase: async (userId: string) => {
     try {
-      set({ isLoading: true });
       const { items } = get();
-      const userCartRef = doc(db, 'carts', userId);
-      await setDoc(userCartRef, { items }, { merge: true });
+      
+      // Delete existing items
+      await supabase
+        .from('cart_items')
+        .delete()
+        .eq('user_id', userId);
+
+      // Insert new items
+      if (items.length > 0) {
+        const { error } = await supabase
+          .from('cart_items')
+          .insert(items.map(item => ({ ...item, user_id: userId })));
+
+        if (error) throw error;
+      }
     } catch (error) {
-      set({ error: 'Failed to sync cart with Firestore' });
-      console.error('Error syncing cart:', error);
-    } finally {
-      set({ isLoading: false });
+      console.error('Error syncing with Supabase:', error);
+      set({ error: 'Failed to sync cart' });
     }
   },
 
   addItem: async (item: CartItem) => {
-    const { items, userId } = get();
-    const existingItem = items.find((i) => i.id === item.id);
+    try {
+      const { items, userId } = get();
+      const newItems = [...items, item];
+      set({ items: newItems });
+      
+      if (userId) {
+        const { error } = await supabase
+          .from('cart_items')
+          .insert([{ ...item, user_id: userId }]);
 
-    if (existingItem) {
-      const updatedItems = items.map((i) =>
-        i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
-      );
-      set({ items: updatedItems });
-    } else {
-      set({ items: [...items, { ...item, quantity: 1 }] });
-    }
-
-    if (userId) {
-      await get().syncWithFirestore(userId);
+        if (error) throw error;
+      }
+    } catch (error) {
+      console.error('Error adding item:', error);
+      set({ error: 'Failed to add item to cart' });
     }
   },
 
   removeItem: async (itemId: string) => {
-    const { items, userId } = get();
-    set({ items: items.filter((item) => item.id !== itemId) });
-    
-    if (userId) {
-      await get().syncWithFirestore(userId);
+    try {
+      const { items, userId } = get();
+      const newItems = items.filter(item => item.id !== itemId);
+      set({ items: newItems });
+
+      if (userId) {
+        const { error } = await supabase
+          .from('cart_items')
+          .delete()
+          .eq('user_id', userId)
+          .eq('id', itemId);
+
+        if (error) throw error;
+      }
+    } catch (error) {
+      console.error('Error removing item:', error);
+      set({ error: 'Failed to remove item from cart' });
     }
   },
 
   updateQuantity: async (itemId: string, quantity: number) => {
-    const { items, userId } = get();
-    if (quantity < 1) {
-      await get().removeItem(itemId);
-      return;
-    }
+    try {
+      const { items, userId } = get();
+      const newItems = items.map(item =>
+        item.id === itemId ? { ...item, quantity } : item
+      );
+      set({ items: newItems });
 
-    const updatedItems = items.map((item) =>
-      item.id === itemId ? { ...item, quantity } : item
-    );
-    set({ items: updatedItems });
+      if (userId) {
+        const { error } = await supabase
+          .from('cart_items')
+          .update({ quantity })
+          .eq('user_id', userId)
+          .eq('id', itemId);
 
-    if (userId) {
-      await get().syncWithFirestore(userId);
+        if (error) throw error;
+      }
+    } catch (error) {
+      console.error('Error updating quantity:', error);
+      set({ error: 'Failed to update item quantity' });
     }
   },
 
   clearCart: async () => {
-    const { userId } = get();
-    set({ items: [], initialized: false });
-    
-    if (userId) {
-      const userCartRef = doc(db, 'carts', userId);
-      await setDoc(userCartRef, { items: [] });
+    try {
+      const { userId } = get();
+      set({ items: [] });
+
+      if (userId) {
+        const { error } = await supabase
+          .from('cart_items')
+          .delete()
+          .eq('user_id', userId);
+
+        if (error) throw error;
+      }
+    } catch (error) {
+      console.error('Error clearing cart:', error);
+      set({ error: 'Failed to clear cart' });
     }
   },
 
   checkout: async () => {
-    const { items, userId } = get();
-    if (!userId || items.length === 0) {
-      throw new Error('Cannot checkout with empty cart or without user ID');
-    }
-
     try {
-      set({ isLoading: true });
-      const response = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ items }),
-      });
+      const { items, userId } = get();
+      if (!userId) throw new Error('User not authenticated');
 
-      if (!response.ok) {
-        throw new Error('Checkout failed');
-      }
+      // Create order in Supabase
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert([
+          {
+            user_id: userId,
+            items: items,
+            status: 'pending',
+            total: items.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0)
+          }
+        ])
+        .select()
+        .single();
 
-      const data = await response.json();
-      return data.url;
+      if (orderError) throw orderError;
+
+      // Clear cart after successful checkout
+      await get().clearCart();
+
+      return order.id;
     } catch (error) {
-      console.error('Checkout error:', error);
+      console.error('Error during checkout:', error);
+      set({ error: 'Failed to process checkout' });
       throw error;
-    } finally {
-      set({ isLoading: false });
     }
   },
 
   completeCart: async (userId: string, userEmail: string) => {
     try {
-      set({ isLoading: true });
+      const { items } = get();
+      const { error } = await supabase
+        .from('completed_carts')
+        .insert([
+          {
+            user_id: userId,
+            user_email: userEmail,
+            items: items,
+            completed_at: new Date()
+          }
+        ]);
+
+      if (error) throw error;
       await get().clearCart();
-      set({ isLoading: false });
     } catch (error) {
+      console.error('Error completing cart:', error);
       set({ error: 'Failed to complete cart' });
-      throw error;
     }
-  },
+  }
 }));
 
 export { useCartStore };

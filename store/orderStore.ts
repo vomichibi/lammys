@@ -2,18 +2,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { db } from '@/lib/firebaseInit';
-import { 
-  collection, 
-  doc, 
-  setDoc, 
-  getDoc, 
-  getDocs, 
-  query, 
-  where,
-  orderBy,
-  Timestamp 
-} from 'firebase/firestore';
+import { supabase } from '@/lib/supabaseClient';
 
 export interface OrderItem {
   id: string;
@@ -39,7 +28,7 @@ interface OrderStore {
   isLoading: boolean;
   error: string | null;
   fetchUserOrders: (userId: string) => Promise<void>;
-  createOrder: (order: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  createOrder: (order: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Order>;
   updateOrderStatus: (orderId: string, status: Order['status']) => Promise<void>;
 }
 
@@ -57,20 +46,14 @@ export const useOrderStore = create<OrderStore>()(
       fetchUserOrders: async (userId: string) => {
         try {
           set({ isLoading: true, error: null });
-          const ordersRef = collection(db, 'orders');
-          const q = query(
-            ordersRef,
-            where('userId', '==', userId),
-            orderBy('createdAt', 'desc')
-          );
-          
-          const querySnapshot = await getDocs(q);
-          const orders = querySnapshot.docs.map(doc => ({
-            ...doc.data(),
-            id: doc.id,
-          })) as Order[];
-          
-          set({ orders });
+          const { data: orders, error } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+
+          if (error) throw error;
+          set({ orders: orders || [] });
         } catch (error: any) {
           console.error('Error fetching orders:', error);
           set({ error: error?.message || 'Failed to fetch orders' });
@@ -82,24 +65,25 @@ export const useOrderStore = create<OrderStore>()(
       createOrder: async (orderData) => {
         try {
           set({ isLoading: true, error: null });
-          const orderId = createOrderId();
-          const orderRef = doc(db, 'orders', orderId);
-          
-          const order: Order = {
-            ...orderData,
-            id: orderId,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          };
-          
-          await setDoc(orderRef, order);
-          
+          const { data: order, error } = await supabase
+            .from('orders')
+            .insert([{
+              ...orderData,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            }])
+            .select()
+            .single();
+
+          if (error) throw error;
           set(state => ({
             orders: [order, ...state.orders]
           }));
+          return order;
         } catch (error: any) {
           console.error('Error creating order:', error);
           set({ error: error?.message || 'Failed to create order' });
+          throw error;
         } finally {
           set({ isLoading: false });
         }
@@ -108,17 +92,20 @@ export const useOrderStore = create<OrderStore>()(
       updateOrderStatus: async (orderId: string, status: Order['status']) => {
         try {
           set({ isLoading: true, error: null });
-          const orderRef = doc(db, 'orders', orderId);
-          
-          await setDoc(orderRef, {
-            status,
-            updatedAt: new Date().toISOString()
-          }, { merge: true });
-          
+          const { error } = await supabase
+            .from('orders')
+            .update({
+              status,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', orderId);
+
+          if (error) throw error;
+
           set(state => ({
             orders: state.orders.map(order =>
               order.id === orderId
-                ? { ...order, status, updatedAt: new Date().toISOString() }
+                ? { ...order, status, updated_at: new Date().toISOString() }
                 : order
             )
           }));

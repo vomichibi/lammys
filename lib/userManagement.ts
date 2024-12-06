@@ -1,23 +1,12 @@
-import { db } from './firebaseInit';
-import { 
-  collection, 
-  doc, 
-  setDoc, 
-  getDoc, 
-  getDocs, 
-  query, 
-  where,
-  enableNetwork,
-  disableNetwork
-} from 'firebase/firestore';
+import { supabase } from './supabaseClient';
 
 export interface User {
   id: string;
   email: string;
   name?: string;
   role: 'user' | 'admin';
-  createdAt: Date;
-  lastLoginAt: Date;
+  created_at: Date;
+  last_login_at: Date;
 }
 
 export const createUser = async (userData: {
@@ -25,91 +14,95 @@ export const createUser = async (userData: {
   name?: string;
 }): Promise<User> => {
   try {
-    const usersRef = collection(db, 'users');
-    const userDoc = doc(usersRef, userData.email);
-    
     // Check if user already exists
-    const existingUser = await getDoc(userDoc);
-    if (existingUser.exists()) {
+    const { data: existingUser, error: fetchError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('email', userData.email)
+      .single();
+
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      throw fetchError;
+    }
+
+    if (existingUser) {
       // Update last login time
-      const updatedUser = {
-        ...existingUser.data(),
-        lastLoginAt: new Date(),
-      };
-      await setDoc(userDoc, updatedUser, { merge: true });
+      const { data: updatedUser, error: updateError } = await supabase
+        .from('profiles')
+        .update({ last_login_at: new Date() })
+        .eq('email', userData.email)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
       return updatedUser as User;
     }
 
     // Create new user
-    const newUser: User = {
+    const newUser = {
       id: userData.email,
       email: userData.email,
       name: userData.name || '',
       role: 'user',
-      createdAt: new Date(),
-      lastLoginAt: new Date(),
+      created_at: new Date(),
+      last_login_at: new Date(),
     };
 
-    await setDoc(userDoc, newUser);
-    return newUser;
+    const { data, error } = await supabase
+      .from('profiles')
+      .insert([newUser])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as User;
   } catch (error) {
-    console.error('Error creating/updating user:', error);
-    // Try to reconnect if network is the issue
-    try {
-      await enableNetwork(db);
-      // Retry the operation
-      return createUser(userData);
-    } catch (retryError) {
-      console.error('Failed to retry user creation:', retryError);
-      throw new Error('Failed to create/update user');
-    }
+    console.error('Error creating user:', error);
+    throw error;
   }
 };
 
 export const getUser = async (email: string): Promise<User | null> => {
   try {
-    const userDoc = await getDoc(doc(db, 'users', email));
-    if (userDoc.exists()) {
-      return userDoc.data() as User;
-    }
-    return null;
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('email', email)
+      .single();
+
+    if (error) throw error;
+    return data as User;
   } catch (error) {
-    console.error('Error getting user:', error);
-    // Try to reconnect if network is the issue
-    try {
-      await enableNetwork(db);
-      // Retry the operation
-      return getUser(email);
-    } catch (retryError) {
-      console.error('Failed to retry getting user:', retryError);
-      return null;
-    }
+    console.error('Error fetching user:', error);
+    return null;
   }
 };
 
 export const getAllUsers = async (): Promise<User[]> => {
   try {
-    const usersRef = collection(db, 'users');
-    const querySnapshot = await getDocs(usersRef);
-    return querySnapshot.docs.map(doc => doc.data() as User);
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data as User[];
   } catch (error) {
-    console.error('Error getting all users:', error);
-    // Try to reconnect if network is the issue
-    try {
-      await enableNetwork(db);
-      // Retry the operation
-      return getAllUsers();
-    } catch (retryError) {
-      console.error('Failed to retry getting all users:', retryError);
-      return [];
-    }
+    console.error('Error fetching users:', error);
+    return [];
   }
 };
 
 export const isAdmin = async (email: string): Promise<boolean> => {
   try {
-    const user = await getUser(email);
-    return user?.role === 'admin';
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('email', email)
+      .single();
+
+    if (error) throw error;
+    return data?.role === 'admin';
   } catch (error) {
     console.error('Error checking admin status:', error);
     return false;

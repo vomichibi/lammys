@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { User, onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { User } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabaseClient';
 
 export interface AuthUser {
   id: string;
@@ -13,13 +13,27 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser: User | null) => {
-      if (firebaseUser) {
-        // You can modify this to include additional user data from your database
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
         setUser({
-          id: firebaseUser.uid,
-          email: firebaseUser.email,
-          isAdmin: firebaseUser.email === 'team@lammys.au' // Add your admin logic here
+          id: session.user.id,
+          email: session.user.email,
+          isAdmin: session.user.email === 'team@lammys.au'
+        });
+      }
+      setLoading(false);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email,
+          isAdmin: session.user.email === 'team@lammys.au'
         });
       } else {
         setUser(null);
@@ -27,7 +41,7 @@ export function useAuth() {
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => subscription.unsubscribe();
   }, []);
 
   return {

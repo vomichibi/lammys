@@ -1,16 +1,17 @@
 'use client';
 
-import { ReactNode } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
-import { useEffect, useState } from 'react';
-import { auth } from '@/lib/firebase';
+import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { AuthUser, isAdmin } from '@/lib/firebase-auth';
+import { supabase } from '@/lib/supabaseClient';
+import type { AuthUser } from '@/types/auth';
 
-interface AuthContextType {
+const AuthContext = createContext<{
   user: AuthUser | null;
   loading: boolean;
-}
+}>({
+  user: null,
+  loading: true,
+});
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -18,22 +19,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      if (firebaseUser) {
-        // Transform Firebase user to AuthUser
-        const isUserAdmin = isAdmin(firebaseUser);
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
         setUser({
-          id: firebaseUser.uid,
-          email: firebaseUser.email,
-          name: firebaseUser.displayName,
-          isAdmin: isUserAdmin
+          id: session.user.id,
+          email: session.user.email,
+          isAdmin: session.user.email === 'team@lammys.au'
+        });
+      }
+      setLoading(false);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email,
+          isAdmin: session.user.email === 'team@lammys.au'
         });
 
         // Redirect admin users to admin dashboard, regular users to user dashboard
         const currentPath = window.location.pathname;
-        if (isUserAdmin && currentPath === '/dashboard') {
+        if (session.user.email === 'team@lammys.au' && currentPath === '/dashboard') {
           router.push('/admindash/dashboard');
-        } else if (!isUserAdmin && currentPath.startsWith('/admindash')) {
+        } else if (session.user.email !== 'team@lammys.au' && currentPath.startsWith('/admindash')) {
           router.push('/dashboard');
         }
       } else {
@@ -47,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => subscription.unsubscribe();
   }, [router]);
 
   if (loading) {
@@ -56,5 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     </div>;
   }
 
-  return <>{children}</>;
+  return <AuthContext.Provider value={{ user, loading }}>
+    {children}
+  </AuthContext.Provider>;
 }
