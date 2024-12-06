@@ -25,7 +25,7 @@ Lammy’s Dry Cleaning Website is a user-friendly platform designed to streamlin
    - Real-time data from Stripe webhooks to display sales analytics.
 
 5. **Email Automation**:
-   - Send booking confirmations and reminders via SendGrid or Mailgun.
+   - Send booking confirmations and reminders via Gmail
 
 ---
 
@@ -252,3 +252,113 @@ export default async function handler(req, res) {
 
 4. **Backup**:
    - Enable Supabase database backups for data safety.
+
+## Key Updates
+
+1. **Authentication**:
+   - Supabase authentication uses email/password with RLS.
+   - Admin accounts are identified with an `is_admin` flag in the `users` table.
+   - Email confirmation is enabled through Supabase.
+
+2. **Database Schema**:
+   - The database is designed with strict UUID-based relationships and fine-grained RLS policies.
+
+3. **Role-Based Policies**:
+   - Admins have full access to manage users, services, and bookings.
+   - Customers can only view and update their data.
+
+---
+
+
+## Updated Database Schema
+
+### **Users Table**
+Tracks all users, including customers and admins.
+
+```sql
+CREATE TABLE users (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    email VARCHAR(150) UNIQUE NOT NULL,
+    name VARCHAR(100),
+    is_admin BOOLEAN DEFAULT FALSE,
+    password_hash TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+### **Bookings Table**
+Tracks customer appointments and associated services.
+
+```sql
+CREATE TABLE bookings (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    service_id UUID REFERENCES services(id),
+    pickup_time TIMESTAMP,
+    dropoff_time TIMESTAMP,
+    special_instructions TEXT,
+    status VARCHAR(20) DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+### **Services Table**
+Lists all available services.
+
+```sql
+CREATE TABLE services (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    price NUMERIC(10, 2) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+### **Payments Table**
+Tracks all payment transactions.
+
+```sql
+CREATE TABLE payments (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    order_id UUID REFERENCES bookings(id) ON DELETE CASCADE,
+    amount NUMERIC(10, 2) NOT NULL,
+    payment_method VARCHAR(50),
+    status VARCHAR(20) DEFAULT 'successful',
+    created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+---
+
+
+## Authentication Enhancements
+
+1. **Admin Role Setup**:
+   - Admins are identified by the `is_admin` flag in the `users` table.
+
+2. **Email Confirmation**:
+   - Enabled in Supabase to ensure verified users.
+   - SMTP configuration required for email delivery.
+
+3. **Error Handling**:
+   - Logs are monitored for failed sign-ups and email issues.
+
+---
+
+
+## Stripe Integration
+
+1. Payments are processed through the Stripe API.
+2. Payment success is recorded in the `payments` table via webhooks.
+3. Refunds and failed payments are tracked for analytics.
+
+---
+
+
+## Supabase Edge Functions
+
+1. **Webhook Handling**:
+   Supabase Edge Functions are used to handle Stripe webhooks for real-time updates.
+
+---
