@@ -58,11 +58,11 @@ export default function CustomersLayout({
               <div>
                 <Avatar>
                   <AvatarImage src={user?.email ? `https://www.gravatar.com/avatar/${Buffer.from(user.email).toString('hex')}?d=mp` : ''} />
-                  <AvatarFallback>{user?.name?.[0]}</AvatarFallback>
+                  <AvatarFallback>{(user?.user_metadata?.name as string)?.[0] || user?.email?.[0]?.toUpperCase() || '?'}</AvatarFallback>
                 </Avatar>
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-700">{user?.name}</p>
+                <p className="text-sm font-medium text-gray-700">{user?.user_metadata?.name || user?.email}</p>
                 <Button 
                   variant="ghost" 
                   onClick={() => supabase.auth.signOut()}
