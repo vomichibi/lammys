@@ -1,37 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth, db } from '@/lib/firebaseAdmin'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
 export async function POST(request: NextRequest) {
   try {
-    const { token } = await request.json()
+    const { email, password } = await request.json()
 
-    if (!token) {
-      return NextResponse.json({ error: 'No token provided' }, { status: 401 })
-    }
-
-    // Verify Firebase auth token
-    const decodedToken = await auth.verifyIdToken(token)
-    if (!decodedToken.email) {
-      return NextResponse.json({ error: 'User email not found' }, { status: 400 })
-    }
-
-    // Check if user document already exists
-    const userDoc = await db.collection('users').doc(decodedToken.uid).get()
-    if (userDoc.exists) {
-      return NextResponse.json({ error: 'User already exists' }, { status: 409 })
-    }
-    
-    // Create user document in Firestore
-    await db.collection('users').doc(decodedToken.uid).set({
-      email: decodedToken.email,
-      createdAt: new Date().toISOString(),
-      role: 'user',
-      uid: decodedToken.uid
+    const { data: { user }, error } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true
     })
 
-    return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('Create user error:', error)
-    return NextResponse.json({ error: 'Failed to create user' }, { status: 500 })
+    if (error) throw error
+
+    // Create a profile for the new user
+    const { error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .insert({
+        id: user.id,
+        email: user.email,
+        is_admin: false
+      })
+
+    if (profileError) throw profileError
+
+    return NextResponse.json({ userId: user.id })
+  } catch (error: any) {
+    console.error('Error creating user:', error)
+    return NextResponse.json(
+      { error: error.message || 'Failed to create user' },
+      { status: 500 }
+    )
   }
 }

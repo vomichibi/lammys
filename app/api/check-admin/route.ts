@@ -1,25 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/firebaseAdmin'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
 export async function POST(request: NextRequest) {
   try {
     const { token } = await request.json()
 
-    if (!token) {
-      return NextResponse.json({ error: 'No token provided' }, { status: 401 })
-    }
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
+    if (error) throw error
 
-    // Verify the Firebase token
-    const decodedToken = await auth.verifyIdToken(token)
-    
-    // Check if user has admin custom claim
-    if (!decodedToken.admin) {
-      return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
-    }
+    const isAdmin = user?.email === 'team@lammys.au'
 
-    return NextResponse.json({ isAdmin: true })
+    return NextResponse.json({ isAdmin })
   } catch (error) {
-    console.error('Admin check error:', error)
-    return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
+    console.error('Error checking admin status:', error)
+    return NextResponse.json({ error: 'Failed to check admin status' }, { status: 500 })
   }
 }

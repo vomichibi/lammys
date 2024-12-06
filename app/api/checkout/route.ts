@@ -1,28 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Stripe from 'stripe'
-import { auth } from '@/lib/firebaseAdmin'
+import { stripe } from '@/lib/stripe'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-10-16',
-})
+const origin = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
 export async function POST(request: NextRequest) {
   try {
-    const { token, items } = await request.json()
+    const { items, token } = await request.json()
 
-    if (!token) {
-      return NextResponse.json({ error: 'No token provided' }, { status: 401 })
-    }
-
-    if (!items || !Array.isArray(items) || items.length === 0) {
-      return NextResponse.json({ error: 'Invalid items data' }, { status: 400 })
-    }
-
-    // Verify Firebase auth token
-    const decodedToken = await auth.verifyIdToken(token)
-    if (!decodedToken.email) {
-      return NextResponse.json({ error: 'User email not found' }, { status: 400 })
-    }
+    // Verify user
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
+    if (authError) throw authError
 
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
@@ -39,20 +27,32 @@ export async function POST(request: NextRequest) {
         quantity: item.quantity,
       })),
       mode: 'payment',
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/booking`,
-      customer_email: decodedToken.email,
+      success_url: `${origin}/booking/confirmation?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/booking/cart`,
       metadata: {
-        userId: decodedToken.uid
-      }
+        userId: user.id,
+      },
     })
 
+    // Create order in Supabase
+    const { error: orderError } = await supabaseAdmin
+      .from('orders')
+      .insert({
+        user_id: user.id,
+        session_id: session.id,
+        amount: session.amount_total ? session.amount_total / 100 : 0,
+        status: 'pending',
+        items: items,
+      })
+
+    if (orderError) throw orderError
+
     return NextResponse.json({ sessionId: session.id })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Checkout error:', error)
-    if (error instanceof Stripe.errors.StripeError) {
-      return NextResponse.json({ error: error.message }, { status: 400 })
-    }
-    return NextResponse.json({ error: 'Checkout failed' }, { status: 500 })
+    return NextResponse.json(
+      { error: error.message || 'Checkout failed' },
+      { status: 500 }
+    )
   }
 }
