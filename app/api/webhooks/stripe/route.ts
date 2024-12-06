@@ -1,56 +1,48 @@
-import { headers } from 'next/headers'
-import { NextResponse } from 'next/server'
-import Stripe from 'stripe'
-import { db } from '@/lib/firebaseAdmin'
+import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
-import * as admin from 'firebase-admin'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 
-export async function POST(req: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const body = await req.text()
-    const signature = headers().get('stripe-signature')!
+    const body = await request.text()
+    const signature = request.headers.get('stripe-signature')!
 
-    let event: Stripe.Event
-
+    let event
     try {
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
-    } catch (err) {
-      console.error('Webhook signature verification failed:', err)
-      return new NextResponse('Webhook signature verification failed', { status: 400 })
+    } catch (err: any) {
+      console.error('Webhook signature verification failed:', err.message)
+      return NextResponse.json({ error: err.message }, { status: 400 })
     }
-
-    const session = event.data.object as Stripe.Checkout.Session
 
     if (event.type === 'checkout.session.completed') {
-      const customerId = session.client_reference_id // This should be the Firebase UID
-      
-      if (!customerId) {
-        console.error('No customer ID found in session')
-        return new NextResponse('No customer ID found', { status: 400 })
+      const session = event.data.object as any
+
+      // Update order status in Supabase
+      const { error: orderError } = await supabaseAdmin
+        .from('orders')
+        .update({ status: 'paid', payment_intent: session.payment_intent })
+        .eq('session_id', session.id)
+
+      if (orderError) {
+        console.error('Error updating order status:', orderError)
+        return NextResponse.json(
+          { error: 'Failed to update order status' },
+          { status: 500 }
+        )
       }
 
-      // Update order status in Firestore
-      const orderRef = db.collection('orders').doc(session.id)
-      await orderRef.update({
-        status: 'paid',
-        stripePaymentId: session.payment_intent as string,
-        updatedAt: new Date().toISOString()
-      })
-
-      // Update user's orders in Firestore
-      const userRef = db.collection('users').doc(customerId)
-      await userRef.update({
-        orders: admin.firestore.FieldValue.arrayUnion(session.id)
-      })
-
-      console.log(`Payment successful for order ${session.id}`)
+      // You could send confirmation emails here
     }
 
-    return new NextResponse('Webhook processed successfully', { status: 200 })
-  } catch (err) {
-    console.error('Webhook error:', err)
-    return new NextResponse('Webhook error occurred', { status: 500 })
+    return NextResponse.json({ received: true })
+  } catch (error: any) {
+    console.error('Webhook error:', error)
+    return NextResponse.json(
+      { error: error.message || 'Webhook handler failed' },
+      { status: 500 }
+    )
   }
 }

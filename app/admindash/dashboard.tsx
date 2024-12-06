@@ -23,7 +23,8 @@ import { Input } from "@/components/ui/input"
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabaseClient'
-import { createHash } from 'crypto';
+import { createHash } from 'crypto'
+import { BusinessMetrics } from './components/BusinessMetrics'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://your-vps-ip:3001';
 
@@ -42,14 +43,17 @@ interface Order {
 }
 
 const sidebarLinks = [
-  { name: 'Dashboard', icon: LayoutDashboardIcon, href: '/admindash/dashboard' },
+  { name: 'Dashboard', icon: LayoutDashboardIcon, href: '/admindash' },
   { name: 'Orders', icon: ClipboardListIcon, href: '/admindash/orders' },
+  { name: 'Services', icon: PackageIcon, href: '/admindash/services' },
   { name: 'Customers', icon: UsersIcon, href: '/admindash/customers' },
   { name: 'Settings', icon: SettingsIcon, href: '/admindash/settings' },
 ]
 
 export default function AdminDashboard() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [orders, setOrders] = useState<Order[]>([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [revenueData, setRevenueData] = useState([])
   const [recentOrders, setRecentOrders] = useState<Order[]>([])
@@ -126,45 +130,25 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Navigation */}
-        <div className="flex-shrink-0 flex h-16 bg-white border-b border-gray-200">
-          <button
-            type="button"
-            className="md:hidden px-4 border-r border-gray-200 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            <span className="sr-only">Open sidebar</span>
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-          <div className="flex-1 px-4 flex justify-between">
-            <div className="flex-1 flex">
-              <div className="w-full flex md:ml-0">
-                <div className="relative w-full">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <SearchIcon className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <Input
-                    className="pl-10"
-                    placeholder="Search orders, customers..."
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="ml-4 flex items-center md:ml-6">
-              <button className="p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none">
-                <span className="sr-only">View notifications</span>
-                <BellIcon className="h-6 w-6" />
-              </button>
+      {/* Main content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-8">
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold">Dashboard</h1>
+            <div className="flex items-center space-x-4">
+              <Input
+                type="search"
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-64"
+              />
             </div>
           </div>
-        </div>
 
-        {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto bg-gray-50 p-6">
+          {/* Business Metrics */}
+          <BusinessMetrics />
+
           {/* Overview Cards */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
@@ -293,7 +277,7 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
           </div>
-        </main>
+        </div>
       </div>
     </div>
   )
