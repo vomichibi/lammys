@@ -19,52 +19,50 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
+  // Add this function to test Supabase connection
+  const testConnection = async () => {
+    try {
+      const { data, error } = await supabase.from('profiles').select('count').single();
+      console.log('Connection test:', { data, error });
+    } catch (err) {
+      console.error('Connection test error:', err);
+    }
+  }
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match')
-      return
-    }
-
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters')
-      return
-    }
-
     setLoading(true)
 
     try {
-      const { data, error: signUpError } = await supabase.auth.signUp({
+      // Sign up the user with all data in the metadata
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            full_name: name,
-          }
+            name: name,  // Store in user metadata
+            email: email
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`
         }
       })
 
-      if (signUpError) throw signUpError
+      if (signUpError) {
+        console.error('Signup error:', signUpError)
+        throw signUpError
+      }
 
-      // Create user profile in Supabase profiles table
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([
-          {
-            id: data.user?.id,
-            full_name: name,
-            email: email,
-          }
-        ])
+      if (!authData.user?.id) {
+        throw new Error('No user ID returned from signup')
+      }
 
-      if (profileError) throw profileError
-
+      // Success - redirect to dashboard
       router.push('/dashboard')
     } catch (err) {
       console.error('Registration error:', err)
       setError(err instanceof Error ? err.message : 'Failed to create account')
+    } finally {
       setLoading(false)
     }
   }
