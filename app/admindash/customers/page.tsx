@@ -30,8 +30,7 @@ import {
   PhoneIcon,
   MailIcon,
   UserIcon,
-  ShieldIcon,
-  CalendarIcon
+  ShieldIcon
 } from 'lucide-react'
 import { getAllUsers, User } from '@/lib/userManagement'
 
@@ -142,13 +141,11 @@ export default function CustomersPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center">
-                          <CalendarIcon className="mr-2 h-4 w-4 text-gray-500" />
                           {new Date(customer.created_at).toLocaleDateString()}
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center">
-                          <CalendarIcon className="mr-2 h-4 w-4 text-gray-500" />
                           {new Date(customer.last_login_at).toLocaleDateString()}
                         </div>
                       </TableCell>
