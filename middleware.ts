@@ -2,14 +2,6 @@ import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-// Add paths that require authentication
-const protectedPaths = [
-  '/booking',
-  '/admindash',
-  '/profile',
-  '/orders',
-]
-
 // Add paths that are only accessible when NOT authenticated
 const authPaths = [
   '/login',
@@ -17,71 +9,72 @@ const authPaths = [
   '/forgot-password',
 ]
 
-// Add paths that require admin access
-const adminPaths = [
-  '/admindash',
-]
-
 export async function middleware(request: NextRequest) {
-  const res = NextResponse.next()
-  const supabase = createMiddlewareClient({ req: request, res })
-  
-  // Check if user is authenticated
-  const { data: { session } } = await supabase.auth.getSession()
-  const path = request.nextUrl.pathname
-
-  // Check if path requires authentication
-  const isProtectedPath = protectedPaths.some(protPath => 
-    path.startsWith(protPath)
-  )
-
-  // Check if path is auth-only (login, register, etc.)
-  const isAuthPath = authPaths.some(authPath => 
-    path.startsWith(authPath)
-  )
-
-  // Check if path requires admin access
-  const isAdminPath = adminPaths.some(adminPath => 
-    path.startsWith(adminPath)
-  )
-
-  // If user is not authenticated and tries to access protected path
-  if (isProtectedPath && !session) {
-    const redirectUrl = new URL('/login', request.url)
-    redirectUrl.searchParams.set('from', request.nextUrl.pathname)
-    return NextResponse.redirect(redirectUrl)
-  }
-
-  // If user is authenticated and tries to access auth path
-  if (isAuthPath && session) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
-  }
-
-  // If non-admin user tries to access admin path
-  if (isAdminPath) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', session?.user?.id)
-      .single()
-
-    if (!profile?.is_admin) {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
+  try {
+    const res = NextResponse.next()
+    const path = request.nextUrl.pathname
+    
+    // Initialize Supabase client with environment variables
+    const supabase = createMiddlewareClient({ 
+      req: request, 
+      res,
+      options: {
+        supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+        supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      }
+    })
+    
+    // Check if user is authenticated
+    const { data: { session }, error } = await supabase.auth.getSession()
+    
+    if (error) {
+      console.error('Supabase auth error:', error)
+      return NextResponse.redirect(new URL('/login', request.url))
     }
-  }
 
-  return res
+    // Check if path is auth-only (login, register, etc.)
+    const isAuthPath = authPaths.some(authPath => path.startsWith(authPath))
+
+    // If user is authenticated and tries to access auth path
+    if (isAuthPath && session) {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+
+    // If user is not authenticated and tries to access protected path
+    if (!session && !isAuthPath) {
+      const redirectUrl = new URL('/login', request.url)
+      redirectUrl.searchParams.set('from', request.nextUrl.pathname)
+      return NextResponse.redirect(redirectUrl)
+    }
+
+    // Only check admin status for admin paths
+    if (path.startsWith('/admindash')) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', session.user.id)
+        .single()
+
+      if (!profile?.is_admin) {
+        return NextResponse.redirect(new URL('/', request.url))
+      }
+    }
+
+    return res
+  } catch (error) {
+    console.error('Middleware error:', error)
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
-    '/((?!_next/static|_next/image|favicon.ico|public/).*)',
-  ],
+    '/booking/:path*',
+    '/admindash/:path*',
+    '/profile/:path*',
+    '/orders/:path*',
+    '/login',
+    '/register',
+    '/forgot-password'
+  ]
 }

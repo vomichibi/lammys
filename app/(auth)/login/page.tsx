@@ -3,7 +3,54 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+
+// Bubble component for background animation
+const Bubble = ({ 
+  size, 
+  top, 
+  left, 
+  delay, 
+  duration 
+}: { 
+  size: number, 
+  top: string, 
+  left: string, 
+  delay: number, 
+  duration: number 
+}) => (
+  <motion.div
+    initial={{ 
+      scale: 0, 
+      opacity: 0 
+    }}
+    animate={{ 
+      scale: [0, 1.2, 1], 
+      opacity: [0, 0.7, 0.5, 0] 
+    }}
+    transition={{
+      duration: duration,
+      delay: delay,
+      repeat: Infinity,
+      repeatType: 'loop'
+    }}
+    style={{
+      position: 'absolute',
+      width: `${size}px`,
+      height: `${size}px`,
+      borderRadius: '50%',
+      backgroundColor: 'rgba(255, 255, 255, 0.1)', // White color with low opacity
+      top: top,
+      left: left,
+      zIndex: 0
+    }}
+  />
+);
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -45,83 +92,92 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to your account
-          </h2>
+    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50/5 to-blue-100/5 overflow-hidden">
+      {/* Animated Bubble Background */}
+      {[...Array(15)].map((_, i) => (
+        <Bubble 
+          key={i}
+          size={Math.random() * 200 + 50}
+          top={`${Math.random() * 100}%`}
+          left={`${Math.random() * 100}%`}
+          delay={Math.random() * 5}
+          duration={Math.random() * 10 + 5}
+        />
+      ))}
+
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+        className="relative z-10 w-full max-w-md p-8 space-y-8 bg-white/90 rounded-xl shadow-2xl backdrop-blur-sm"
+      >
+        <div className="text-center">
+          <h2 className="text-3xl font-bold text-black/90">Welcome Back</h2>
+          <p className="mt-2 text-sm text-black/70">
+            Sign in to continue to Lammy's Multi-Services
+          </p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-              <span className="block sm:inline">{error}</span>
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription className="text-black/90">{error}</AlertDescription>
+            </Alert>
           )}
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                disabled={loading}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                disabled={loading}
-              />
-            </div>
+
+          <div>
+            <Label htmlFor="email" className="text-black/90">Email Address</Label>
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({...formData, email: e.target.value})}
+              required
+              placeholder="Enter your email"
+              className="mt-1 text-black/90 placeholder:text-black/60 bg-white"
+            />
           </div>
 
           <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
-                loading ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'
-              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
-            >
-              {loading ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Signing in...
-                </>
-              ) : (
-                'Sign in'
-              )}
-            </button>
+            <Label htmlFor="password" className="text-black/90">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              value={formData.password}
+              onChange={(e) => setFormData({...formData, password: e.target.value})}
+              required
+              placeholder="Enter your password"
+              className="mt-1 text-black/90 placeholder:text-black/60 bg-white"
+            />
           </div>
 
-          <div className="text-sm text-center">
-            <Link href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
-              Don't have an account? Sign up
+          <Button 
+            type="submit" 
+            disabled={loading}
+            className="w-full"
+          >
+            {loading ? 'Signing In...' : 'Sign In'}
+          </Button>
+
+          <div className="text-center">
+            <p className="text-sm text-black/80">
+              Don't have an account?{' '}
+              <Link 
+                href="/register" 
+                className="font-medium text-primary hover:underline"
+              >
+                Sign up
+              </Link>
+            </p>
+            <Link 
+              href="/forgot-password" 
+              className="text-sm text-primary hover:underline mt-2 inline-block"
+            >
+              Forgot password?
             </Link>
           </div>
         </form>
-      </div>
+      </motion.div>
     </div>
   );
 }

@@ -38,7 +38,7 @@ export default function PaymentSuccessPage() {
             <p className="text-red-500 mb-4">{error}</p>
             <Link
               href="/test-payment"
-              className="text-blue-500 hover:text-blue-600"
+              className="text-primary hover:text-primary/80"
             >
               Return to Test Payment
             </Link>
@@ -62,7 +62,7 @@ export default function PaymentSuccessPage() {
           </p>
           <Link
             href="/test-payment"
-            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+            className="bg-primary hover:bg-primary/90 text-white font-bold py-2 px-4 rounded"
           >
             Make Another Test Payment
           </Link>

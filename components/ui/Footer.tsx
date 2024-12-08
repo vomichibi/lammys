@@ -7,7 +7,7 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-gray-900 text-gray-300">
+    <footer className="footer-bg text-white/90">
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Contact Information */}
@@ -82,7 +82,7 @@ const Footer = () => {
         </div>
         
         {/* Copyright */}
-        <div className="border-t border-gray-800 mt-8 pt-8 text-center">
+        <div className="border-t border-white/10 mt-8 pt-8 text-center">
           <p> {currentYear} Lammy's Multi Services. All rights reserved.</p>
         </div>
       </div>

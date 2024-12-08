@@ -88,7 +88,7 @@ export function BusinessMetrics() {
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="revenue" fill="#2563eb" name="Revenue" />
+                <Bar dataKey="revenue" fill="var(--primary)" name="Revenue" />
                 <Bar dataKey="quantity" fill="#4ade80" name="Quantity" />
               </BarChart>
             </ResponsiveContainer>

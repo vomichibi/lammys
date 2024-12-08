@@ -41,7 +41,7 @@ export function LandingPageComponent() {
                 <div className="rounded-md shadow">
                   <button
                     onClick={handleBookNowClick}
-                    className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10"
+                    className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary hover:bg-primary/90 md:py-4 md:text-lg md:px-10"
                   >
                     {loading ? 'Loading...' : user ? 'Book Now' : 'Login to Book'}
                   </button>
@@ -55,7 +55,7 @@ export function LandingPageComponent() {
         <div id="services" className="py-12 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="lg:text-center">
-              <h2 className="text-base text-blue-600 font-semibold tracking-wide uppercase">Our Services</h2>
+              <h2 className="text-base text-secondary font-semibold tracking-wide uppercase">Our Services</h2>
               <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
                 Everything you need, all in one place
               </p>
@@ -66,7 +66,7 @@ export function LandingPageComponent() {
                 <Link href="/services/dry-cleaning" className="block">
                   <div className="relative p-4 sm:p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer">
                     <dt className="flex items-center mb-4">
-                      <div className="flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-md bg-blue-500 text-white">
+                      <div className="flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-md bg-primary text-white">
                         <Shirt className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
                       </div>
                       <p className="ml-4 text-base sm:text-lg font-medium text-gray-900">Dry Cleaning</p>
@@ -77,7 +77,7 @@ export function LandingPageComponent() {
                 <Link href="/services/alterations" className="block">
                   <div className="relative p-4 sm:p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer">
                     <dt className="flex items-center mb-4">
-                      <div className="flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-md bg-blue-500 text-white">
+                      <div className="flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-md bg-primary text-white">
                         <Scissors className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
                       </div>
                       <p className="ml-4 text-base sm:text-lg font-medium text-gray-900">Alterations</p>
@@ -88,7 +88,7 @@ export function LandingPageComponent() {
                 <Link href="/services/key-cutting" className="block">
                   <div className="relative p-4 sm:p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer">
                     <dt className="flex items-center mb-4">
-                      <div className="flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-md bg-blue-500 text-white">
+                      <div className="flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-md bg-primary text-white">
                         <Key className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
                       </div>
                       <p className="ml-4 text-base sm:text-lg font-medium text-gray-900">Key Cutting</p>
@@ -101,7 +101,7 @@ export function LandingPageComponent() {
         </div>
 
         {/* About section */}
-        <div id="about" className="bg-blue-50 py-16 lg:py-24">
+        <div id="about" className="bg-accent/10 py-16 lg:py-24">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="lg:grid lg:grid-cols-2 lg:gap-8 items-center">
               <div>
@@ -130,7 +130,6 @@ export function LandingPageComponent() {
         <div className="py-16 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="lg:text-center mb-12">
-              <h2 className="text-base text-blue-600 font-semibold tracking-wide uppercase">Testimonials</h2>
               <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
                 What Our Customers Say
               </p>
@@ -168,7 +167,7 @@ export function LandingPageComponent() {
         </div>
 
         {/* Location section */}
-        <div id="location" className="py-16 bg-blue-50">
+        <div id="location" className="py-16 bg-accent/10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="lg:text-center mb-12">
               <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
@@ -183,7 +182,7 @@ export function LandingPageComponent() {
                 <div className="mt-5 md:mt-0">
                   <div className="space-y-6">
                     <div className="flex items-center">
-                      <MapPin className="h-6 w-6 text-blue-600" />
+                      <MapPin className="h-6 w-6 text-secondary" />
                       <a 
                         href="https://www.google.com/maps/search/?api=1&query=36+Eighth+Ave+Maylands+WA+6051"
                         target="_blank"
@@ -194,7 +193,7 @@ export function LandingPageComponent() {
                       </a>
                     </div>
                     <div className="flex items-center">
-                      <Clock className="h-6 w-6 text-blue-600" />
+                      <Clock className="h-6 w-6 text-secondary" />
                       <span className="ml-3 text-gray-700">
                         Monday-Friday: 9am-5pm<br />
                         Saturday: 9am-1pm<br />

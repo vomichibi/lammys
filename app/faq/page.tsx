@@ -1,93 +1,177 @@
 'use client';
 
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 
-const faqs = [
+// Define FAQ items with more engaging content
+const faqData = [
   {
-    question: "What services do you offer?",
-    answer: "We offer a comprehensive range of services including dry cleaning, alterations, and key cutting. Our dry cleaning service handles all types of garments, from everyday wear to delicate items. Our alterations service can handle everything from simple hemming to complex garment modifications. We also provide professional key cutting services for most types of keys."
+    id: 1,
+    icon: '🧼',
+    title: 'Dry Cleaning Magic',
+    question: 'How do you handle delicate fabrics?',
+    answer: 'We use state-of-the-art cleaning techniques that are gentle on fabrics but tough on stains. Our experts carefully assess each garment to ensure the best cleaning method, preserving color, texture, and shape.',
+    color: 'bg-blue-50',
+    hoverColor: 'hover:bg-blue-100'
   },
   {
-    question: "How long does dry cleaning take?",
-    answer: "Standard dry cleaning service typically takes 2-3 working days. We also offer an express service for an additional fee, which can have your items ready within 24 hours. Please note that some specialty items or complex stains may require additional time."
+    id: 2,
+    icon: '✂️',
+    title: 'Alteration Artistry',
+    question: 'Can you do custom alterations?',
+    answer: 'Absolutely! Our skilled tailors can transform any garment. From simple hem adjustments to complete redesigns, we turn your clothing dreams into reality. We specialize in precision fitting and creative modifications.',
+    color: 'bg-green-50',
+    hoverColor: 'hover:bg-green-100'
   },
   {
-    question: "Do you offer same-day service?",
-    answer: "Yes, we offer same-day service for items dropped off before 10 AM, Monday through Friday. This service is available for an additional fee and is subject to capacity. Please contact us to confirm availability for same-day service."
+    id: 3,
+    icon: '🔑',
+    title: 'Key Cutting Precision',
+    question: 'What types of keys can you duplicate?',
+    answer: 'We cut keys for homes, offices, cars, and more! Using advanced key cutting technology, we ensure perfect duplicates for most standard and modern key types. Quick, accurate, and reliable key services.',
+    color: 'bg-purple-50',
+    hoverColor: 'hover:bg-purple-100'
   },
   {
-    question: "What payment methods do you accept?",
-    answer: "We accept all major credit and debit cards, Apple Pay, Google Pay, and cash. For online bookings, payment is processed securely through our Stripe payment system."
+    id: 4,
+    icon: '⏰',
+    title: 'Turnaround Time',
+    question: 'How quickly can you complete services?',
+    answer: 'Most dry cleaning orders are ready within 24-48 hours. Alterations typically take 3-7 days depending on complexity. Key cutting is usually done while you wait! We prioritize speed without compromising quality.',
+    color: 'bg-yellow-50',
+    hoverColor: 'hover:bg-yellow-100'
   },
   {
-    question: "Do you offer pickup and delivery?",
-    answer: "Currently, we operate as a drop-off and collection service from our store location. We're working on implementing a pickup and delivery service in the near future."
+    id: 5,
+    icon: '💸',
+    title: 'Pricing Transparency',
+    question: 'How are your prices determined?',
+    answer: 'We believe in fair, transparent pricing. Our rates are competitive and based on garment type, fabric, and complexity of service. No hidden fees - we provide upfront quotes for all our services.',
+    color: 'bg-pink-50',
+    hoverColor: 'hover:bg-pink-100'
   },
   {
-    question: "How do I prepare my garments for dry cleaning?",
-    answer: "Please remove all items from pockets and point out any stains or areas of concern to our staff. If you have any specific preferences for starch or pressing, please let us know when you drop off your items."
-  },
-  {
-    question: "What if my garment is damaged during cleaning?",
-    answer: "While we take utmost care with all items, if any damage occurs during the cleaning process, we have a comprehensive insurance policy. Please notify us within 24 hours of collection, and we'll assess the situation and make appropriate arrangements for compensation if necessary."
-  },
-  {
-    question: "Can you handle delicate or specialty items?",
-    answer: "Yes, we specialize in handling delicate and specialty items including wedding dresses, evening gowns, suits, and other high-end garments. Our experienced staff uses appropriate cleaning methods and products for different fabric types."
-  },
-  {
-    question: "How do I book an appointment?",
-    answer: "You can book an appointment through our website by clicking the 'Book Now' button. Select your desired service, choose a convenient time slot, and complete the booking process. You'll receive a confirmation email with your booking details."
-  },
-  {
-    question: "What is your cancellation policy?",
-    answer: "We understand that plans can change. You can cancel or reschedule your appointment up to 24 hours before your scheduled time without any charge. Cancellations within 24 hours may incur a fee."
+    id: 6,
+    icon: '🌍',
+    title: 'Eco-Friendly Approach',
+    question: 'Are your cleaning methods environmentally friendly?',
+    answer: 'We\'re committed to sustainability! We use biodegradable cleaning solutions, minimize water waste, and continuously invest in eco-friendly technologies to reduce our environmental impact.',
+    color: 'bg-teal-50',
+    hoverColor: 'hover:bg-teal-100'
   }
 ];
 
 export default function FAQPage() {
+  const [activeCard, setActiveCard] = useState<number | null>(null);
+
+  const toggleCard = (id: number) => {
+    setActiveCard(activeCard === id ? null : id);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="max-w-3xl mx-auto">
-          <h1 className="text-3xl font-bold text-center mb-8">
+    <div className="min-h-screen bg-gradient-to-br from-white/5 to-gray-100/5 py-20 px-4 sm:px-6 lg:px-8 flex flex-col justify-center">
+      <div className="max-w-7xl mx-auto w-full">
+        <div className="text-center mb-16 px-4">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-black/90 mb-6 break-words">
             Frequently Asked Questions
           </h1>
-          <p className="text-gray-600 text-center mb-12">
-            Find answers to common questions about our services. If you can't find what you're looking for, please don't hesitate to contact us.
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto px-4">
+            Got questions? We've got answers! Dive into our most common inquiries about Lammy's services.
           </p>
-          
-          <Accordion type="single" collapsible className="space-y-4">
-            {faqs.map((faq, index) => (
-              <AccordionItem key={index} value={`item-${index}`} className="bg-white rounded-lg shadow-sm">
-                <AccordionTrigger className="px-6 py-4 text-left">
-                  {faq.question}
-                </AccordionTrigger>
-                <AccordionContent className="px-6 pb-4 text-gray-600">
-                  {faq.answer}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
+        </div>
 
-          <div className="mt-12 text-center">
-            <p className="text-gray-600">
-              Still have questions? We're here to help!
-            </p>
-            <div className="mt-4">
-              <a
-                href="/contact"
-                className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+        <div className="grid md:grid-cols-3 gap-8 px-4 mb-16">
+          {faqData.map((faq) => (
+            <motion.div
+              key={faq.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: faq.id * 0.1 }}
+              className={`
+                relative rounded-xl shadow-lg overflow-hidden 
+                transition-all duration-300 ease-in-out
+                ${faq.color} ${faq.hoverColor}
+                ${activeCard === faq.id ? 'z-10' : 'z-0'}
+              `}
+              style={{ 
+                position: 'relative',
+                height: activeCard === faq.id ? 'auto' : 'fit-content' 
+              }}
+            >
+              <div 
+                onClick={() => toggleCard(faq.id)}
+                className="cursor-pointer p-6 flex items-center justify-between"
               >
-                Contact Us
-              </a>
-            </div>
-          </div>
+                <div className="flex items-center space-x-4">
+                  <span className="text-4xl">{faq.icon}</span>
+                  <h2 className="text-xl font-bold text-black/90">{faq.title}</h2>
+                </div>
+                {activeCard === faq.id ? (
+                  <FaChevronUp className="text-black/60" />
+                ) : (
+                  <FaChevronDown className="text-black/60" />
+                )}
+              </div>
+
+              <AnimatePresence>
+                {activeCard === faq.id && (
+                  <motion.div
+                    key={`answer-${faq.id}`}
+                    initial={{ 
+                      opacity: 0, 
+                      height: 0,
+                      marginTop: 0
+                    }}
+                    animate={{ 
+                      opacity: 1, 
+                      height: 'auto',
+                      marginTop: 16
+                    }}
+                    exit={{ 
+                      opacity: 0, 
+                      height: 0,
+                      marginTop: 0
+                    }}
+                    transition={{ 
+                      duration: 0.3,
+                      type: "tween"
+                    }}
+                    className="px-6 pb-6 overflow-hidden"
+                  >
+                    <p className="text-black/80 text-base">
+                      {faq.answer}
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          ))}
+        </div>
+
+        <div className="text-center px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+            className="bg-white/90 rounded-xl shadow-lg p-10 max-w-2xl mx-auto"
+          >
+            <h3 className="text-2xl font-bold text-black/90 mb-6">
+              Still Have Questions?
+            </h3>
+            <p className="text-gray-600 mb-8">
+              We're here to help! If you can't find the answer you're looking for, 
+              don't hesitate to reach out to our friendly customer support team.
+            </p>
+            <motion.a
+              href="/contact"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="inline-block bg-secondary text-white px-6 py-3 rounded-lg shadow-md hover:bg-secondary/90 transition-all"
+            >
+              Contact Us
+            </motion.a>
+          </motion.div>
         </div>
       </div>
     </div>
