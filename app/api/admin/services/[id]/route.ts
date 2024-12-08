@@ -37,7 +37,7 @@ export async function PUT(
     if (error) throw error;
 
     return NextResponse.json(data);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating service:', error);
     return NextResponse.json(
       { error: 'Failed to update service' },
@@ -65,7 +65,7 @@ export async function DELETE(
     if (error) throw error;
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting service:', error);
     return NextResponse.json(
       { error: 'Failed to delete service' },
@@ -90,7 +90,7 @@ export async function GET(
     if (error) throw error;
 
     return NextResponse.json(data);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching service:', error);
     return NextResponse.json(
       { error: 'Failed to fetch service' },
