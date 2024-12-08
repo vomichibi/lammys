@@ -33,30 +33,49 @@ export default function LoginPage() {
       }
 
       console.log('Attempting to sign in with Supabase...');
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password,
-      });
+      let signInResult;
+      try {
+        signInResult = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
+        console.log('Raw sign in result:', signInResult);
+      } catch (signInError) {
+        console.error('Sign in threw error:', signInError);
+        throw signInError;
+      }
 
-      console.log('Sign in response received');
+      const { data, error: signInError } = signInResult;
 
       if (signInError) {
-        console.error('Sign in error:', signInError);
+        console.error('Sign in error from response:', signInError);
         setError(signInError.message);
         setLoading(false);
         return;
       }
 
       if (!data?.user) {
-        console.error('No user data returned');
+        console.error('No user data returned from sign in');
         setError('No user data returned');
         setLoading(false);
         return;
       }
 
-      console.log('Successfully signed in, checking admin status...');
+      console.log('Successfully signed in user:', data.user.id);
 
       try {
+        // Get current session to verify authentication
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) {
+          console.error('Session verification error:', sessionError);
+          throw sessionError;
+        }
+        if (!session) {
+          console.error('No session after sign in');
+          throw new Error('Authentication failed - no session');
+        }
+        console.log('Session verified');
+
         console.log('Fetching user profile...');
         const { data: profile, error: profileError } = await supabase
           .from('users')
@@ -66,7 +85,21 @@ export default function LoginPage() {
 
         if (profileError) {
           console.error('Error fetching profile:', profileError);
-          // If profile fetch fails, default to regular user dashboard
+          // Create a new user profile if it doesn't exist
+          const { error: insertError } = await supabase
+            .from('users')
+            .insert([
+              { 
+                id: data.user.id,
+                email: data.user.email,
+                is_admin: false // default to non-admin
+              }
+            ]);
+            
+          if (insertError) {
+            console.error('Error creating user profile:', insertError);
+          }
+          // Default to regular dashboard
           await router.push('/dashboard');
           return;
         }
@@ -75,10 +108,15 @@ export default function LoginPage() {
         const targetPath = profile?.is_admin ? '/admindash/dashboard' : '/dashboard';
         console.log('Redirecting to:', targetPath);
         
-        await router.push(targetPath);
-        console.log('Navigation successful');
+        try {
+          await router.push(targetPath);
+          console.log('Navigation successful');
+        } catch (routerError) {
+          console.error('Router push error:', routerError);
+          throw routerError;
+        }
       } catch (navError) {
-        console.error('Navigation error:', navError);
+        console.error('Navigation/profile error:', navError);
         setError('Error during navigation. Please try again.');
         setLoading(false);
       }
