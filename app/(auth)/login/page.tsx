@@ -44,7 +44,7 @@ const Bubble = ({
       width: `${size}px`,
       height: `${size}px`,
       borderRadius: '50%',
-      backgroundColor: 'rgba(255, 255, 255, 0.1)', // White color with low opacity
+      backgroundColor: 'rgba(59, 130, 246, 0.1)', // Blue color with low opacity
       top: top,
       left: left,
       zIndex: 0

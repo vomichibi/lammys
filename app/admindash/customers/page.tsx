@@ -149,7 +149,7 @@ export default function CustomersPage() {
                       <TableCell>
                         <div className="flex items-center">
                           <CalendarIcon className="mr-2 h-4 w-4 text-gray-500" />
-                          {new Date(customer.lastLoginAt).toLocaleDateString()}
+                          {new Date(customer.last_login_at).toLocaleDateString()}
                         </div>
                       </TableCell>
                       <TableCell>{customer.totalOrders || 0}</TableCell>
