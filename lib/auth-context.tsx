@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { User } from '@supabase/supabase-js'
-import { supabase } from './supabase'
+import { supabase } from './supabaseClient'
 
 interface AuthContextType {
   user: User | null
@@ -38,7 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Check admin status if user is logged in
       if (session?.user) {
         const { data: profile } = await supabase
-          .from('profiles')
+          .from('users')
           .select('is_admin')
           .eq('id', session.user.id)
           .single()

@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
+import { supabase } from '@/lib/supabaseClient'
 
 export default function AdminDashboardLayout({
   children,
@@ -10,7 +11,7 @@ export default function AdminDashboardLayout({
   children: React.ReactNode
 }) {
   const router = useRouter()
-  const { user, loading } = useAuth()
+  const { user, loading, isAdmin } = useAuth()
 
   useEffect(() => {
     const checkAdminAccess = async () => {
@@ -20,28 +21,17 @@ export default function AdminDashboardLayout({
           return
         }
 
-        try {
-          const token = await user.getIdToken()
-          const response = await fetch('/api/check-admin', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ token }),
-          })
-
-          if (!response.ok) {
-            router.push('/')
-          }
-        } catch (error) {
-          console.error('Admin check error:', error)
+        // Check if user is admin using the isAdmin flag from auth context
+        if (!isAdmin) {
+          console.log('Not an admin user')
           router.push('/')
+          return
         }
       }
     }
 
     checkAdminAccess()
-  }, [user, loading, router])
+  }, [user, loading, router, isAdmin])
 
   if (loading) {
     return (
@@ -51,5 +41,5 @@ export default function AdminDashboardLayout({
     )
   }
 
-  return children
+  return <>{children}</>
 }
