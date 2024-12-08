@@ -4,18 +4,31 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
 const origin = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  description: string;
+}
+
+interface CheckoutData {
+  items: CartItem[];
+  token: string;
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { items, token } = await request.json()
+    const data: CheckoutData = await request.json()
 
     // Verify user
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(data.token)
     if (authError) throw authError
 
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      line_items: items.map((item: any) => ({
+      line_items: data.items.map((item: CartItem) => ({
         price_data: {
           currency: 'aud',
           product_data: {
@@ -42,7 +55,7 @@ export async function POST(request: NextRequest) {
         session_id: session.id,
         amount: session.amount_total ? session.amount_total / 100 : 0,
         status: 'pending',
-        items: items,
+        items: data.items,
       })
 
     if (orderError) throw orderError

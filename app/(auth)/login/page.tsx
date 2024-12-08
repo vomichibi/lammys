@@ -168,13 +168,12 @@ export default function LoginPage() {
               >
                 Sign up
               </Link>
-            </p>
-            <Link 
-              href="/forgot-password" 
-              className="text-sm text-primary hover:underline mt-2 inline-block"
-            >
-              Forgot password?
-            </Link>
+            </div>
+            <div className="text-sm">
+              <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500">
+                Don't have an account?
+              </Link>
+            </div>
           </div>
         </form>
       </motion.div>
