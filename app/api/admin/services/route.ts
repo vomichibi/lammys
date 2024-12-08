@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { getCurrentUser } from '@/lib/supabase-auth';
+import { handleApiError } from '@/lib/error-handling';
 
 // Middleware to check admin status
 async function checkAdmin() {
@@ -23,11 +24,7 @@ export async function GET() {
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Error fetching services:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch services' },
-      { status: error.message === 'Unauthorized' ? 403 : 500 }
-    );
+    return handleApiError(error, 'Failed to fetch services');
   }
 }
 
@@ -56,10 +53,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Error creating service:', error);
-    return NextResponse.json(
-      { error: 'Failed to create service' },
-      { status: error.message === 'Unauthorized' ? 403 : 500 }
-    );
+    return handleApiError(error, 'Failed to create service');
   }
 }

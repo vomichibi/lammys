@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { getCurrentUser } from '@/lib/supabase-auth';
+import { handleApiError } from '@/lib/error-handling';
 
 // Middleware to check admin status
 async function checkAdmin() {
@@ -37,12 +38,8 @@ export async function PUT(
     if (error) throw error;
 
     return NextResponse.json(data);
-  } catch (error: any) {
-    console.error('Error updating service:', error);
-    return NextResponse.json(
-      { error: 'Failed to update service' },
-      { status: error.message === 'Unauthorized' ? 403 : 500 }
-    );
+  } catch (error) {
+    return handleApiError(error, 'Failed to update service');
   }
 }
 
@@ -65,12 +62,8 @@ export async function DELETE(
     if (error) throw error;
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    console.error('Error deleting service:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete service' },
-      { status: error.message === 'Unauthorized' ? 403 : 500 }
-    );
+  } catch (error) {
+    return handleApiError(error, 'Failed to delete service');
   }
 }
 
@@ -90,11 +83,7 @@ export async function GET(
     if (error) throw error;
 
     return NextResponse.json(data);
-  } catch (error: any) {
-    console.error('Error fetching service:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch service' },
-      { status: error.message === 'Unauthorized' ? 403 : 500 }
-    );
+  } catch (error) {
+    return handleApiError(error, 'Failed to fetch service');
   }
 }
