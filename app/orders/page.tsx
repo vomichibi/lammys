@@ -44,7 +44,7 @@ function OrdersPageContent() {
               You haven't placed any orders with us yet.
             </p>
             <Button
-              onClick={() => window.location.href = '/booking'}
+              onClick={() => window.location.href = '/booking/page'}
             >
               Make a Booking
             </Button>

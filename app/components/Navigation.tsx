@@ -102,7 +102,7 @@ export default function Navigation() {
                       Home
                     </Link>
                     <Link
-                      href="/booking"
+                      href="/booking/page"
                       className="text-gray-700 hover:text-blue-600"
                       onClick={() => setIsMenuOpen(false)}
                     >

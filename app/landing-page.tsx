@@ -14,12 +14,7 @@ export function LandingPageComponent() {
 
   const handleBookNowClick = (e: React.MouseEvent) => {
     e.preventDefault()
-    if (!user && !loading) {
-      // If user is not logged in, redirect to login page
-      router.push('/login')
-      return
-    }
-    router.push('/booking')
+    router.push('/booking/page')
   }
 
   return (
@@ -37,13 +32,13 @@ export function LandingPageComponent() {
               <p className="mt-3 text-base text-gray-200 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl">
                 Quality dry cleaning, expert alterations, and quick key cutting services all under one roof.
               </p>
-              <div className="mt-5 sm:mt-8 flex justify-center">
+              <div className="mt-5 sm:mt-8 flex justify-center gap-4">
                 <div className="rounded-md shadow">
                   <button
                     onClick={handleBookNowClick}
                     className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10"
                   >
-                    {loading ? 'Loading...' : user ? 'Book Now' : 'Login to Book'}
+                    Book Now
                   </button>
                 </div>
               </div>

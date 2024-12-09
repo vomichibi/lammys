@@ -50,7 +50,7 @@ export function OrderHistory() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Order History</h2>
-        <Link href="/booking">
+        <Link href="/booking/page">
           <Button>Book New Service</Button>
         </Link>
       </div>
