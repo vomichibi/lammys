@@ -1,19 +1,12 @@
-'use client';
-
 import React from 'react';
-import { formatDate } from '@/lib/utils/date';
-
-interface SelectedItem {
-  id: string;
-  quantity: number;
-}
+import { Button } from '@/components/ui/button';
 
 interface SummaryProps {
   selectedService: string;
-  selectedItems: SelectedItem[];
+  selectedItems: Array<{ id: string; quantity: number }>;
   selectedDate: string;
   selectedTime: string;
-  guestEmail?: string;
+  guestEmail: string;
   onSubmit: () => void;
 }
 
@@ -22,70 +15,63 @@ const Summary: React.FC<SummaryProps> = ({
   selectedItems,
   selectedDate,
   selectedTime,
-  guestEmail = '',
+  guestEmail,
   onSubmit,
 }) => {
-  const getServiceName = (service: string) => {
-    switch (service) {
-      case 'dry-cleaning':
-        return 'Dry Cleaning';
-      case 'key-cutting':
-        return 'Key Cutting';
-      default:
-        return service;
-    }
+  const formatService = (service: string) => {
+    return service.split('-').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
   };
 
   const calculateTotal = () => {
-    // This is a placeholder calculation - replace with actual pricing logic
+    // This is a placeholder - implement actual pricing logic
     return selectedItems.reduce((total, item) => total + item.quantity * 10, 0);
   };
 
   return (
-    <div className="bg-white shadow rounded-lg p-6">
-      <h2 className="text-2xl font-bold mb-6">Booking Summary</h2>
-
-      <div className="space-y-6">
+    <div className="space-y-6">
+      <h2 className="text-2xl font-semibold">Booking Summary</h2>
+      
+      <div className="space-y-4">
         <div className="border-b pb-4">
-          <p className="text-gray-600">Contact Email</p>
-          <p className="font-medium">{guestEmail}</p>
+          <h3 className="font-medium">Service</h3>
+          <p>{formatService(selectedService)}</p>
         </div>
 
         <div className="border-b pb-4">
-          <p className="text-gray-600">Service</p>
-          <p className="font-medium">{getServiceName(selectedService)}</p>
+          <h3 className="font-medium">Items</h3>
+          {selectedItems.map((item, index) => (
+            <div key={index} className="flex justify-between">
+              <span>{item.id}</span>
+              <span>Quantity: {item.quantity}</span>
+            </div>
+          ))}
         </div>
 
         <div className="border-b pb-4">
-          <p className="text-gray-600">Items</p>
-          <ul className="mt-2 space-y-2">
-            {selectedItems.map((item) => (
-              <li key={item.id} className="flex justify-between">
-                <span>{item.id}</span>
-                <span>x{item.quantity}</span>
-              </li>
-            ))}
-          </ul>
+          <h3 className="font-medium">Date & Time</h3>
+          <p>{selectedDate} at {selectedTime}</p>
         </div>
 
         <div className="border-b pb-4">
-          <p className="text-gray-600">Appointment</p>
-          <p className="font-medium">
-            {formatDate(selectedDate)} at {selectedTime}
-          </p>
+          <h3 className="font-medium">Contact Information</h3>
+          <p>{guestEmail}</p>
         </div>
 
         <div className="border-b pb-4">
-          <p className="text-gray-600">Total</p>
-          <p className="text-2xl font-bold">${calculateTotal().toFixed(2)}</p>
+          <h3 className="font-medium">Estimated Total</h3>
+          <p>£{calculateTotal().toFixed(2)}</p>
         </div>
+      </div>
 
-        <button
+      <div className="flex justify-end">
+        <Button
           onClick={onSubmit}
-          className="w-full bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark"
         >
           Confirm Booking
-        </button>
+        </Button>
       </div>
     </div>
   );

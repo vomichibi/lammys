@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server'
 
 // Add paths that require authentication
 const protectedPaths = [
-  '/booking',
+  '/dashboard',
   '/admindash',
   '/profile',
   '/orders',
@@ -27,7 +27,7 @@ export async function middleware(request: NextRequest) {
   const supabase = createMiddlewareClient({ req: request, res })
   
   // Check if user is authenticated
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession()
   const path = request.nextUrl.pathname
 
   // Check if path requires authentication
@@ -52,17 +52,26 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
-  // If user is authenticated and tries to access auth path
+  // If user is authenticated and tries to access auth paths
   if (isAuthPath && session) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
-  }
-
-  // If non-admin user tries to access admin path
-  if (isAdminPath) {
+    // Check if user is admin
     const { data: profile } = await supabase
       .from('profiles')
       .select('is_admin')
-      .eq('id', session?.user?.id)
+      .eq('id', session.user.id)
+      .single()
+
+    // Redirect admin to admin dashboard, regular user to user dashboard
+    const targetPath = profile?.is_admin ? '/admindash/dashboard' : '/dashboard'
+    return NextResponse.redirect(new URL(targetPath, request.url))
+  }
+
+  // If non-admin user tries to access admin paths
+  if (isAdminPath && session) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', session.user.id)
       .single()
 
     if (!profile?.is_admin) {
@@ -82,6 +91,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public folder
      */
-    '/((?!_next/static|_next/image|favicon.ico|public/).*)',
+    '/((?!_next/static|_next/image|favicon.ico|public|api).*)',
   ],
 }

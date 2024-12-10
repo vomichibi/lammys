@@ -2,7 +2,8 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/providers/AuthProvider'
+import { useAuth } from '@/lib/auth-context'
+import { supabase } from '@/lib/supabaseClient'
 import { UserBookings } from './components/UserBookings'
 import { UserProfile } from './components/UserProfile'
 import { OrderHistory } from './components/OrderHistory'
@@ -12,24 +13,28 @@ import { LogOut, Calendar, History, User } from 'lucide-react'
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { user, signOut } = useAuth()
+  const { user, isAdmin } = useAuth()
 
   useEffect(() => {
     if (!user) {
       router.push('/login')
+    } else if (isAdmin) {
+      router.push('/admindash/dashboard')
     }
-  }, [user, router])
+  }, [user, isAdmin, router])
 
   const handleSignOut = async () => {
     try {
-      await signOut()
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
       router.push('/')
+      router.refresh()
     } catch (error) {
       console.error('Error signing out:', error)
     }
   }
 
-  if (!user) return null
+  if (!user || isAdmin) return null
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -51,24 +56,24 @@ export default function DashboardPage() {
             </Button>
           </div>
 
-          {/* Main Content */}
-          <Tabs defaultValue="bookings" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="bookings" className="space-x-2">
-                <Calendar className="h-4 w-4" />
-                <span>My Bookings</span>
+          {/* Tabs */}
+          <Tabs defaultValue="bookings" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="bookings">
+                <Calendar className="mr-2 h-4 w-4" />
+                Bookings
               </TabsTrigger>
-              <TabsTrigger value="orders" className="space-x-2">
-                <History className="h-4 w-4" />
-                <span>Order History</span>
+              <TabsTrigger value="orders">
+                <History className="mr-2 h-4 w-4" />
+                Order History
               </TabsTrigger>
-              <TabsTrigger value="profile" className="space-x-2">
-                <User className="h-4 w-4" />
-                <span>Profile</span>
+              <TabsTrigger value="profile">
+                <User className="mr-2 h-4 w-4" />
+                Profile
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="bookings" className="space-y-6">
+            <TabsContent value="bookings">
               <UserBookings />
             </TabsContent>
 

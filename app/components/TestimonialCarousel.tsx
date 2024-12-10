@@ -12,8 +12,26 @@ interface Testimonial {
   role: string;
 }
 
+const defaultTestimonials: Testimonial[] = [
+  {
+    text: "The quality of service at Lammy's is exceptional. My clothes always come back looking brand new!",
+    author: "Sarah Johnson",
+    role: "Regular Customer"
+  },
+  {
+    text: "Quick, efficient, and professional key cutting service. I'm very impressed!",
+    author: "Michael Chen",
+    role: "Business Owner"
+  },
+  {
+    text: "Their alterations service is top-notch. They fixed my favorite suit perfectly.",
+    author: "David Williams",
+    role: "Customer"
+  }
+];
+
 interface TestimonialCarouselProps {
-  testimonials: Testimonial[];
+  testimonials?: Testimonial[];
 }
 
 const NextArrow = (props: any) => {
@@ -42,31 +60,26 @@ const PrevArrow = (props: any) => {
   );
 };
 
-export function TestimonialCarousel({ testimonials }: TestimonialCarouselProps) {
+export function TestimonialCarousel({ testimonials = defaultTestimonials }: TestimonialCarouselProps) {
   const settings = {
     dots: true,
     infinite: true,
     speed: 500,
     slidesToShow: 1,
     slidesToScroll: 1,
-    autoplay: true,
-    autoplaySpeed: 5000,
-    arrows: true,
-    pauseOnHover: true,
     nextArrow: <NextArrow />,
     prevArrow: <PrevArrow />,
-    className: "max-w-4xl mx-auto",
-    dotsClass: "slick-dots !bottom-[-3rem]",
-    appendDots: (dots: any) => (
-      <div style={{ bottom: "-3rem" }}>
-        <ul className="flex justify-center gap-2"> {dots} </ul>
-      </div>
-    ),
-    customPaging: () => (
-      <button className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-gray-300 hover:bg-blue-500 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-        <span className="sr-only">Go to slide</span>
-      </button>
-    )
+    autoplay: true,
+    autoplaySpeed: 5000,
+    pauseOnHover: true,
+    responsive: [
+      {
+        breakpoint: 640,
+        settings: {
+          arrows: false
+        }
+      }
+    ]
   };
 
   return (
@@ -76,20 +89,20 @@ export function TestimonialCarousel({ testimonials }: TestimonialCarouselProps) 
           <div key={index} className="px-2 sm:px-4">
             <blockquote className="mt-4">
               <div className="max-w-3xl mx-auto text-base sm:text-xl text-gray-600 text-center">
-                <div className="relative inline-block">
-                  <span className="text-3xl sm:text-5xl text-blue-500 absolute -left-4 sm:-left-8 -top-4 sm:-top-6 leading-none">"</span>
-                  <p className="relative px-4 sm:px-8">
-                    {testimonial.text}
-                  </p>
-                  <span className="text-3xl sm:text-5xl text-blue-500 absolute -right-2 sm:-right-4 -top-4 sm:-top-6 leading-none">"</span>
-                </div>
-                <footer className="mt-4 sm:mt-8">
-                  <div className="flex flex-col items-center">
-                    <p className="text-sm sm:text-base font-semibold text-gray-900">{testimonial.author}</p>
-                    <p className="text-sm sm:text-base text-gray-500">{testimonial.role}</p>
-                  </div>
-                </footer>
+                "{testimonial.text}"
               </div>
+              <footer className="mt-4">
+                <div className="flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-base font-semibold text-gray-900">
+                      {testimonial.author}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {testimonial.role}
+                    </div>
+                  </div>
+                </div>
+              </footer>
             </blockquote>
           </div>
         ))}

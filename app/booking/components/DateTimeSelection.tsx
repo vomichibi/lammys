@@ -1,105 +1,89 @@
 'use client';
 
-import React from 'react';
-import { formatDate } from '@/lib/utils/date';
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { DayPicker } from 'react-day-picker';
+import { format } from 'date-fns';
+import 'react-day-picker/dist/style.css';
 
 interface DateTimeSelectionProps {
-  selectedDate: string;
-  selectedTime: string;
-  onDateSelect: (date: string) => void;
-  onTimeSelect: (time: string) => void;
-  onStepChange: (step: number) => void;
+  onSelect: (date: string, time: string) => void;
 }
 
-const availableTimes = [
-  '09:00', '09:15', '09:30', '09:45',
-  '10:00', '10:15', '10:30', '10:45',
-  '11:00', '11:15', '11:30', '11:45',
-  '12:00', '12:15', '12:30', '12:45',
-  '13:00', '13:15', '13:30', '13:45',
-  '14:00', '14:15', '14:30', '14:45',
-  '15:00', '15:15', '15:30', '15:45',
-  '16:00', '16:15', '16:30', '16:45'
+const timeSlots = [
+  '09:00', '10:00', '11:00', '12:00', '13:00',
+  '14:00', '15:00', '16:00', '17:00'
 ];
 
-const DateTimeSelection: React.FC<DateTimeSelectionProps> = ({
-  selectedDate,
-  selectedTime,
-  onDateSelect,
-  onTimeSelect,
-  onStepChange,
-}) => {
-  const handleDateSelect = (date: string) => {
-    onDateSelect(date);
-  };
-
-  const handleTimeSelect = (time: string) => {
-    onTimeSelect(time);
-  };
+const DateTimeSelection: React.FC<DateTimeSelectionProps> = ({ onSelect }) => {
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [selectedTime, setSelectedTime] = useState('');
+  const [error, setError] = useState('');
 
   const handleContinue = () => {
-    if (selectedDate && selectedTime) {
-      onStepChange(4);
+    if (!selectedDate || !selectedTime) {
+      setError('Please select both date and time');
+      return;
     }
+
+    setError('');
+    onSelect(format(selectedDate, 'yyyy-MM-dd'), selectedTime);
   };
+
+  // Disable past dates and weekends
+  const disabledDays = [
+    { before: new Date() },
+    { dayOfWeek: [0, 6] }
+  ];
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Select Date</h2>
-        <div className="grid grid-cols-3 gap-4">
-          {[...Array(7)].map((_, i) => {
-            const date = new Date();
-            date.setDate(date.getDate() + i);
-            const dateStr = date.toISOString().split('T')[0];
-            return (
-              <button
-                key={dateStr}
-                onClick={() => handleDateSelect(dateStr)}
-                className={`p-4 rounded-lg border ${
-                  selectedDate === dateStr
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-blue-500'
-                }`}
-              >
-                {formatDate(dateStr)}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {selectedDate && (
+      <h2 className="text-2xl font-semibold">Select Date & Time</h2>
+      
+      <div className="space-y-6">
         <div>
-          <h2 className="text-xl font-semibold mb-4">Select Time</h2>
-          <div className="grid grid-cols-4 gap-3">
-            {availableTimes.map((time) => (
-              <button
+          <h3 className="text-lg font-medium mb-4">Select Date</h3>
+          <div className="border rounded-lg p-4 bg-white">
+            <DayPicker
+              mode="single"
+              selected={selectedDate}
+              onSelect={setSelectedDate}
+              disabled={disabledDays}
+              fromDate={new Date()}
+              className="mx-auto"
+            />
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-lg font-medium mb-4">Select Time</h3>
+          <div className="grid grid-cols-3 gap-2">
+            {timeSlots.map((time) => (
+              <Button
                 key={time}
-                onClick={() => handleTimeSelect(time)}
-                className={`p-3 rounded-lg border ${
-                  selectedTime === time
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-blue-500'
-                }`}
+                onClick={() => setSelectedTime(time)}
+                variant={selectedTime === time ? 'default' : 'outline'}
+                className="w-full"
               >
                 {time}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
-      )}
 
-      {selectedDate && selectedTime && (
+        {error && (
+          <p className="text-red-500 text-sm">{error}</p>
+        )}
+
         <div className="flex justify-end">
-          <button
+          <Button
             onClick={handleContinue}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+            className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark"
           >
-            Continue to Summary
-          </button>
+            Continue
+          </Button>
         </div>
-      )}
+      </div>
     </div>
   );
 };

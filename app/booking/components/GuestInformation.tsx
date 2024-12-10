@@ -1,79 +1,68 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 interface GuestInformationProps {
-  guestEmail: string;
-  guestName: string;
-  guestPhone: string;
-  onGuestEmailChange: (email: string) => void;
-  onGuestNameChange: (name: string) => void;
-  onGuestPhoneChange: (phone: string) => void;
-  onContinue: () => void;
+  onSubmit: (email: string) => void;
 }
 
-const GuestInformation: React.FC<GuestInformationProps> = ({
-  guestEmail,
-  guestName,
-  guestPhone,
-  onGuestEmailChange,
-  onGuestNameChange,
-  onGuestPhoneChange,
-  onContinue,
-}) => {
-  const isValid = guestEmail && guestName && guestPhone;
+const GuestInformation: React.FC<GuestInformationProps> = ({ onSubmit }) => {
+  const [email, setEmail] = useState('');
+  const [error, setError] = useState('');
+
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email) {
+      setError('Email is required');
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    setError('');
+    onSubmit(email);
+  };
 
   return (
-    <div className="bg-white shadow sm:rounded-lg p-6 mb-6">
-      <h2 className="text-lg font-medium text-gray-900 mb-4">Guest Information</h2>
-      <div className="space-y-4">
+    <div className="space-y-6">
+      <h2 className="text-2xl font-semibold">Guest Information</h2>
+      
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="guestEmail" className="block text-sm font-medium text-gray-700">
-            Email Address *
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            Email Address
           </label>
-          <input
+          <Input
+            id="email"
             type="email"
-            id="guestEmail"
-            value={guestEmail}
-            onChange={(e) => onGuestEmailChange(e.target.value)}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter your email address"
+            className={error ? 'border-red-500' : ''}
           />
+          {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
         </div>
-        <div>
-          <label htmlFor="guestName" className="block text-sm font-medium text-gray-700">
-            Full Name *
-          </label>
-          <input
-            type="text"
-            id="guestName"
-            value={guestName}
-            onChange={(e) => onGuestNameChange(e.target.value)}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            required
-          />
+
+        <div className="flex justify-end">
+          <Button
+            type="submit"
+            className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark"
+          >
+            Continue
+          </Button>
         </div>
-        <div>
-          <label htmlFor="guestPhone" className="block text-sm font-medium text-gray-700">
-            Phone Number *
-          </label>
-          <input
-            type="tel"
-            id="guestPhone"
-            value={guestPhone}
-            onChange={(e) => onGuestPhoneChange(e.target.value)}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            required
-          />
-        </div>
-        <button
-          onClick={onContinue}
-          disabled={!isValid}
-          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400"
-        >
-          Continue to Service Selection
-        </button>
-      </div>
+      </form>
     </div>
   );
 };

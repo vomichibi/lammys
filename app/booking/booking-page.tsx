@@ -1,148 +1,101 @@
-'use client'
+'use client';
 
-import React, { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Head from 'next/head'
-import ServiceSelection from './components/ServiceSelection'
-import DryCleaningSelection from './components/DryCleaningSelection'
-import KeyCuttingSelection from './components/KeyCuttingSelection'
-import DateTimeSelection from './components/DateTimeSelection'
-import Summary from './components/Summary'
-import GuestInformation from './components/GuestInformation'
+import React, { useState } from 'react';
+import { Steps } from '@/components/ui/steps';
+import ServiceSelection from './components/ServiceSelection';
+import QuantitySelector from './components/QuantitySelector';
+import DateTimeSelection from './components/DateTimeSelection';
+import GuestInformation from './components/GuestInformation';
+import Summary from './components/Summary';
 
-interface SelectedItem {
-  id: string;
-  quantity: number;
-}
+export default function BookingPageComponent() {
+  const [currentStep, setCurrentStep] = useState(1);
+  const [selectedService, setSelectedService] = useState('');
+  const [selectedItems, setSelectedItems] = useState<{ id: string; quantity: number }[]>([]);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedTime, setSelectedTime] = useState('');
+  const [guestEmail, setGuestEmail] = useState('');
 
-const BookingPageComponent: React.FC = () => {
-  const router = useRouter()
+  const steps = [
+    { id: 1, name: 'Service' },
+    { id: 2, name: 'Items' },
+    { id: 3, name: 'Date & Time' },
+    { id: 4, name: 'Information' },
+    { id: 5, name: 'Review' },
+  ];
 
-  // State management
-  const [step, setStep] = useState(1)
-  const [selectedService, setSelectedService] = useState('')
-  const [selectedDate, setSelectedDate] = useState('')
-  const [selectedTime, setSelectedTime] = useState('')
-  const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([])
-  const [guestEmail, setGuestEmail] = useState('')
-  const [guestName, setGuestName] = useState('')
-  const [guestPhone, setGuestPhone] = useState('')
+  const handleServiceSelect = (service: string) => {
+    setSelectedService(service);
+    setCurrentStep(2);
+  };
 
-  const handleServiceSelect = (serviceId: string) => {
-    if (serviceId === 'alterations') {
-      router.push('/alterations')
-      return
-    }
-    setSelectedService(serviceId)
-    setSelectedItems([])
-    setStep(2)
-  }
+  const handleItemsSelect = (items: { id: string; quantity: number }[]) => {
+    setSelectedItems(items);
+    setCurrentStep(3);
+  };
 
-  const handleBooking = () => {
-    // Store booking details in localStorage
-    const bookingDetails = {
-      email: guestEmail,
-      name: guestName,
-      phone: guestPhone,
+  const handleDateTimeSelect = (date: string, time: string) => {
+    setSelectedDate(date);
+    setSelectedTime(time);
+    setCurrentStep(4);
+  };
+
+  const handleGuestInformation = (email: string) => {
+    setGuestEmail(email);
+    setCurrentStep(5);
+  };
+
+  const handleBookingSubmit = async () => {
+    // Here you would typically send the booking data to your backend
+    console.log('Booking submitted:', {
       service: selectedService,
       items: selectedItems,
       date: selectedDate,
       time: selectedTime,
-    }
-    localStorage.setItem('guestBooking', JSON.stringify(bookingDetails))
-    router.push('/booking/guest-confirmation')
-  }
-
-  // Function to render the current step
-  const renderStep = () => {
-    switch (step) {
-      case 1:
-        return (
-          <ServiceSelection
-            selectedService={selectedService}
-            onServiceSelect={handleServiceSelect}
-          />
-        )
-      case 2:
-        if (selectedService === 'dry-cleaning') {
-          return (
-            <DryCleaningSelection
-              selectedItems={selectedItems}
-              onSelectedItemsChange={setSelectedItems}
-              onStepChange={setStep}
-            />
-          )
-        } else if (selectedService === 'key-cutting') {
-          return (
-            <KeyCuttingSelection
-              selectedItems={selectedItems}
-              onSelectedItemsChange={setSelectedItems}
-              onStepChange={setStep}
-            />
-          )
-        }
-        break
-      case 3:
-        return (
-          <DateTimeSelection
-            selectedDate={selectedDate}
-            selectedTime={selectedTime}
-            onDateSelect={setSelectedDate}
-            onTimeSelect={setSelectedTime}
-            onStepChange={setStep}
-          />
-        )
-      case 4:
-        return (
-          <GuestInformation
-            guestEmail={guestEmail}
-            guestName={guestName}
-            guestPhone={guestPhone}
-            onGuestEmailChange={setGuestEmail}
-            onGuestNameChange={setGuestName}
-            onGuestPhoneChange={setGuestPhone}
-            onContinue={() => setStep(5)}
-          />
-        )
-      case 5:
-        return (
-          <Summary
-            selectedService={selectedService}
-            selectedItems={selectedItems}
-            selectedDate={selectedDate}
-            selectedTime={selectedTime}
-            guestEmail={guestEmail}
-            onSubmit={handleBooking}
-          />
-        )
-      default:
-        return null
-    }
-  }
+      email: guestEmail,
+    });
+    // Redirect to confirmation page or show success message
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <Head>
-        <title>Book a Service - Lammy's Multi Services</title>
-      </Head>
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <Steps steps={steps} currentStep={currentStep} />
+        </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="max-w-3xl mx-auto">
-          {/* Progress indicator */}
-          <div className="mb-8">
-            <div className="flex justify-between items-center">
-              <div className="text-sm text-gray-500">
-                Step {step} of 5
-              </div>
-            </div>
-          </div>
+        <div className="bg-white shadow rounded-lg p-6">
+          {currentStep === 1 && (
+            <ServiceSelection onSelect={handleServiceSelect} />
+          )}
 
-          {/* Current step content */}
-          {renderStep()}
+          {currentStep === 2 && (
+            <QuantitySelector
+              selectedService={selectedService}
+              onSelect={handleItemsSelect}
+            />
+          )}
+
+          {currentStep === 3 && (
+            <DateTimeSelection onSelect={handleDateTimeSelect} />
+          )}
+
+          {currentStep === 4 && (
+            <GuestInformation onSubmit={handleGuestInformation} />
+          )}
+
+          {currentStep === 5 && (
+            <Summary
+              selectedService={selectedService}
+              selectedItems={selectedItems}
+              selectedDate={selectedDate}
+              selectedTime={selectedTime}
+              guestEmail={guestEmail}
+              onSubmit={handleBookingSubmit}
+            />
+          )}
         </div>
       </div>
     </div>
-  )
+  );
 }
-
-export default BookingPageComponent
