@@ -4,8 +4,6 @@ import { Phone, Mail, MapPin, Clock, Scissors, Key, Shirt } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { ParallaxHero } from './components/ParallaxHero'
-import { TestimonialCarousel } from './components/TestimonialCarousel'
 
 export function LandingPageComponent() {
   const router = useRouter()
@@ -19,33 +17,39 @@ export function LandingPageComponent() {
     <div className="min-h-screen bg-gray-50">
       <main>
         {/* Hero section */}
-        <ParallaxHero
-          imageUrl="https://images.unsplash.com/photo-1520434901111-8e9bcb42c628?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80"
-        >
-          <div className="relative flex items-center justify-center h-full px-4 sm:px-6 lg:px-8">
-            <div className="text-center">
-              <h1 className="text-4xl font-extrabold text-white sm:text-5xl md:text-6xl">
-                Lammy's Multi Services
-              </h1>
-              <p className="mt-3 text-base text-gray-200 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl">
-                Quality dry cleaning, expert alterations, and quick key cutting services all under one roof.
-              </p>
-              <div className="mt-5 sm:mt-8 flex justify-center gap-4">
-                <div className="rounded-md shadow">
-                  <button
-                    onClick={handleBookNowClick}
-                    className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10"
-                  >
-                    Book Now
-                  </button>
-                </div>
+        <section className="relative h-screen flex items-center justify-center">
+          <div className="absolute inset-0">
+            <Image
+              src="https://images.unsplash.com/photo-1520434901111-8e9bcb42c628?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80"
+              alt="Hero"
+              fill
+              style={{ objectFit: 'cover' }}
+              priority
+            />
+            <div className="absolute inset-0 bg-black opacity-50" />
+          </div>
+          <div className="relative z-10 text-center">
+            <h1 className="text-4xl font-extrabold text-white sm:text-5xl md:text-6xl">
+              Lammy's Multi Services
+            </h1>
+            <p className="mt-3 text-base text-gray-200 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl">
+              Quality dry cleaning, expert alterations, and quick key cutting services all under one roof.
+            </p>
+            <div className="mt-5 sm:mt-8 flex justify-center gap-4">
+              <div className="rounded-md shadow">
+                <button
+                  onClick={handleBookNowClick}
+                  className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10"
+                >
+                  Book Now
+                </button>
               </div>
             </div>
           </div>
-        </ParallaxHero>
+        </section>
 
         {/* Services section */}
-        <div className="py-12 bg-white">
+        <section className="py-12 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center">
               <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">Our Services</h2>
@@ -91,24 +95,10 @@ export function LandingPageComponent() {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Testimonials section */}
-        <div className="bg-gray-50 py-12">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center">
-              <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-                What Our Customers Say
-              </h2>
-            </div>
-            <div className="mt-8">
-              <TestimonialCarousel />
-            </div>
-          </div>
-        </div>
+        </section>
 
         {/* Contact section */}
-        <div className="bg-white py-12">
+        <section className="bg-white py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center">
               <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">Contact Us</h2>
@@ -122,7 +112,7 @@ export function LandingPageComponent() {
                   <Phone className="h-6 w-6" />
                 </div>
                 <h3 className="mt-4 text-lg font-medium text-gray-900">Phone</h3>
-                <p className="mt-2 text-base text-gray-500">+44 7123 456 789</p>
+                <p className="mt-2 text-base text-gray-500">0483 876 223</p>
               </div>
 
               {/* Email */}
@@ -131,7 +121,7 @@ export function LandingPageComponent() {
                   <Mail className="h-6 w-6" />
                 </div>
                 <h3 className="mt-4 text-lg font-medium text-gray-900">Email</h3>
-                <p className="mt-2 text-base text-gray-500">info@lammys.co.uk</p>
+                <p className="mt-2 text-base text-gray-500">team@lammys.au</p>
               </div>
 
               {/* Location */}
@@ -140,7 +130,7 @@ export function LandingPageComponent() {
                   <MapPin className="h-6 w-6" />
                 </div>
                 <h3 className="mt-4 text-lg font-medium text-gray-900">Location</h3>
-                <p className="mt-2 text-base text-gray-500">123 High Street, London</p>
+                <p className="mt-2 text-base text-gray-500">36 Eighth Ave, Maylands WA 6051</p>
               </div>
 
               {/* Opening Hours */}
@@ -156,7 +146,7 @@ export function LandingPageComponent() {
               </div>
             </div>
           </div>
-        </div>
+        </section>
       </main>
     </div>
   )
