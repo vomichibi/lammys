@@ -14,7 +14,9 @@ export const supabase = createClient(
     auth: {
       autoRefreshToken: true,
       persistSession: true,
-      detectSessionInUrl: false
+      detectSessionInUrl: false,
+      storageKey: 'lammys-auth',
+      storage: typeof window !== 'undefined' ? window.localStorage : undefined
     },
     global: {
       headers: {

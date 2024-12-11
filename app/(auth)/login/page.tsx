@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
@@ -25,46 +25,39 @@ export default function LoginPage() {
       }
 
       // Sign in with Supabase
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
       });
 
-      if (signInError) throw signInError;
-      if (!data?.user) throw new Error('No user data returned');
+      if (signInError) {
+        console.error('Sign in error:', signInError);
+        throw new Error(signInError.message);
+      }
 
-      // Check if user exists in users table
-      const { data: userProfile, error: profileError } = await supabase
-        .from('users')
+      if (!authData?.user) {
+        throw new Error('No user data returned');
+      }
+
+      // Check admin status from profiles table
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
         .select('is_admin')
-        .eq('id', data.user.id)
+        .eq('id', authData.user.id)
         .single();
 
-      if (profileError && profileError.code === 'PGRST116') {
-        // User doesn't exist in users table, create profile
-        const { error: createError } = await supabase
-          .from('users')
-          .insert([
-            {
-              id: data.user.id,
-              email: data.user.email,
-              is_admin: data.user.email === 'team@lammys.au'
-            }
-          ]);
-
-        if (createError) throw createError;
-
-        // Redirect based on email
-        router.push(data.user.email === 'team@lammys.au' ? '/admindash/dashboard' : '/dashboard');
-      } else if (profileError) {
-        throw profileError;
-      } else {
-        // Redirect based on existing profile
-        router.push(userProfile.is_admin ? '/admindash/dashboard' : '/dashboard');
+      if (profileError) {
+        console.error('Profile fetch error:', profileError);
+        throw new Error('Error fetching user profile');
       }
+
+      // Redirect based on admin status from profile
+      router.push(profileData?.is_admin ? '/admindash/dashboard' : '/dashboard');
+      
     } catch (err) {
       console.error('Login error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred during login');
+    } finally {
       setLoading(false);
     }
   };
