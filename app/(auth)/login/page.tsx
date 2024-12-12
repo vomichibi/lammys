@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
@@ -14,6 +14,14 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  const redirectToDashboard = (isAdmin: boolean) => {
+    const path = isAdmin ? '/admindash/dashboard' : '/dashboard';
+    // First update the URL without a page refresh
+    window.history.pushState({}, '', path);
+    // Then force a page refresh to ensure clean state
+    window.location.reload();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -23,6 +31,8 @@ export default function LoginPage() {
       if (!formData.email || !formData.password) {
         throw new Error('Please enter both email and password');
       }
+
+      console.log('Attempting to sign in...');
 
       // Sign in with Supabase
       const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
@@ -39,7 +49,9 @@ export default function LoginPage() {
         throw new Error('No user data returned');
       }
 
-      // Check admin status from profiles table
+      console.log('Auth successful, checking profile...');
+
+      // Check if user profile exists
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('is_admin')
@@ -47,13 +59,24 @@ export default function LoginPage() {
         .single();
 
       if (profileError) {
-        console.error('Profile fetch error:', profileError);
-        throw new Error('Error fetching user profile');
+        if (profileError.code === 'PGRST116') {
+          console.log('No profile found, redirecting to register');
+          router.push('/register');
+          return;
+        }
+        console.error('Profile error:', profileError);
+        throw new Error('Error checking user profile');
       }
 
-      // Redirect based on admin status from profile
-      router.push(profileData?.is_admin ? '/admindash/dashboard' : '/dashboard');
-      
+      if (!profileData) {
+        console.log('No profile data, redirecting to register');
+        router.push('/register');
+        return;
+      }
+
+      console.log('Profile found, redirecting to dashboard...');
+      redirectToDashboard(profileData.is_admin);
+
     } catch (err) {
       console.error('Login error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred during login');
@@ -76,6 +99,12 @@ export default function LoginPage() {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Sign in to your account
           </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Or{' '}
+            <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500">
+              register for a new account
+            </Link>
+          </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">

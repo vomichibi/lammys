@@ -12,16 +12,10 @@ export const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   {
     auth: {
-      autoRefreshToken: true,
       persistSession: true,
+      autoRefreshToken: true,
       detectSessionInUrl: false,
-      storageKey: 'lammys-auth',
       storage: typeof window !== 'undefined' ? window.localStorage : undefined
-    },
-    global: {
-      headers: {
-        'X-Client-Info': 'lammys-website'
-      }
     }
   }
 )

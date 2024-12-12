@@ -35,6 +35,7 @@ export default function Navigation() {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      setIsMenuOpen(false);
       router.push('/');
     } catch (error) {
       console.error('Error signing out:', error);
@@ -122,20 +123,45 @@ export default function Navigation() {
                     >
                       FAQ
                     </Link>
-                    <Link
-                      href="/login"
-                      className="text-gray-700 hover:text-blue-600"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Login
-                    </Link>
-                    <Link
-                      href="/register"
-                      className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 inline-block text-center"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Register
-                    </Link>
+                    
+                    {!loading && (
+                      <>
+                        {user ? (
+                          <>
+                            <Link
+                              href="/dashboard"
+                              className="text-gray-700 hover:text-blue-600"
+                              onClick={() => setIsMenuOpen(false)}
+                            >
+                              Dashboard
+                            </Link>
+                            <button
+                              onClick={handleLogout}
+                              className="text-left text-gray-700 hover:text-blue-600"
+                            >
+                              Sign Out
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <Link
+                              href="/login"
+                              className="text-gray-700 hover:text-blue-600"
+                              onClick={() => setIsMenuOpen(false)}
+                            >
+                              Login
+                            </Link>
+                            <Link
+                              href="/register"
+                              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 inline-block text-center"
+                              onClick={() => setIsMenuOpen(false)}
+                            >
+                              Register
+                            </Link>
+                          </>
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
