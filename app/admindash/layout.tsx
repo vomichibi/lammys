@@ -22,9 +22,12 @@ export default function AdminDashboardLayout({
           console.log('Checking admin access:', { user: user?.email, isAdmin })
 
           if (!user) {
-            console.log('No user found, redirecting to login')
-            router.push('/login')
-            return
+            console.log('No user found, showing access denied')
+            return (
+              <div className="min-h-screen flex items-center justify-center">
+                <div className="text-red-600">Access Denied. Please log in with an admin account.</div>
+              </div>
+            )
           }
 
           // Double-check admin status directly
@@ -44,8 +47,11 @@ export default function AdminDashboardLayout({
           
           if (!profile?.is_admin) {
             console.log('Not an admin user')
-            router.push('/')
-            return
+            return (
+              <div className="min-h-screen flex items-center justify-center">
+                <div className="text-red-600">Access Denied. Admin privileges required.</div>
+              </div>
+            )
           }
 
           console.log('Admin access confirmed')

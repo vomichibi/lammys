@@ -23,7 +23,7 @@ const getGravatarUrl = (email: string) => {
 };
 
 const sidebarLinks = [
-  { name: 'Dashboard', icon: LayoutDashboardIcon, href: '/admindash/dashboard' },
+  { name: 'Dashboard', icon: LayoutDashboardIcon, href: '/admindash' },
   { name: 'Orders', icon: ClipboardListIcon, href: '/admindash/orders' },
   { name: 'Customers', icon: UsersIcon, href: '/admindash/customers' },
   { name: 'Settings', icon: SettingsIcon, href: '/admindash/settings' },

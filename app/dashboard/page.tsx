@@ -12,13 +12,28 @@ import { LogOut, Calendar, History, User } from 'lucide-react'
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { user, signOut } = useAuth()
+  const { user, signOut, isAdmin } = useAuth()
 
   useEffect(() => {
-    if (!user) {
-      router.push('/login')
+    if (user && isAdmin) {
+      router.push('/admindash')
     }
-  }, [user, router])
+  }, [user, isAdmin, router])
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold text-gray-900 mb-2">Access Denied</h1>
+          <p className="text-gray-600">Please log in to access your dashboard.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isAdmin) {
+    return null; // Will be redirected by useEffect
+  }
 
   const handleSignOut = async () => {
     try {
@@ -28,8 +43,6 @@ export default function DashboardPage() {
       console.error('Error signing out:', error)
     }
   }
-
-  if (!user) return null
 
   return (
     <div className="min-h-screen bg-gray-50">

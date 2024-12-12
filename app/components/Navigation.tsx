@@ -10,7 +10,7 @@ export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const { user, loading } = useAuth();
+  const { user, loading, isAdmin } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -128,13 +128,23 @@ export default function Navigation() {
                       <>
                         {user ? (
                           <>
-                            <Link
-                              href="/dashboard"
-                              className="text-gray-700 hover:text-blue-600"
-                              onClick={() => setIsMenuOpen(false)}
-                            >
-                              Dashboard
-                            </Link>
+                            {isAdmin ? (
+                              <Link
+                                href="/admindash"
+                                className="text-gray-700 hover:text-blue-600"
+                                onClick={() => setIsMenuOpen(false)}
+                              >
+                                Dashboard
+                              </Link>
+                            ) : (
+                              <Link
+                                href="/dashboard"
+                                className="text-gray-700 hover:text-blue-600"
+                                onClick={() => setIsMenuOpen(false)}
+                              >
+                                Dashboard
+                              </Link>
+                            )}
                             <button
                               onClick={handleLogout}
                               className="text-left text-gray-700 hover:text-blue-600"
