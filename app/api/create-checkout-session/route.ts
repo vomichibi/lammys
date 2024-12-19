@@ -31,8 +31,8 @@ export async function POST(req: Request) {
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
-      success_url: `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/test-payment/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/test-payment`,
+      success_url: `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/booking/confirmation?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/booking/cart`,
     });
 
     return NextResponse.json({ sessionId: session.id, url: session.url });

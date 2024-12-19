@@ -1,9 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+<<<<<<< HEAD
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
+=======
+import Link from 'next/link';
+import { supabase } from '@/lib/supabaseClient';
+import { useRouter, useSearchParams } from 'next/navigation';
+>>>>>>> 9b3c2d631955f7b6202f0f164032c3d88ff88ed7
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -13,6 +19,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+<<<<<<< HEAD
 
   const redirectToDashboard = (isAdmin: boolean) => {
     const path = isAdmin ? '/admindash/dashboard' : '/dashboard';
@@ -21,6 +28,9 @@ export default function LoginPage() {
     // Then force a page refresh to ensure clean state
     window.location.reload();
   };
+=======
+  const searchParams = useSearchParams();
+>>>>>>> 9b3c2d631955f7b6202f0f164032c3d88ff88ed7
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,6 +38,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+<<<<<<< HEAD
       if (!formData.email || !formData.password) {
         throw new Error('Please enter both email and password');
       }
@@ -36,10 +47,14 @@ export default function LoginPage() {
 
       // Sign in with Supabase
       const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
+=======
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+>>>>>>> 9b3c2d631955f7b6202f0f164032c3d88ff88ed7
         email: formData.email,
         password: formData.password,
       });
 
+<<<<<<< HEAD
       if (signInError) {
         console.error('Sign in error:', signInError);
         throw new Error(signInError.message);
@@ -77,6 +92,20 @@ export default function LoginPage() {
       console.log('Profile found, redirecting to dashboard...');
       redirectToDashboard(profileData.is_admin);
 
+=======
+      if (signInError) throw signInError;
+
+      // Redirect based on user role or redirect parameter
+      if (data?.user) {
+        const redirectTo = searchParams.get('redirectTo');
+        if (redirectTo) {
+          router.push(redirectTo);
+        } else {
+          const isAdmin = data.user.email === 'team@lammys.au';
+          router.push(isAdmin ? '/admindash' : '/dashboard');
+        }
+      }
+>>>>>>> 9b3c2d631955f7b6202f0f164032c3d88ff88ed7
     } catch (err) {
       console.error('Login error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred during login');
@@ -143,7 +172,13 @@ export default function LoginPage() {
           </div>
 
           {error && (
+<<<<<<< HEAD
             <div className="text-red-500 text-sm text-center">{error}</div>
+=======
+            <div className="text-red-500 text-sm text-center">
+              {error}
+            </div>
+>>>>>>> 9b3c2d631955f7b6202f0f164032c3d88ff88ed7
           )}
 
           <div>
@@ -156,6 +191,7 @@ export default function LoginPage() {
                   : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
               }`}
             >
+<<<<<<< HEAD
               {loading ? (
                 <span className="flex items-center">
                   <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -175,6 +211,11 @@ export default function LoginPage() {
               Forgot your password?
             </Link>
           </div>
+=======
+              {loading ? 'Signing in...' : 'Sign in'}
+            </button>
+          </div>
+>>>>>>> 9b3c2d631955f7b6202f0f164032c3d88ff88ed7
         </form>
       </div>
     </div>
