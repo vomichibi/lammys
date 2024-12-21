@@ -67,11 +67,11 @@ export default function OrdersLayout({
               <div>
                 <Avatar>
                   <AvatarImage src={user?.email ? getGravatarUrl(user.email) : ''} />
-                  <AvatarFallback>{user?.displayName?.[0]}</AvatarFallback>
+                  <AvatarFallback>{user?.email?.[0].toUpperCase()}</AvatarFallback>
                 </Avatar>
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-700">{user?.displayName}</p>
+                <p className="text-sm font-medium text-gray-700">{user?.email}</p>
                 <Button 
                   variant="ghost" 
                   onClick={() => supabase.auth.signOut()}

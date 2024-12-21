@@ -19,23 +19,9 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(redirectUrl)
     }
 
-    // If logged in and trying to access auth routes
-    if (session && (path === '/login' || path === '/register')) {
-      const isAdmin = session.user.email === 'team@lammys.au'
-      const redirectUrl = new URL(isAdmin ? '/admindash' : '/dashboard', request.url)
-      return NextResponse.redirect(redirectUrl)
-    }
-
-    // If admin trying to access regular dashboard
-    if (session?.user.email === 'team@lammys.au' && path.startsWith('/dashboard')) {
-      const redirectUrl = new URL('/admindash', request.url)
-      return NextResponse.redirect(redirectUrl)
-    }
-
     // If non-admin trying to access admin dashboard
     if (session?.user.email !== 'team@lammys.au' && path.startsWith('/admindash')) {
-      const redirectUrl = new URL('/dashboard', request.url)
-      return NextResponse.redirect(redirectUrl)
+      return NextResponse.redirect(new URL('/dashboard', request.url))
     }
 
     return res
@@ -49,7 +35,5 @@ export const config = {
   matcher: [
     '/dashboard/:path*',
     '/admindash/:path*',
-    '/login',
-    '/register'
   ],
 }

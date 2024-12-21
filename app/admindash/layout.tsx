@@ -11,13 +11,13 @@ export default function AdminDashboardLayout({
   children: React.ReactNode
 }) {
   const router = useRouter()
-  const { user, loading, isAdmin } = useAuth()
+  const { user, isLoading, isAdmin } = useAuth()
   const [isChecking, setIsChecking] = useState(true)
 
   useEffect(() => {
     const checkAdminAccess = async () => {
       try {
-        if (!loading) {
+        if (!isLoading) {
           setIsChecking(true)
           console.log('Checking admin access:', { user: user?.email, isAdmin })
 
@@ -64,9 +64,9 @@ export default function AdminDashboardLayout({
     }
 
     checkAdminAccess()
-  }, [user, loading, router, isAdmin])
+  }, [user, isLoading, router, isAdmin])
 
-  if (loading || isChecking) {
+  if (isLoading || isChecking) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>

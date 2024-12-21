@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 
 export default function Navigation() {
   const { user, isAdmin, signOut, isLoading } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -36,6 +37,16 @@ export default function Navigation() {
     setIsMenuOpen(false);
   };
 
+  const handleDashboardClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!user) {
+      router.push('/login');
+    } else {
+      router.push(isAdmin ? '/admindash' : '/dashboard');
+    }
+    setIsMenuOpen(false);
+  };
+
   return (
     <nav className="bg-white shadow-lg">
       <div className="max-w-7xl mx-auto px-4">
@@ -56,7 +67,6 @@ export default function Navigation() {
               aria-expanded="false"
             >
               <span className="sr-only">Open main menu</span>
-              {/* Icon when menu is closed */}
               {!isMenuOpen ? (
                 <svg
                   className="block h-6 w-6"
@@ -74,7 +84,6 @@ export default function Navigation() {
                   />
                 </svg>
               ) : (
-                // Icon when menu is open
                 <svg
                   className="block h-6 w-6"
                   xmlns="http://www.w3.org/2000/svg"
@@ -112,33 +121,18 @@ export default function Navigation() {
               </Link>
               {!isLoading && (
                 <>
-                  {user ? (
-                    isAdmin ? (
-                      <Link
-                        href="/admindash"
-                        className={`block px-3 py-2 text-base font-medium ${
-                          pathname.startsWith('/admindash')
-                            ? 'bg-blue-50 border-l-4 border-blue-500 text-blue-700'
-                            : 'text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700'
-                        }`}
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        Admin Dashboard
-                      </Link>
-                    ) : (
-                      <Link
-                        href="/dashboard"
-                        className={`block px-3 py-2 text-base font-medium ${
-                          pathname.startsWith('/dashboard')
-                            ? 'bg-blue-50 border-l-4 border-blue-500 text-blue-700'
-                            : 'text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700'
-                        }`}
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        Dashboard
-                      </Link>
-                    )
-                  ) : (
+                  <a
+                    href="#"
+                    className={`block px-3 py-2 text-base font-medium ${
+                      pathname.startsWith('/dashboard') || pathname.startsWith('/admindash')
+                        ? 'bg-blue-50 border-l-4 border-blue-500 text-blue-700'
+                        : 'text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700'
+                    }`}
+                    onClick={handleDashboardClick}
+                  >
+                    {isAdmin ? 'Admin Dashboard' : 'Dashboard'}
+                  </a>
+                  {!user && (
                     <>
                       <Link
                         href="/login"
@@ -156,18 +150,16 @@ export default function Navigation() {
                       </Link>
                     </>
                   )}
+                  {user && (
+                    <a
+                      href="#"
+                      className="block px-3 py-2 text-base font-medium text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
+                      onClick={handleSignOut}
+                    >
+                      Sign out
+                    </a>
+                  )}
                 </>
-              )}
-              {user && (
-                <button
-                  onClick={(e) => {
-                    handleSignOut(e);
-                    setIsMenuOpen(false);
-                  }}
-                  className="block w-full text-left px-3 py-2 text-base font-medium text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
-                >
-                  Sign out
-                </button>
               )}
             </div>
           </div>

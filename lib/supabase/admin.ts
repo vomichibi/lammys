@@ -93,7 +93,7 @@ export async function getBusinessMetrics(startDate: Date, endDate: Date) {
   const { data: topServices, error: servicesError } = await supabaseAdmin
     .from('order_items')
     .select(`
-      services (
+      services:services (
         name
       ),
       quantity,
@@ -116,7 +116,7 @@ export async function getBusinessMetrics(startDate: Date, endDate: Date) {
   return {
     revenue: revenue.reduce((sum, order) => sum + order.total_amount, 0),
     topServices: topServices.reduce((acc, item) => {
-      const serviceName = item.services?.name || 'Unknown'
+      const serviceName = Array.isArray(item.services) && item.services[0]?.name || 'Unknown'
       if (!acc[serviceName]) {
         acc[serviceName] = { revenue: 0, quantity: 0 }
       }

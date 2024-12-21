@@ -14,7 +14,7 @@ function OrdersPageContent() {
 
   useEffect(() => {
     if (user?.email) {
-      fetchUserOrders(user.email);
+      fetchUserOrders();
     }
   }, [user, fetchUserOrders]);
 
@@ -59,7 +59,7 @@ function OrdersPageContent() {
                       Order #{order.id ? order.id.slice(-6) : 'N/A'}
                     </h3>
                     <p className="text-sm text-gray-500">
-                      {order.createdAt ? formatDistance(new Date(order.createdAt), new Date(), { addSuffix: true }) : 'Date not available'}
+                      {order.created_at ? formatDistance(new Date(order.created_at), new Date(), { addSuffix: true }) : 'Date not available'}
                     </p>
                   </div>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
@@ -72,9 +72,9 @@ function OrdersPageContent() {
                 </div>
 
                 <div className="space-y-2">
-                  {order.items && order.items.map((item, index) => item && (
+                  {order.order_items && order.order_items.map((item, index) => item && (
                     <div key={index} className="flex justify-between text-sm">
-                      <span>{item.name || 'Unknown Item'} x{item.quantity || 0}</span>
+                      <span>{item.service?.name || 'Unknown Item'} x{item.quantity || 0}</span>
                       <span>${((item.price || 0) * (item.quantity || 0)).toFixed(2)}</span>
                     </div>
                   ))}
@@ -84,7 +84,7 @@ function OrdersPageContent() {
                   <div className="text-sm">
                     <span className="text-gray-600">Total:</span>
                     <span className="font-semibold ml-2">
-                      ${order.total ? order.total.toFixed(2) : '0.00'}
+                      ${order.total_amount ? order.total_amount.toFixed(2) : '0.00'}
                     </span>
                   </div>
                   {order.status === 'pending' && (

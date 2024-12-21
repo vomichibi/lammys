@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 
-export default function EmailConfirmPage() {
+function EmailConfirmContent() {
   const [message, setMessage] = useState('Verifying your email...');
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -20,7 +20,8 @@ export default function EmailConfirmPage() {
           // Handle email change confirmation
           const { error } = await supabase.auth.verifyOtp({
             token: token as string,
-            type: 'email_change'
+            type: 'email_change',
+            email: searchParams.get('email') || ''
           });
 
           if (error) throw error;
@@ -29,7 +30,8 @@ export default function EmailConfirmPage() {
           // Handle signup confirmation
           const { error } = await supabase.auth.verifyOtp({
             token: token as string,
-            type: 'signup'
+            type: 'signup',
+            email: searchParams.get('email') || ''
           });
 
           if (error) throw error;
@@ -47,7 +49,7 @@ export default function EmailConfirmPage() {
     };
 
     handleEmailConfirmation();
-  }, [router, searchParams]);
+  }, [searchParams, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -56,11 +58,19 @@ export default function EmailConfirmPage() {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Email Confirmation
           </h2>
-          <div className="mt-4 text-center text-lg text-gray-600">
+          <p className="mt-2 text-center text-sm text-gray-600">
             {message}
-          </div>
+          </p>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function EmailConfirmPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <EmailConfirmContent />
+    </Suspense>
   );
 }

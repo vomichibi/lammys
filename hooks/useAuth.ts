@@ -15,10 +15,10 @@ export function useAuth() {
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
+      if (session) {
         setUser({
           id: session.user.id,
-          email: session.user.email,
+          email: session.user.email ?? null,
           isAdmin: session.user.email === 'team@lammys.au'
         });
       }
@@ -29,10 +29,10 @@ export function useAuth() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
+      if (session) {
         setUser({
           id: session.user.id,
-          email: session.user.email,
+          email: session.user.email ?? null,
           isAdmin: session.user.email === 'team@lammys.au'
         });
       } else {

@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
   const searchParams = useSearchParams()
   const sessionId = searchParams.get('session_id')
   const [loading, setLoading] = useState(true)
@@ -52,22 +52,29 @@ export default function PaymentSuccessPage() {
     <div className="container mx-auto py-8">
       <Card>
         <CardHeader>
-          <CardTitle className="text-center text-green-500">
+          <CardTitle className="text-center text-green-600">
             Payment Successful!
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center py-8">
-          <p className="text-lg mb-6">
-            Thank you for your payment. Your transaction has been completed successfully.
-          </p>
+          <p className="mb-4">Your test payment was processed successfully.</p>
+          <p className="mb-4">Session ID: {sessionId}</p>
           <Link
             href="/test-payment"
-            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+            className="text-blue-500 hover:text-blue-600"
           >
-            Make Another Test Payment
+            Return to Test Payment
           </Link>
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <PaymentSuccessContent />
+    </Suspense>
   )
 }

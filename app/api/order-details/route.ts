@@ -18,6 +18,13 @@ export async function GET(request: NextRequest) {
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
     if (authError) throw authError
 
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not authenticated' },
+        { status: 401 }
+      );
+    }
+
     // Fetch order details
     const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')

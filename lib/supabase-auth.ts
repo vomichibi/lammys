@@ -24,7 +24,7 @@ export async function signInWithEmail(email: string, password: string) {
   return {
     user: {
       id: data.user.id,
-      email: data.user.email,
+      email: data.user.email ?? null,
       isAdmin: profile?.is_admin || false,
     },
     session: data.session,
@@ -81,7 +81,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
 
   return {
     id: session.user.id,
-    email: session.user.email,
+    email: session.user.email ?? null,
     isAdmin: profile?.is_admin || false,
   }
 }

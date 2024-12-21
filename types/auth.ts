@@ -1,6 +1,6 @@
 export interface AuthUser {
   id: string
-  email: string | undefined
+  email: string | null
   fullName: string | null
   isAdmin: boolean
 }
@@ -13,6 +13,7 @@ export interface Profile {
   created_at: string
   last_login_at: string | null
   is_admin: boolean
+  avatar_url?: string | null
 }
 
 export interface Service {

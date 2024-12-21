@@ -26,7 +26,7 @@ export async function GET() {
     console.error('Error fetching services:', error);
     return NextResponse.json(
       { error: 'Failed to fetch services' },
-      { status: error.message === 'Unauthorized' ? 403 : 500 }
+      { status: error instanceof Error && error.message === 'Unauthorized' ? 403 : 500 }
     );
   }
 }
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
     console.error('Error creating service:', error);
     return NextResponse.json(
       { error: 'Failed to create service' },
-      { status: error.message === 'Unauthorized' ? 403 : 500 }
+      { status: error instanceof Error && error.message === 'Unauthorized' ? 403 : 500 }
     );
   }
 }

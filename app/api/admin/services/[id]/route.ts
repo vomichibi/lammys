@@ -41,7 +41,7 @@ export async function PUT(
     console.error('Error updating service:', error);
     return NextResponse.json(
       { error: 'Failed to update service' },
-      { status: error.message === 'Unauthorized' ? 403 : 500 }
+      { status: error instanceof Error && error.message === 'Unauthorized' ? 403 : 500 }
     );
   }
 }
@@ -69,7 +69,7 @@ export async function DELETE(
     console.error('Error deleting service:', error);
     return NextResponse.json(
       { error: 'Failed to delete service' },
-      { status: error.message === 'Unauthorized' ? 403 : 500 }
+      { status: error instanceof Error && error.message === 'Unauthorized' ? 403 : 500 }
     );
   }
 }
@@ -94,7 +94,7 @@ export async function GET(
     console.error('Error fetching service:', error);
     return NextResponse.json(
       { error: 'Failed to fetch service' },
-      { status: error.message === 'Unauthorized' ? 403 : 500 }
+      { status: error instanceof Error && error.message === 'Unauthorized' ? 403 : 500 }
     );
   }
 }

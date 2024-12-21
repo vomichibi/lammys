@@ -13,8 +13,15 @@ export async function POST(request: NextRequest) {
 
     if (error) throw error
 
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
     // Create a profile for the new user
-    const { error: profileError } = await supabaseAdmin
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .insert({
         id: user.id,

@@ -12,8 +12,8 @@ export default function CartPage() {
     items, 
     removeItem, 
     updateQuantity, 
-    syncWithFirestore, 
-    loadFromFirestore,
+    syncWithSupabase, 
+    loadFromSupabase,
     initializeCart,
     isLoading,
     error,
@@ -43,8 +43,8 @@ export default function CartPage() {
         await initializeCart(user.email);
         
         if (mounted) {
-          await loadFromFirestore(user.email);
-          await syncWithFirestore(user.email);
+          await loadFromSupabase(user.email);
+          await syncWithSupabase(user.email);
         }
       } catch (error) {
         console.error('Error initializing/loading cart:', error);
@@ -70,7 +70,7 @@ export default function CartPage() {
     
     try {
       await removeItem(id);
-      await syncWithFirestore(user.email);
+      await syncWithSupabase(user.email);
     } catch (error) {
       console.error('Error removing item:', error);
       setError('Failed to remove item. Please try again.');
@@ -85,7 +85,7 @@ export default function CartPage() {
       const newQuantity = Math.max(1, item.quantity + change)
       try {
         await updateQuantity(id, newQuantity);
-        await syncWithFirestore(user.email);
+        await syncWithSupabase(user.email);
       } catch (error) {
         console.error('Error updating quantity:', error);
         setError('Failed to update quantity. Please try again.');
