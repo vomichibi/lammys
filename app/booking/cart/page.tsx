@@ -93,23 +93,19 @@ export default function CartPage() {
     }
   }
 
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
     if (!user?.email) {
       router.push('/login');
       return;
     }
 
-    try {
-      setIsCheckingOut(true);
-      setError(null);
-      const checkoutUrl = await checkout();
-      window.location.href = checkoutUrl;
-    } catch (error) {
-      console.error('Checkout error:', error);
-      setError('Failed to start checkout. Please try again.');
-    } finally {
-      setIsCheckingOut(false);
+    if (items.length === 0) {
+      setError('Your cart is empty');
+      return;
     }
+
+    // Redirect to checkout page
+    router.push('/booking/checkout');
   };
 
   if (!user) {
@@ -244,8 +240,6 @@ export default function CartPage() {
                 <span className="text-lg font-medium">Total:</span>
                 <span className="text-2xl font-semibold">${total.toFixed(2)}</span>
               </div>
-　
-　
 　
               <div className="flex justify-end space-x-4">
                 <button

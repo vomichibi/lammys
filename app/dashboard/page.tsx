@@ -2,7 +2,11 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+<<<<<<< HEAD
+import { useAuth } from '@/providers/AuthProvider'
+=======
 import { useAuth } from '@/lib/auth-context'
+>>>>>>> 9b3c2d631955f7b6202f0f164032c3d88ff88ed7
 import { UserBookings } from './components/UserBookings'
 import { UserProfile } from './components/UserProfile'
 import { OrderHistory } from './components/OrderHistory'
@@ -20,10 +24,13 @@ export default function DashboardPage() {
     }
   }, [user, isAdmin, router])
 
+<<<<<<< HEAD
+=======
   if (isAdmin) {
     return null; // Will be redirected by useEffect
   }
 
+>>>>>>> 9b3c2d631955f7b6202f0f164032c3d88ff88ed7
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -35,6 +42,13 @@ export default function DashboardPage() {
     );
   }
 
+<<<<<<< HEAD
+  if (isAdmin) {
+    return null; // Will be redirected by useEffect
+  }
+
+=======
+>>>>>>> 9b3c2d631955f7b6202f0f164032c3d88ff88ed7
   const handleSignOut = async () => {
     try {
       await signOut()
@@ -52,7 +66,11 @@ export default function DashboardPage() {
           <div className="flex justify-between items-center mb-6">
             <div>
               <h1 className="text-2xl font-semibold text-gray-900">
+<<<<<<< HEAD
+                Welcome back{user.email ? `, ${user.email}` : ''}
+=======
                 Welcome back{user?.email ? `, ${user.email}` : ''}
+>>>>>>> 9b3c2d631955f7b6202f0f164032c3d88ff88ed7
               </h1>
               <p className="mt-1 text-sm text-gray-600">
                 Manage your bookings and account settings

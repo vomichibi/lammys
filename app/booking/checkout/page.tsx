@@ -4,10 +4,11 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/store/cartStore';
 import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
+import CheckoutForm from '@/components/payment/CheckoutForm';
 
 // Initialize Stripe
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
@@ -16,8 +17,15 @@ export default function CheckoutPage() {
   const { user } = useAuth();
   const router = useRouter();
   const { items, isLoading: cartLoading, initializeCart } = useCartStore();
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [clientSecret, setClientSecret] = useState('');
   const [error, setError] = useState<string | null>(null);
+
+  const total = items.reduce((sum: number, item) => {
+    const price = typeof item.price === 'string' 
+      ? parseFloat(item.price.toString().replace(/[^0-9.]/g, '')) 
+      : item.price;
+    return sum + (price * item.quantity);
+  }, 0);
 
   useEffect(() => {
     if (!user) {
@@ -34,56 +42,27 @@ export default function CheckoutPage() {
     }
   }, [user, router, initializeCart]);
 
-  const handleCheckout = async () => {
-    if (!user?.email) {
-      setError('Please log in to checkout');
-      return;
-    }
+  useEffect(() => {
+    if (!user?.email || !items.length) return;
 
-    if (!items.length) {
-      setError('Your cart is empty');
-      return;
-    }
-
-    try {
-      setIsProcessing(true);
-      setError(null);
-
-      const response = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          items,
-          userEmail: user.email 
-        }),
+    // Create PaymentIntent as soon as the page loads
+    fetch('/api/create-payment-intent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        items,
+        userEmail: user.email 
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setClientSecret(data.clientSecret);
+      })
+      .catch((err) => {
+        console.error('Error creating payment intent:', err);
+        setError('Failed to initialize payment. Please try again.');
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to create checkout session');
-      }
-
-      const { sessionId } = await response.json();
-      const stripe = await stripePromise;
-
-      if (!stripe) {
-        throw new Error('Stripe failed to initialize');
-      }
-
-      const { error: stripeError } = await stripe.redirectToCheckout({ sessionId });
-
-      if (stripeError) {
-        throw new Error(stripeError.message || 'Failed to redirect to checkout');
-      }
-    } catch (err: any) {
-      console.error('Checkout error:', err);
-      setError(err.message || 'An error occurred during checkout');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+  }, [items, user?.email]);
 
   if (!user) {
     return null;
@@ -116,32 +95,36 @@ export default function CheckoutPage() {
                       <h3 className="font-medium">{item.name}</h3>
                       <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
                     </div>
-                    <p className="font-medium">£{Number(item.price) * item.quantity}</p>
+                    <p className="font-medium">${Number(item.price) * item.quantity}</p>
                   </div>
                 ))}
                 <div className="border-t pt-4">
                   <div className="flex justify-between font-bold">
                     <span>Total</span>
-                    <span>£{items.reduce((total: number, item) => total + (Number(item.price) * item.quantity), 0)}</span>
+                    <span>${total.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
             )}
 
-            <Button
-              onClick={handleCheckout}
-              disabled={isProcessing || items.length === 0}
-              className="w-full mt-6"
-            >
-              {isProcessing ? (
-                <div className="flex items-center justify-center">
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Processing...
-                </div>
-              ) : (
-                'Proceed to Payment'
-              )}
-            </Button>
+            {clientSecret && (
+              <div className="mt-6">
+                <Elements
+                  stripe={stripePromise}
+                  options={{
+                    clientSecret,
+                    appearance: {
+                      theme: 'stripe',
+                      variables: {
+                        colorPrimary: '#0070f3',
+                      },
+                    },
+                  }}
+                >
+                  <CheckoutForm amount={total} />
+                </Elements>
+              </div>
+            )}
           </div>
         )}
       </Card>

@@ -5,7 +5,10 @@ import { useRouter } from 'next/navigation'
 import Head from 'next/head'
 import { useCartStore } from '@/store/cartStore'
 import { formatDate } from '@/lib/utils/date'
+<<<<<<< HEAD
+=======
 import { useAuth } from '@/lib/auth-context'
+>>>>>>> 9b3c2d631955f7b6202f0f164032c3d88ff88ed7
 
 interface DryCleaningItem {
   id: string;
@@ -22,7 +25,10 @@ interface SelectedItem {
 const BookingPageComponent = () => {
   const router = useRouter()
   const { items, addItem, initializeCart, error: cartError } = useCartStore()
+<<<<<<< HEAD
+=======
   const { user } = useAuth()
+>>>>>>> 9b3c2d631955f7b6202f0f164032c3d88ff88ed7
 
   const [step, setStep] = useState(1)
   const [selectedService, setSelectedService] = useState('')
@@ -198,6 +204,10 @@ const BookingPageComponent = () => {
         }
       }
 
+<<<<<<< HEAD
+      // Show guest form
+      setShowGuestForm(true);
+=======
       // Only show guest form if user is not logged in
       if (!user) {
         setShowGuestForm(true);
@@ -205,6 +215,7 @@ const BookingPageComponent = () => {
         // If user is logged in, proceed directly to confirmation
         router.push('/booking/confirmation');
       }
+>>>>>>> 9b3c2d631955f7b6202f0f164032c3d88ff88ed7
     } catch (error) {
       console.error('Error adding items to cart:', error);
       // Handle error appropriately
@@ -233,6 +244,10 @@ const BookingPageComponent = () => {
         }
       }
 
+<<<<<<< HEAD
+      // Show guest form
+      setShowGuestForm(true);
+=======
       // Only show guest form if user is not logged in
       if (!user) {
         setShowGuestForm(true);
@@ -240,6 +255,7 @@ const BookingPageComponent = () => {
         // If user is logged in, proceed directly to cart
         router.push('/booking/cart');
       }
+>>>>>>> 9b3c2d631955f7b6202f0f164032c3d88ff88ed7
     } catch (error) {
       console.error('Error processing cart:', error);
       // Handle error appropriately
